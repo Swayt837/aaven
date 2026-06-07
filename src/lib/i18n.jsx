@@ -85,6 +85,13 @@ const dict = {
     'pos.a2': 'Réserver',
     'pos.a3': 'Soutenir',
     'pos.a4': 'Contacter',
+    'legal.mentions': 'Mentions légales',
+    'legal.cgu': 'CGU',
+    'legal.cgv': 'CGV',
+    'legal.privacy': 'Confidentialité',
+    'cookie.text': 'On utilise uniquement un cookie de session nécessaire au fonctionnement et une mesure d’audience anonyme.',
+    'cookie.link': 'En savoir plus',
+    'cookie.ok': 'J’ai compris',
 
     // Landing — pricing
     'pricing.eyebrow': 'TARIFS',
@@ -507,6 +514,13 @@ const dict = {
     'pos.a2': 'Book',
     'pos.a3': 'Support',
     'pos.a4': 'Contact',
+    'legal.mentions': 'Legal notice',
+    'legal.cgu': 'Terms',
+    'legal.cgv': 'Sales terms',
+    'legal.privacy': 'Privacy',
+    'cookie.text': 'We only use a session cookie required for the service and anonymous audience measurement.',
+    'cookie.link': 'Learn more',
+    'cookie.ok': 'Got it',
 
     'pricing.eyebrow': 'PRICING',
     'pricing.title': 'Simple. Honest.',

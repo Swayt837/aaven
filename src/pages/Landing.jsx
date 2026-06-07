@@ -270,6 +270,12 @@ export default function Landing() {
       </section>
 
       <footer className="border-t-2 border-ink py-8 text-center text-sm font-bold text-ink/50">
+        <div className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-2">
+          <a href="/legal/mentions-legales" className="hover:text-ink">{t('legal.mentions')}</a>
+          <a href="/legal/cgu" className="hover:text-ink">{t('legal.cgu')}</a>
+          <a href="/legal/cgv" className="hover:text-ink">{t('legal.cgv')}</a>
+          <a href="/legal/confidentialite" className="hover:text-ink">{t('legal.privacy')}</a>
+        </div>
         {t('common.madeWith')} · © 2026 BioBoost
       </footer>
     </div>

@@ -10,6 +10,8 @@ import PublicPage from './pages/PublicPage'
 import Stats from './pages/Stats'
 import TipSuccess from './pages/TipSuccess'
 import BuySuccess from './pages/BuySuccess'
+import Legal from './pages/Legal'
+import { CookieBanner } from './components/CookieBanner'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -22,17 +24,21 @@ function Protected({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/onboarding" element={<Protected><Onboarding /></Protected>} />
-      <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-      <Route path="/edit/:slug" element={<Protected><Editor /></Protected>} />
-      <Route path="/stats/:slug" element={<Protected><Stats /></Protected>} />
-      <Route path="/tip-success" element={<TipSuccess />} />
-      <Route path="/buy-success" element={<BuySuccess />} />
-      <Route path="/:slug" element={<PublicPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/onboarding" element={<Protected><Onboarding /></Protected>} />
+        <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+        <Route path="/edit/:slug" element={<Protected><Editor /></Protected>} />
+        <Route path="/stats/:slug" element={<Protected><Stats /></Protected>} />
+        <Route path="/tip-success" element={<TipSuccess />} />
+        <Route path="/buy-success" element={<BuySuccess />} />
+        <Route path="/legal/:doc" element={<Legal />} />
+        <Route path="/:slug" element={<PublicPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <CookieBanner />
+    </>
   )
 }
