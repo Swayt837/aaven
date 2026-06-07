@@ -28,32 +28,63 @@ export function PhoneFrame({ children, bg = '#FCE7EF', screenStyle, bare = false
   )
 }
 
+// Accroche : différents styles premium selon theme.headlineStyle.
+function HeadlinePremium({ text, hlStyle, txt, accent, headFont, light }) {
+  if (!text) return null
+  const common = { fontFamily: headFont }
+  if (hlStyle === 'accent') {
+    return <span className="mt-3 text-xs font-extrabold uppercase tracking-[0.24em]" style={{ ...common, color: accent }}>{text}</span>
+  }
+  if (hlStyle === 'line') {
+    return (
+      <span className="mt-3 inline-flex flex-col items-center gap-1.5 text-sm font-bold" style={{ ...common, color: txt }}>
+        {text}
+        <span style={{ height: 2, width: 40, background: accent, borderRadius: 9999 }} />
+      </span>
+    )
+  }
+  if (hlStyle === 'outline') {
+    return <span className="mt-3 inline-block rounded-full border-2 px-4 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em]" style={{ ...common, color: txt, borderColor: accent }}>{text}</span>
+  }
+  if (hlStyle === 'serif') {
+    return <span className="mt-3 text-lg italic" style={{ color: txt, fontFamily: "'Fraunces', Georgia, serif" }}>{text}</span>
+  }
+  // pill (défaut) — verre dépoli
+  return (
+    <span
+      className="mt-3 inline-block rounded-full px-4 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] backdrop-blur-md"
+      style={{ ...common, color: txt, border: `1px solid ${light ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.15)'}`, background: light ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.05)' }}
+    >
+      {text}
+    </span>
+  )
+}
+
 // En-tête immersif : compose le contenu sur la photo selon la disposition choisie.
-function ImmersiveHeader({ page, theme, headFont }) {
+function ImmersiveHeader({ page, theme, headFont, txt, accent, light }) {
   const layout = theme.layout || 'spotlight'
   const hasAvatar = !!page.avatarUrl
   const av = { posX: theme.avPosX ?? 50, posY: theme.avPosY ?? 50, zoom: theme.avZoom ?? 1 }
   const leftAlign = layout === 'magazine'
-  const showAvatar = hasAvatar // affichée si renseignée, quelle que soit la disposition
+  const showAvatar = hasAvatar
   const avSize = layout === 'spotlight' ? 116 : layout === 'cover' ? 92 : layout === 'frame' ? 100 : 84
   const bigName = layout === 'fullbleed' || layout === 'magazine'
+  const avRing = light ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.55)'
+  // Ombre adaptative : texte clair → ombre sombre ; texte foncé → halo clair.
+  const textShadow = light ? '0 2px 22px rgba(0,0,0,.55), 0 1px 4px rgba(0,0,0,.5)' : '0 1px 12px rgba(255,255,255,.55)'
   return (
-    <div className={`relative z-10 flex flex-col bb-textsh ${leftAlign ? 'items-start text-left' : 'items-center text-center'}`}>
+    <div className={`relative z-10 flex flex-col ${leftAlign ? 'items-start text-left' : 'items-center text-center'}`} style={{ textShadow }}>
       {showAvatar &&
         (layout === 'frame' ? (
           <div className="rotate-[-2deg] rounded-2xl bg-white p-2 pb-5 bb-float" style={{ boxShadow: '0 18px 40px rgba(0,0,0,0.45)' }}>
             <Avatar avatarUrl={page.avatarUrl} size={avSize} radius="14px" border="none" {...av} />
           </div>
         ) : (
-          <Avatar avatarUrl={page.avatarUrl} size={avSize} border="3px solid rgba(255,255,255,0.85)" className="bb-float" {...av} />
+          <Avatar avatarUrl={page.avatarUrl} size={avSize} border={`3px solid ${avRing}`} className="bb-float" {...av} />
         ))}
-      <h1 className={`font-extrabold leading-tight tracking-tight text-white ${showAvatar ? 'mt-4' : ''} ${bigName ? 'text-4xl' : 'text-3xl'}`} style={{ fontFamily: headFont }}>{page.title}</h1>
-      {page.headline ? (
-        <span className="mt-3 inline-block rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur-md" style={{ fontFamily: headFont }}>
-          {page.headline}
-        </span>
-      ) : null}
-      {page.bio ? <p className={`mt-3 text-sm font-medium leading-relaxed text-white/75 ${leftAlign ? '' : 'max-w-xs'}`}>{page.bio}</p> : null}
+      <h1 className={`font-extrabold leading-tight tracking-tight ${showAvatar ? 'mt-4' : ''} ${bigName ? 'text-4xl' : 'text-3xl'}`} style={{ color: txt, fontFamily: headFont }}>{page.title}</h1>
+      <HeadlinePremium text={page.headline} hlStyle={theme.headlineStyle || 'pill'} txt={txt} accent={accent} headFont={headFont} light={light} />
+      {page.bio ? <p className={`mt-3 text-sm font-medium leading-relaxed ${leftAlign ? '' : 'max-w-xs'}`} style={{ color: txt, opacity: 0.78 }}>{page.bio}</p> : null}
     </div>
   )
 }
@@ -326,12 +357,12 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, supp
   const theme = getTheme(page)
   const mode = modeOf(page.mode)
   const accent = theme.accent || mode.accent
-  const txt = immersive ? '#FFFFFF' : textColor(theme)
+  const txt = textColor(theme)
   const style = STYLES[theme.style] ? theme.style : 'brutalist'
   const btn = theme.btnStyle || STYLES[style].btn
   const headFont = fontCss(theme.font || STYLES[style].font)
   const radius = STYLES[style].radius
-  const light = immersive ? true : isLight(theme)
+  const light = isLight(theme)
 
   const active = (buttons || []).filter((b) => b.isActive)
   // L'objectif principal = le bouton EN HAUT de la liste. Réordonner change le principal.
@@ -343,7 +374,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, supp
   return (
     <div className="relative z-10 flex flex-col">
       {immersive ? (
-        <ImmersiveHeader page={page} theme={theme} headFont={headFont} />
+        <ImmersiveHeader page={page} theme={theme} headFont={headFont} txt={txt} accent={accent} light={light} />
       ) : (
         <ProfileHeader page={page} theme={theme} accent={accent} txt={txt} headFont={headFont} style={style} radius={radius} />
       )}

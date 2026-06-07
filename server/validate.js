@@ -91,6 +91,7 @@ export function sanitizeTheme(input) {
     avZoom: num(th.avZoom, 1, 1, 4),
     text: TEXT_MODES.includes(th.text) ? th.text : 'dark',
     accent: hex(th.accent) || '#EF5A4C',
+    headlineStyle: ['pill', 'line', 'accent', 'outline', 'serif'].includes(th.headlineStyle) ? th.headlineStyle : 'pill',
     showSupporters: th.showSupporters === true,
     tipAmounts: sanitizeAmounts(th.tipAmounts),
     animation: ANIMATIONS.includes(th.animation) ? th.animation : 'none',

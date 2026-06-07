@@ -276,6 +276,18 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
         </div>
       </div>
 
+      {/* Style d'accroche */}
+      <div>
+        <Label>{t('edit.headlineStyle')}</Label>
+        <div className="grid grid-cols-5 gap-1.5">
+          {[['pill', 'edit.hl.pill'], ['line', 'edit.hl.line'], ['accent', 'edit.hl.accent'], ['outline', 'edit.hl.outline'], ['serif', 'edit.hl.serif']].map(([k, lab]) => (
+            <button key={k} type="button" onClick={() => set({ headlineStyle: k })} className={`rounded-lg border-2 border-ink px-1 py-2 text-[10px] font-extrabold transition ${(theme.headlineStyle || 'pill') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
+              {t(lab)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Ambiance animée (premium) */}
       <div>
         <Label>✨ {t('edit.ambiance')}</Label>

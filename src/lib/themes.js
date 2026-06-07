@@ -80,6 +80,7 @@ export function defaultTheme(mode) {
     avZoom: 1,
     text: 'dark',
     accent: m.accent,
+    headlineStyle: 'pill', // pill | line | accent | outline | serif
     showSupporters: false,
     tipAmounts: [3, 5, 10, 20],
     // Premium (Creator/Pro) : ambiance vivante

@@ -309,6 +309,12 @@ const dict = {
     'edit.style': 'Style',
     'edit.font': 'Police',
     'edit.button': 'Style de bouton',
+    'edit.headlineStyle': 'Style d’accroche',
+    'edit.hl.pill': 'Pastille',
+    'edit.hl.line': 'Ligne',
+    'edit.hl.accent': 'Accent',
+    'edit.hl.outline': 'Contour',
+    'edit.hl.serif': 'Élégant',
 
     // Tip modal
     'tip.title': '❤️ Me soutenir',
@@ -657,6 +663,12 @@ const dict = {
     'edit.style': 'Style',
     'edit.font': 'Font',
     'edit.button': 'Button style',
+    'edit.headlineStyle': 'Tagline style',
+    'edit.hl.pill': 'Pill',
+    'edit.hl.line': 'Line',
+    'edit.hl.accent': 'Accent',
+    'edit.hl.outline': 'Outline',
+    'edit.hl.serif': 'Elegant',
 
     'tip.title': '❤️ Support me',
     'tip.sub': 'Pick an amount and send a little message ✨',
