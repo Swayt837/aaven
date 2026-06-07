@@ -206,7 +206,7 @@ export const TEMPLATES = [
     apply: { template: 'aura-live', style: 'clean', layout: 'spotlight', font: 'modern', btnStyle: 'bubble', bgType: 'gradient', gradFrom: '#7C3AED', gradTo: '#22D3EE', gradAngle: 135, text: 'light', accent: '#F472B6', animation: 'none', bgVideo: 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium/Premium%20Createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4' },
   },
   {
-    key: 'neon-creator', persona: 'creator', premium: true, name: 'Neon Studio', desc: { fr: 'Néon · lumière qui balaie', en: 'Neon · sweeping light' },
+    key: 'neon-creator', persona: 'creator', name: 'Neon Studio', desc: { fr: 'Néon · lumière qui balaie · vidéo offerte', en: 'Neon · sweeping light · free video' },
     preview: P('1492684223066-81342ee5ff30'),
     apply: { template: 'neon-creator', style: 'premium', layout: 'magazine', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1492684223066-81342ee5ff30'), overlay: 0.5, text: 'light', accent: '#22D3EE', animation: 'none', bgVideo: 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4' },
   },
@@ -222,7 +222,7 @@ export const TEMPLATES = [
     apply: { template: 'nightclub-live', style: 'clean', layout: 'fullbleed', font: 'grotesque', btnStyle: 'bubble', bgType: 'image', bgImage: U('1514933651103-005eec06c04b'), overlay: 0.5, text: 'light', accent: '#F0426B', animation: 'none', bgVideo: 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium/Premium%20Etablissement/4fd81e08-facb-4b26-84a9-c82c8b532be2-2-1.2-invideo-seedance_2_0.mp4' },
   },
   {
-    key: 'lounge-live', persona: 'bar', premium: true, name: 'Restaurant', desc: { fr: 'Ambiance restaurant premium', en: 'Premium restaurant ambiance' },
+    key: 'lounge-live', persona: 'bar', name: 'Restaurant', desc: { fr: 'Ambiance restaurant · vidéo offerte', en: 'Restaurant ambiance · free video' },
     preview: P('1551024601-bec78aea704b'),
     apply: { template: 'lounge-live', style: 'premium', layout: 'cover', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1551024601-bec78aea704b'), overlay: 0.5, text: 'light', accent: '#F59E0B', animation: 'none', bgVideo: 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4' },
   },
@@ -233,7 +233,7 @@ export const TEMPLATES = [
     apply: { template: 'studio-live', style: 'clean', layout: 'magazine', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1558655146-9f40138edfeb'), overlay: 0.45, text: 'light', accent: '#F472B6', animation: 'none', bgVideo: 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium/Premium%20Freelance/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-1-1.1-invideo-seedance_2_0.mp4' },
   },
   {
-    key: 'office-live', persona: 'freelance', premium: true, name: 'Office Live', desc: { fr: 'Corporate · lumière qui balaie', en: 'Corporate · sweeping light' },
+    key: 'office-live', persona: 'freelance', name: 'Office Live', desc: { fr: 'Corporate · lumière qui balaie · vidéo offerte', en: 'Corporate · sweeping light · free video' },
     preview: P('1497215728101-856f4ea42174'),
     apply: { template: 'office-live', style: 'premium', layout: 'cover', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1497215728101-856f4ea42174'), overlay: 0.5, text: 'light', accent: '#38BDF8', animation: 'none', bgVideo: 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium/Premium%20Freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4' },
   },

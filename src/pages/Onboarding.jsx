@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Button, Card, Input, Textarea, Label } from '../components/ui'
+import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { MODES } from '../lib/modes'
@@ -15,6 +16,7 @@ export default function Onboarding() {
   const [headline, setHeadline] = useState('')
   const [bio, setBio] = useState('')
   const [busy, setBusy] = useState(false)
+  const [created, setCreated] = useState(null) // page créée → écran de succès
 
   const cards = [
     { m: MODES.creator, label: 'onb.creator.label', desc: 'onb.creator.desc', name: 'Créateur', color: '#F0426B' },
@@ -27,7 +29,8 @@ export default function Onboarding() {
     setBusy(true)
     try {
       const { page } = await api.createPage({ title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode })
-      nav(`/edit/${page.slug}`)
+      setCreated(page)
+      setStep(3)
     } catch (e) {
       alert(e.message)
       setBusy(false)
@@ -87,6 +90,24 @@ export default function Onboarding() {
                 <Button variant="secondary" onClick={() => setStep(1)}>{t('common.back')}</Button>
                 <Button className="flex-1" onClick={create} disabled={busy || !title.trim()}>
                   {busy ? t('common.loading') : t('onb.step2.create')}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {step === 3 && created && (
+          <Card className="mt-8 p-6 text-center" style={{ background: MODES[mode].cardBg }}>
+            <div className="rounded-brutal border-2 border-ink bg-white p-6">
+              <h2 className="font-display text-2xl font-extrabold">{t('onb.done.title')}</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm font-medium text-ink/70">{t('onb.done.sub')}</p>
+              <ShareLink url={`${window.location.origin}/${created.slug}`} className="mx-auto mt-5 max-w-md" />
+              <div className="mx-auto mt-5 flex max-w-md flex-col gap-2 sm:flex-row">
+                <Button as="a" href={`/${created.slug}`} target="_blank" rel="noreferrer" variant="secondary" className="flex-1">
+                  {t('onb.done.view')}
+                </Button>
+                <Button className="flex-1" onClick={() => nav(`/edit/${created.slug}`)}>
+                  {t('onb.done.customize')}
                 </Button>
               </div>
             </div>

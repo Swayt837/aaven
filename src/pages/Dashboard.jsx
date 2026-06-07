@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Button, Card } from '../components/ui'
 import { Avatar } from '../components/PhoneMockup'
+import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
@@ -145,7 +146,9 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-4 gap-2">
+                  <ShareLink url={`${window.location.origin}/${p.slug}`} className="mt-4" />
+
+                  <div className="mt-3 grid grid-cols-4 gap-2">
                     <Button as={Link} to={`/edit/${p.slug}`} variant="secondary" size="sm">{t('dash.edit')}</Button>
                     <Button as={Link} to={`/stats/${p.slug}`} variant="secondary" size="sm">{t('dash.stats')}</Button>
                     <Button as="a" href={`/${p.slug}`} target="_blank" rel="noreferrer" variant="dark" size="sm">{t('dash.see')}</Button>

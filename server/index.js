@@ -12,17 +12,34 @@ import nodemailer from 'nodemailer'
 import { nanoid } from 'nanoid'
 import { Users, Pages, Buttons, Clicks, Tips, Messages, Products, Purchases } from './db.js'
 import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
-import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme } from './validate.js'
+import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
+import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
 const APP_URL = process.env.APP_URL || 'http://localhost:5180'
 const SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me'
 const googleConfigured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+const isProd = process.env.NODE_ENV === 'production'
+
+// Garde-fou prod : refuse de démarrer avec le secret de session par défaut.
+if (isProd && SECRET === 'dev-secret-change-me') {
+  console.error('\n  ✗ SESSION_SECRET non défini en production. Génère une clé aléatoire longue et relance.\n')
+  process.exit(1)
+}
 
 // Commission BioBoost selon le plan (points de base : 500 = 5%).
 const FEE_BPS = { free: 500, creator: 100, pro: 0 }
 const feeBps = (plan) => FEE_BPS[plan] ?? 500
+
+// 1 template vidéo offert par catégorie (accessible aux comptes Free).
+// URL canonique épinglée côté serveur (anti-contournement du gating premium).
+const SUPA = 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium'
+const FREE_VIDEO_TEMPLATES = {
+  'neon-creator': `${SUPA}/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`,
+  'lounge-live': `${SUPA}/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`,
+  'office-live': `${SUPA}/Premium%20Freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`,
+}
 
 // Prix d'abonnement Stripe (Billing).
 const PRICE = { creator: process.env.STRIPE_PRICE_CREATOR, pro: process.env.STRIPE_PRICE_PRO }
@@ -43,51 +60,26 @@ const tipLimiter = rl(60 * 60 * 1000, 40, 'Trop de tentatives de paiement, rées
 const clickLimiter = rl(60 * 1000, 100, 'Trop de clics, réessaie dans un instant.')
 const contactLimiter = rl(60 * 60 * 1000, 20, 'Trop de messages envoyés, réessaie plus tard.')
 
-// ---------- Upload d'images (fonds de page) ----------
-const uploadsDir = path.join(__dirname, 'uploads')
-fs.mkdirSync(uploadsDir, { recursive: true })
+// ---------- Uploads (mémoire → délégués à storage.js : Supabase ou disque) ----------
 const ALLOWED_IMG = /^image\/(png|jpe?g|webp|gif|avif)$/
-const EXT = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif', 'image/avif': '.avif' }
+const ALLOWED_MEDIA = /^(image|video|audio)\/|^application\/pdf$/
+// En mode local, les images sont servies en statique depuis le dossier uploads.
+app.use('/uploads', express.static(uploadsDir, { maxAge: '7d' }))
+
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: uploadsDir,
-    filename: (req, file, cb) => cb(null, `${req.page.id}-${nanoid(8)}${EXT[file.mimetype] || '.img'}`),
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 Mo
   fileFilter: (req, file, cb) => cb(null, ALLOWED_IMG.test(file.mimetype)),
 })
-app.use('/uploads', express.static(uploadsDir, { maxAge: '7d' }))
-
-// ---------- Fichiers produits (privés, jamais servis en statique) ----------
-const productFilesDir = path.join(__dirname, 'product-files')
-fs.mkdirSync(productFilesDir, { recursive: true })
-const productUpload = multer({
-  storage: multer.diskStorage({
-    destination: productFilesDir,
-    filename: (req, file, cb) => {
-      const ext = (path.extname(file.originalname) || '').replace(/[^.a-z0-9]/gi, '').slice(0, 10)
-      cb(null, `${req.page.id}-${nanoid(10)}${ext}`)
-    },
-  }),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 Mo
-})
+const productUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } })
 function productUploadSingle(req, res, next) {
   productUpload.single('file')(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop lourd (max 50 Mo)' : 'Upload invalide' })
     next()
   })
 }
-
-// ---------- Médias d'ambiance (vidéo/audio/image) — servis en statique ----------
-const ALLOWED_MEDIA = /^(image|video|audio)\/|^application\/pdf$/
 const mediaUpload = multer({
-  storage: multer.diskStorage({
-    destination: uploadsDir,
-    filename: (req, file, cb) => {
-      const ext = (path.extname(file.originalname) || '').replace(/[^.a-z0-9]/gi, '').slice(0, 12)
-      cb(null, `${req.page.id}-${nanoid(8)}${ext}`)
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 60 * 1024 * 1024 }, // 60 Mo
   fileFilter: (req, file, cb) => cb(null, ALLOWED_MEDIA.test(file.mimetype)),
 })
@@ -110,7 +102,7 @@ if (process.env.SMTP_HOST) {
 }
 async function notifyOwner(page, msg) {
   if (!mailer) return // SMTP non configuré → on stocke seulement
-  const owner = Users.findById(page.userId)
+  const owner = await Users.findById(page.userId)
   if (!owner?.email) return
   try {
     await mailer.sendMail({
@@ -158,41 +150,44 @@ function verify(token) {
   const expected = crypto.createHmac('sha256', SECRET).update(userId).digest('hex')
   return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? userId : null
 }
+const COOKIE_OPTS = { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/' }
 function setSession(res, userId) {
-  res.cookie('bb_session', sign(userId), {
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 30 * 24 * 3600 * 1000,
-  })
+  res.cookie('bb_session', sign(userId), { ...COOKIE_OPTS, maxAge: 30 * 24 * 3600 * 1000 })
 }
-function currentUser(req) {
+async function currentUser(req) {
   const id = verify(req.cookies?.bb_session)
-  return id ? Users.findById(id) : null
+  return id ? await Users.findById(id) : null
 }
-function requireAuth(req, res, next) {
-  const u = currentUser(req)
-  if (!u) return res.status(401).json({ error: 'Non authentifié' })
-  req.user = u
-  next()
+async function requireAuth(req, res, next) {
+  try {
+    const u = await currentUser(req)
+    if (!u) return res.status(401).json({ error: 'Non authentifié' })
+    req.user = u
+    next()
+  } catch (e) { next(e) }
 }
-function ownPage(req, res, next) {
-  const page = Pages.bySlug(req.params.slug)
-  if (!page) return res.status(404).json({ error: 'Page introuvable' })
-  if (page.userId !== req.user.id) return res.status(403).json({ error: 'Accès refusé' })
-  req.page = page
-  next()
+async function ownPage(req, res, next) {
+  try {
+    const page = await Pages.bySlug(req.params.slug)
+    if (!page) return res.status(404).json({ error: 'Page introuvable' })
+    if (page.userId !== req.user.id) return res.status(403).json({ error: 'Accès refusé' })
+    req.page = page
+    next()
+  } catch (e) { next(e) }
 }
 
 // ================= AUTH =================
-app.get('/api/me', (req, res) => {
-  const u = currentUser(req)
+app.get('/api/me', async (req, res) => {
+  const u = await currentUser(req)
   if (!u) return res.json({ user: null })
   res.json({ user: { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl, plan: u.plan } })
 })
 
 // Dev login : crée/retourne un compte de démo (utilisé quand Google non configuré)
-app.post('/api/auth/dev-login', authLimiter, (req, res) => {
-  const u = Users.upsertFromGoogle({
+app.post('/api/auth/dev-login', authLimiter, async (req, res) => {
+  // Backdoor de DEV uniquement : désactivée dès que Google OAuth est configuré (prod).
+  if (googleConfigured || isProd) return res.status(404).json({ error: 'Not found' })
+  const u = await Users.upsertFromGoogle({
     googleId: 'dev-user',
     email: 'demo@bioboost.app',
     name: 'Utilisateur démo',
@@ -235,7 +230,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     })
     const prof = await profRes.json()
-    const u = Users.upsertFromGoogle({
+    const u = await Users.upsertFromGoogle({
       googleId: prof.id,
       email: prof.email,
       name: prof.name,
@@ -249,7 +244,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
 })
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('bb_session')
+  res.clearCookie('bb_session', COOKIE_OPTS)
   res.json({ ok: true })
 })
 
@@ -262,7 +257,7 @@ app.post('/api/connect/start', requireAuth, async (req, res) => {
     if (!acct) {
       const a = await stripe.accounts.create({ type: 'express', email: req.user.email })
       acct = a.id
-      Users.setStripeAccount(req.user.id, acct)
+      await Users.setStripeAccount(req.user.id, acct)
     }
     const link = await stripe.accountLinks.create({
       account: acct,
@@ -284,7 +279,7 @@ app.get('/api/connect/status', requireAuth, async (req, res) => {
   try {
     const a = await stripe.accounts.retrieve(req.user.stripeAccountId)
     enabled = !!a.charges_enabled
-    Users.setPayouts(req.user.stripeAccountId, enabled)
+    await Users.setPayouts(req.user.stripeAccountId, enabled)
   } catch {
     /* garde la dernière valeur connue */
   }
@@ -298,7 +293,7 @@ app.post('/api/billing/checkout', requireAuth, async (req, res) => {
   if (!['creator', 'pro'].includes(plan)) return res.status(400).json({ error: 'Plan invalide' })
   if (!stripe || !PRICE[plan]) {
     // Démo (pas de Stripe Billing configuré) : applique le plan directement.
-    Users.setPlan(req.user.id, plan)
+    await Users.setPlan(req.user.id, plan)
     return res.json({ demo: true, plan })
   }
   try {
@@ -306,7 +301,7 @@ app.post('/api/billing/checkout', requireAuth, async (req, res) => {
     if (!customer) {
       const c = await stripe.customers.create({ email: req.user.email })
       customer = c.id
-      Users.setPlan(req.user.id, req.user.plan, customer)
+      await Users.setPlan(req.user.id, req.user.plan, customer)
     }
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -337,18 +332,18 @@ app.post('/api/billing/portal', requireAuth, async (req, res) => {
 })
 
 // Repasser en Free (démo : sans Stripe).
-app.post('/api/billing/downgrade', requireAuth, (req, res) => {
+app.post('/api/billing/downgrade', requireAuth, async (req, res) => {
   if (stripe && req.user.stripeCustomerId) return res.json({ demo: false, portal: true })
-  Users.setPlan(req.user.id, 'free')
+  await Users.setPlan(req.user.id, 'free')
   res.json({ demo: true, plan: 'free' })
 })
 
 // ================= PAGES (privé) =================
-app.get('/api/pages', requireAuth, (req, res) => {
-  res.json({ pages: Pages.byUser(req.user.id) })
+app.get('/api/pages', requireAuth, async (req, res) => {
+  res.json({ pages: await Pages.byUser(req.user.id) })
 })
 
-app.post('/api/pages', requireAuth, createLimiter, (req, res) => {
+app.post('/api/pages', requireAuth, createLimiter, async (req, res) => {
   const title = clampStr(req.body.title, 80).trim()
   const bio = clampStr(req.body.bio, 280)
   const headline = clampStr(req.body.headline, 80)
@@ -356,12 +351,13 @@ app.post('/api/pages', requireAuth, createLimiter, (req, res) => {
   if (!title || !['creator', 'bar', 'freelance'].includes(mode)) {
     return res.status(400).json({ error: 'Titre et mode requis' })
   }
-  const page = Pages.create({ userId: req.user.id, title, bio, headline, mode })
+  const page = await Pages.create({ userId: req.user.id, title, bio, headline, mode })
   // Pré-remplissage des boutons selon le preset du mode
   const preset = PRESETS_SERVER[mode] || []
-  preset.forEach((item, i) => {
+  for (let i = 0; i < preset.length; i++) {
+    const item = preset[i]
     const def = BUTTON_TYPES_SERVER[item.type]
-    Buttons.create(page.id, {
+    await Buttons.create(page.id, {
       type: item.type,
       label: def.label.fr,
       icon: def.icon,
@@ -370,21 +366,21 @@ app.post('/api/pages', requireAuth, createLimiter, (req, res) => {
       featured: !!item.featured,
       position: i,
     })
-  })
-  res.json({ page, buttons: Buttons.byPage(page.id) })
+  }
+  res.json({ page, buttons: await Buttons.byPage(page.id) })
 })
 
-app.get('/api/pages/:slug', requireAuth, ownPage, (req, res) => {
-  res.json({ page: req.page, buttons: Buttons.byPage(req.page.id) })
+app.get('/api/pages/:slug', requireAuth, ownPage, async (req, res) => {
+  res.json({ page: req.page, buttons: await Buttons.byPage(req.page.id) })
 })
 
-app.put('/api/pages/:slug', requireAuth, ownPage, writeLimiter, (req, res) => {
+app.put('/api/pages/:slug', requireAuth, ownPage, writeLimiter, async (req, res) => {
   const { title, slug, bio, headline, avatarUrl, emoji, buttons } = req.body
   // Slug : valide l'unicité si changé
   let newSlug = req.page.slug
   if (slug && slug !== req.page.slug) {
     const cleaned = slug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '')
-    const taken = Pages.bySlug(cleaned)
+    const taken = await Pages.bySlug(cleaned)
     if (taken && taken.id !== req.page.id) return res.status(409).json({ error: 'Slug déjà pris' })
     newSlug = cleaned || req.page.slug
   }
@@ -399,17 +395,19 @@ app.put('/api/pages/:slug', requireAuth, ownPage, writeLimiter, (req, res) => {
   if (req.body.theme !== undefined) {
     const th = sanitizeTheme(req.body.theme)
     // Ambiance premium réservée aux abonnés Creator/Pro.
+    // Exception : 1 template vidéo offert par catégorie reste accessible en Free.
+    // On épingle l'URL canonique pour empêcher l'usage d'une autre vidéo premium.
     if ((req.user.plan || 'free') === 'free') {
       th.animation = 'none'
       th.introVideo = ''
-      th.bgVideo = ''
       th.bgVideoOwn = false
       th.ambientAudio = ''
+      th.bgVideo = FREE_VIDEO_TEMPLATES[th.template] || ''
     }
     patch.theme = th
   }
-  const page = Pages.update(req.page.id, patch)
-  let nb = Buttons.byPage(page.id)
+  const page = await Pages.update(req.page.id, patch)
+  let nb = await Buttons.byPage(page.id)
   if (Array.isArray(buttons)) {
     // Assainit chaque bouton : URL filtrée (anti-XSS) + libellés bornés.
     const clean = buttons.slice(0, 50).map((b, i) => ({
@@ -421,8 +419,9 @@ app.put('/api/pages/:slug', requireAuth, ownPage, writeLimiter, (req, res) => {
       isActive: b.isActive !== false,
       featured: !!b.featured,
       position: Number.isFinite(b.position) ? b.position : i,
+      config: sanitizeButtonConfig(b.type, b.config),
     }))
-    nb = Buttons.sync(page.id, clean)
+    nb = await Buttons.sync(page.id, clean)
   }
   res.json({ page, buttons: nb })
 })
@@ -437,86 +436,91 @@ function uploadSingle(req, res, next) {
     next()
   })
 }
-app.post('/api/pages/:slug/upload', requireAuth, ownPage, writeLimiter, uploadSingle, (req, res) => {
+app.post('/api/pages/:slug/upload', requireAuth, ownPage, writeLimiter, uploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Image invalide (formats : png, jpg, webp, gif, avif)' })
-  res.json({ url: `/uploads/${req.file.filename}` })
+  try {
+    const url = await savePublic(req.file.buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
+    res.json({ url })
+  } catch (e) { res.status(500).json({ error: 'Upload échoué' }) }
 })
 
 // Upload média (vidéo/audio/image) pour l'ambiance.
-app.post('/api/pages/:slug/upload-media', requireAuth, ownPage, writeLimiter, mediaUploadSingle, (req, res) => {
+app.post('/api/pages/:slug/upload-media', requireAuth, ownPage, writeLimiter, mediaUploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Fichier invalide (image, vidéo ou audio)' })
-  res.json({ url: `/uploads/${req.file.filename}` })
+  try {
+    const url = await savePublic(req.file.buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
+    res.json({ url })
+  } catch (e) { res.status(500).json({ error: 'Upload échoué' }) }
 })
 
-app.delete('/api/pages/:slug', requireAuth, ownPage, (req, res) => {
-  Pages.remove(req.page.id)
-  // Nettoie les images uploadées de cette page (préfixées par son id).
-  try {
-    for (const f of fs.readdirSync(uploadsDir)) {
-      if (f.startsWith(`${req.page.id}-`)) fs.unlinkSync(path.join(uploadsDir, f))
-    }
-  } catch {
-    /* non bloquant */
-  }
+app.delete('/api/pages/:slug', requireAuth, ownPage, async (req, res) => {
+  await Pages.remove(req.page.id)
+  await deletePagePublicAssets(req.page.id) // nettoie les assets de la page (Supabase ou disque)
   res.json({ ok: true })
 })
 
-app.get('/api/pages/:slug/stats', requireAuth, ownPage, (req, res) => {
-  const buttons = Buttons.byPage(req.page.id)
+app.get('/api/pages/:slug/stats', requireAuth, ownPage, async (req, res) => {
+  const buttons = await Buttons.byPage(req.page.id)
   const totalClicks = buttons.reduce((s, b) => s + b.clicks, 0)
   res.json({
     views: req.page.views,
     totalClicks,
-    messages: Messages.countByPage(req.page.id),
+    messages: await Messages.countByPage(req.page.id),
     buttons: buttons.map((b) => ({ id: b.id, label: b.label, icon: b.icon, clicks: b.clicks })),
   })
 })
 
 // Messages reçus (owner uniquement).
-app.get('/api/pages/:slug/messages', requireAuth, ownPage, (req, res) => {
-  res.json({ messages: Messages.byPage(req.page.id) })
+app.get('/api/pages/:slug/messages', requireAuth, ownPage, async (req, res) => {
+  res.json({ messages: await Messages.byPage(req.page.id) })
 })
 
 // Soutiens reçus (owner) + réponse du créateur.
-app.get('/api/pages/:slug/tips', requireAuth, ownPage, (req, res) => {
-  res.json({ tips: Tips.byPage(req.page.id) })
+app.get('/api/pages/:slug/tips', requireAuth, ownPage, async (req, res) => {
+  res.json({ tips: await Tips.byPage(req.page.id) })
 })
-app.post('/api/pages/:slug/tips/:tipId/reply', requireAuth, ownPage, writeLimiter, (req, res) => {
-  const tip = Tips.byId(req.params.tipId)
+app.post('/api/pages/:slug/tips/:tipId/reply', requireAuth, ownPage, writeLimiter, async (req, res) => {
+  const tip = await Tips.byId(req.params.tipId)
   if (!tip || tip.pageId !== req.page.id) return res.status(404).json({ error: 'Soutien introuvable' })
-  res.json({ tip: Tips.setReply(tip.id, clampStr(req.body.reply, 280)) })
+  res.json({ tip: await Tips.setReply(tip.id, clampStr(req.body.reply, 280)) })
 })
 
 // ================= PRODUITS DIGITAUX =================
 const FREE_PRODUCT_LIMIT = 3
-function productQuota(req, res, next) {
-  const plan = req.user.plan || 'free'
-  if (plan === 'free' && Products.countByPage(req.page.id) >= FREE_PRODUCT_LIMIT) {
-    return res.status(403).json({ error: `Limite de ${FREE_PRODUCT_LIMIT} produits (passe Creator pour l'illimité)` })
-  }
-  next()
+async function productQuota(req, res, next) {
+  try {
+    const plan = req.user.plan || 'free'
+    if (plan === 'free' && (await Products.countByPage(req.page.id)) >= FREE_PRODUCT_LIMIT) {
+      return res.status(403).json({ error: `Limite de ${FREE_PRODUCT_LIMIT} produits (passe Creator pour l'illimité)` })
+    }
+    next()
+  } catch (e) { next(e) }
 }
 
 // Liste owner (avec nom de fichier).
-app.get('/api/pages/:slug/products', requireAuth, ownPage, (req, res) => {
-  res.json({ products: Products.byPage(req.page.id).map((p) => ({ ...p, filePath: undefined })) })
+app.get('/api/pages/:slug/products', requireAuth, ownPage, async (req, res) => {
+  res.json({ products: (await Products.byPage(req.page.id)).map((p) => ({ ...p, filePath: undefined })) })
 })
 
 // Création (multipart : file + champs).
-app.post('/api/pages/:slug/products', requireAuth, ownPage, writeLimiter, productQuota, productUploadSingle, (req, res) => {
+app.post('/api/pages/:slug/products', requireAuth, ownPage, writeLimiter, productQuota, productUploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Fichier requis' })
   const title = clampStr(req.body.title, 80).trim()
   if (!title) return res.status(400).json({ error: 'Titre requis' })
   const description = clampStr(req.body.description, 500)
   const priceCents = Math.max(100, Math.round((Number(req.body.price) || 0) * 100) || 100)
   const coverImage = sanitizeAsset(req.body.coverImage)
-  const prod = Products.create(req.page.id, { title, description, priceCents, coverImage, filePath: req.file.filename, fileName: req.file.originalname })
+  let filePath
+  try {
+    filePath = await saveProductFile(req.file.buffer, { originalname: req.file.originalname, mimetype: req.file.mimetype, pageId: req.page.id })
+  } catch (e) { return res.status(500).json({ error: 'Upload du fichier échoué' }) }
+  const prod = await Products.create(req.page.id, { title, description, priceCents, coverImage, filePath, fileName: req.file.originalname })
   res.json({ product: { ...prod, filePath: undefined } })
 })
 
 // Mise à jour (sans changer le fichier).
-app.put('/api/pages/:slug/products/:id', requireAuth, ownPage, writeLimiter, (req, res) => {
-  const prod = Products.byId(req.params.id)
+app.put('/api/pages/:slug/products/:id', requireAuth, ownPage, writeLimiter, async (req, res) => {
+  const prod = await Products.byId(req.params.id)
   if (!prod || prod.pageId !== req.page.id) return res.status(404).json({ error: 'Produit introuvable' })
   const patch = {}
   if (req.body.title != null) patch.title = clampStr(req.body.title, 80)
@@ -524,45 +528,41 @@ app.put('/api/pages/:slug/products/:id', requireAuth, ownPage, writeLimiter, (re
   if (req.body.price != null) patch.priceCents = Math.max(100, Math.round((Number(req.body.price) || 0) * 100) || 100)
   if (req.body.active != null) patch.active = !!req.body.active
   if (req.body.coverImage != null) patch.coverImage = sanitizeAsset(req.body.coverImage)
-  res.json({ product: { ...Products.update(prod.id, patch), filePath: undefined } })
+  res.json({ product: { ...(await Products.update(prod.id, patch)), filePath: undefined } })
 })
 
-app.delete('/api/pages/:slug/products/:id', requireAuth, ownPage, (req, res) => {
-  const prod = Products.byId(req.params.id)
+app.delete('/api/pages/:slug/products/:id', requireAuth, ownPage, async (req, res) => {
+  const prod = await Products.byId(req.params.id)
   if (!prod || prod.pageId !== req.page.id) return res.status(404).json({ error: 'Produit introuvable' })
-  Products.remove(prod.id)
-  try {
-    if (prod.filePath) fs.unlinkSync(path.join(productFilesDir, prod.filePath))
-  } catch {
-    /* non bloquant */
-  }
+  await Products.remove(prod.id)
+  await deleteProductFile(prod.filePath)
   res.json({ ok: true })
 })
 
 // Liste publique (produits actifs).
-app.get('/api/public/:slug/products', (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+app.get('/api/public/:slug/products', async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
-  res.json({ products: Products.publicByPage(page.id) })
+  res.json({ products: await Products.publicByPage(page.id) })
 })
 
 // Achat d'un produit (Checkout via Connect, ou démo).
 app.post('/api/public/:slug/products/:id/buy', tipLimiter, async (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
-  const prod = Products.byId(req.params.id)
+  const prod = await Products.byId(req.params.id)
   if (!prod || prod.pageId !== page.id || !prod.active) return res.status(404).json({ error: 'Produit indisponible' })
   const token = nanoid(24)
 
   if (!stripe) {
     // Démo : achat payé immédiatement
-    const pu = Purchases.create({ productId: prod.id, pageId: page.id, email: clampStr(req.body.email, 160), token, status: 'paid', stripeSessionId: `demo_${Date.now()}` })
-    Products.incSales(prod.id)
+    const pu = await Purchases.create({ productId: prod.id, pageId: page.id, email: clampStr(req.body.email, 160), token, status: 'paid', stripeSessionId: `demo_${Date.now()}` })
+    await Products.incSales(prod.id)
     deliverProduct(pu, prod)
     return res.json({ url: `${APP_URL}/buy-success?token=${token}` })
   }
 
-  const owner = Users.findById(page.userId)
+  const owner = await Users.findById(page.userId)
   const params = {
     mode: 'payment',
     line_items: [{ price_data: { currency: 'eur', unit_amount: prod.priceCents, product_data: { name: prod.title, description: prod.description || undefined } }, quantity: 1 }],
@@ -575,36 +575,37 @@ app.post('/api/public/:slug/products/:id/buy', tipLimiter, async (req, res) => {
     params.payment_intent_data = { transfer_data: { destination: owner.stripeAccountId }, ...(fee > 0 ? { application_fee_amount: fee } : {}) }
   }
   const session = await stripe.checkout.sessions.create(params)
-  Purchases.create({ productId: prod.id, pageId: page.id, token, stripeSessionId: session.id, status: 'pending' })
+  await Purchases.create({ productId: prod.id, pageId: page.id, token, stripeSessionId: session.id, status: 'pending' })
   res.json({ url: session.url })
 })
 
 // Statut d'un achat (pour la page de succès).
-app.get('/api/purchase/:token', (req, res) => {
-  const pu = Purchases.byToken(req.params.token)
+app.get('/api/purchase/:token', async (req, res) => {
+  const pu = await Purchases.byToken(req.params.token)
   if (!pu) return res.status(404).json({ error: 'Achat introuvable' })
-  const prod = Products.byId(pu.productId)
+  const prod = await Products.byId(pu.productId)
   res.json({ status: pu.status, title: prod?.title || '', url: pu.status === 'paid' ? `/api/download/${pu.token}` : null })
 })
 
 // Téléchargement sécurisé (uniquement si payé).
-app.get('/api/download/:token', (req, res) => {
-  const pu = Purchases.byToken(req.params.token)
+app.get('/api/download/:token', async (req, res) => {
+  const pu = await Purchases.byToken(req.params.token)
   if (!pu || pu.status !== 'paid') return res.status(403).json({ error: 'Téléchargement indisponible' })
-  const prod = Products.byId(pu.productId)
+  const prod = await Products.byId(pu.productId)
   if (!prod || !prod.filePath) return res.status(404).json({ error: 'Fichier introuvable' })
-  const full = path.join(productFilesDir, prod.filePath)
-  if (!fs.existsSync(full)) return res.status(404).json({ error: 'Fichier introuvable' })
-  res.download(full, prod.fileName || 'telechargement')
+  const dl = await getProductDownload(prod.filePath)
+  if (!dl) return res.status(404).json({ error: 'Fichier introuvable' })
+  if (dl.redirect) return res.redirect(dl.redirect) // URL signée Supabase (privée, expire vite)
+  res.download(dl.filePath, prod.fileName || 'telechargement')
 })
 
 // ================= PUBLIC =================
-app.get('/api/public/:slug', (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+app.get('/api/public/:slug', async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
-  Pages.incViews(page.id)
-  const buttons = Buttons.byPage(page.id).filter((b) => b.isActive)
-  const owner = Users.findById(page.userId)
+  await Pages.incViews(page.id)
+  const buttons = (await Buttons.byPage(page.id)).filter((b) => b.isActive)
+  const owner = await Users.findById(page.userId)
   res.json({
     page: { title: page.title, slug: page.slug, bio: page.bio, headline: page.headline, avatarUrl: page.avatarUrl, emoji: page.emoji, mode: page.mode, theme: page.theme },
     buttons,
@@ -612,19 +613,19 @@ app.get('/api/public/:slug', (req, res) => {
   })
 })
 
-app.post('/api/public/:slug/click/:buttonId', clickLimiter, (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+app.post('/api/public/:slug/click/:buttonId', clickLimiter, async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
-  const btn = Buttons.byId(req.params.buttonId)
+  const btn = await Buttons.byId(req.params.buttonId)
   if (!btn || btn.pageId !== page.id) return res.status(404).json({ error: 'Bouton introuvable' })
-  Buttons.incClicks(btn.id)
-  Clicks.create(page.id, btn.id)
+  await Buttons.incClicks(btn.id)
+  await Clicks.create(page.id, btn.id)
   res.json({ ok: true, url: btn.url })
 })
 
 // Formulaire de contact (public). Stocke + notifie l'owner par e-mail si SMTP configuré.
 app.post('/api/public/:slug/contact', contactLimiter, async (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
   const name = clampStr(req.body.name, 80).trim()
   const email = clampStr(req.body.email, 160).trim()
@@ -632,17 +633,40 @@ app.post('/api/public/:slug/contact', contactLimiter, async (req, res) => {
   const subject = clampStr(req.body.subject, 80)
   if (!body) return res.status(400).json({ error: 'Message vide' })
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'E-mail invalide' })
-  const msg = Messages.create({ pageId: page.id, name, email, body, subject })
+  const msg = await Messages.create({ pageId: page.id, name, email, body, subject })
+  notifyOwner(page, msg) // fire-and-forget
+  res.json({ ok: true })
+})
+
+// Réservation de table (public, mini-formulaire). Stocke comme message + notifie l'owner.
+app.post('/api/public/:slug/reserve', contactLimiter, async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
+  if (!page) return res.status(404).json({ error: 'Page introuvable' })
+  const name = clampStr(req.body.name, 80).trim()
+  const phone = clampStr(req.body.phone, 40).trim()
+  const date = clampStr(req.body.date, 20).trim()
+  const time = clampStr(req.body.time, 10).trim()
+  const guests = clampStr(String(req.body.guests ?? ''), 6).trim()
+  const note = clampStr(req.body.note, 300).trim()
+  if (!name || !phone || !date) return res.status(400).json({ error: 'Champs requis manquants' })
+  const body = [
+    `📅 Date : ${date}${time ? ` à ${time}` : ''}`,
+    `👥 Couverts : ${guests || '—'}`,
+    `🙋 Nom : ${name}`,
+    `📞 Téléphone : ${phone}`,
+    note ? `📝 Note : ${note}` : null,
+  ].filter(Boolean).join('\n')
+  const msg = await Messages.create({ pageId: page.id, name, email: '', body, subject: 'Réservation de table' })
   notifyOwner(page, msg) // fire-and-forget
   res.json({ ok: true })
 })
 
 // Mur de supporters (public) : compteur + soutiens récents (prénom, message, réponse).
-app.get('/api/public/:slug/supporters', (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+app.get('/api/public/:slug/supporters', async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
-  const recent = Tips.recentPaid(page.id, 12).filter((t) => t.name || t.message)
-  res.json({ count: Tips.countPaid(page.id), supporters: recent })
+  const recent = (await Tips.recentPaid(page.id, 12)).filter((t) => t.name || t.message)
+  res.json({ count: await Tips.countPaid(page.id), supporters: recent })
 })
 
 // ================= TIPS / STRIPE =================
@@ -653,7 +677,7 @@ if (process.env.STRIPE_SECRET_KEY) {
 }
 
 app.post('/api/public/:slug/tip', tipLimiter, async (req, res) => {
-  const page = Pages.bySlug(req.params.slug)
+  const page = await Pages.bySlug(req.params.slug)
   if (!page) return res.status(404).json({ error: 'Page introuvable' })
   const amount = Math.max(1, Math.round(Number(req.body.amount) || 0))
   const message = (req.body.message || '').slice(0, 500)
@@ -661,11 +685,11 @@ app.post('/api/public/:slug/tip', tipLimiter, async (req, res) => {
 
   if (!stripe) {
     // Mode démo : simule un tip payé et renvoie vers la page de succès
-    Tips.create({ pageId: page.id, amount, message, supporterName, status: 'paid', stripeSessionId: `demo_${Date.now()}` })
+    await Tips.create({ pageId: page.id, amount, message, supporterName, status: 'paid', stripeSessionId: `demo_${Date.now()}` })
     return res.json({ url: `${APP_URL}/tip-success?slug=${page.slug}&demo=1` })
   }
 
-  const owner = Users.findById(page.userId)
+  const owner = await Users.findById(page.userId)
   const params = {
     mode: 'payment',
     line_items: [
@@ -691,11 +715,11 @@ app.post('/api/public/:slug/tip', tipLimiter, async (req, res) => {
     }
   }
   const session = await stripe.checkout.sessions.create(params)
-  Tips.create({ pageId: page.id, amount, message, supporterName, stripeSessionId: session.id, status: 'pending' })
+  await Tips.create({ pageId: page.id, amount, message, supporterName, stripeSessionId: session.id, status: 'pending' })
   res.json({ url: session.url })
 })
 
-function handleWebhook(req, res) {
+async function handleWebhook(req, res) {
   if (!stripe) return res.json({ received: true })
   let event = req.body
   const sig = req.headers['stripe-signature']
@@ -706,58 +730,121 @@ function handleWebhook(req, res) {
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`)
   }
-  if (event.type === 'checkout.session.completed') {
-    const s = event.data.object
-    if (s.metadata?.type === 'subscription') {
-      Users.setPlan(s.metadata.userId, s.metadata.plan, s.customer)
-    } else if (s.metadata?.type === 'product') {
-      const email = s.customer_details?.email || s.customer_email || ''
-      const pu = Purchases.markPaid(s.id, email)
-      if (pu) {
-        const prod = Products.byId(pu.productId)
-        if (prod) {
-          Products.incSales(prod.id)
-          deliverProduct(pu, prod)
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const s = event.data.object
+      if (s.metadata?.type === 'subscription') {
+        await Users.setPlan(s.metadata.userId, s.metadata.plan, s.customer)
+      } else if (s.metadata?.type === 'product') {
+        const email = s.customer_details?.email || s.customer_email || ''
+        const pu = await Purchases.markPaid(s.id, email)
+        if (pu) {
+          const prod = await Products.byId(pu.productId)
+          if (prod) {
+            await Products.incSales(prod.id)
+            deliverProduct(pu, prod)
+          }
         }
+      } else {
+        await Tips.markPaid(s.id)
       }
-    } else {
-      Tips.markPaid(s.id)
     }
-  }
-  // Abonnement modifié / annulé → recalcule le plan.
-  if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-    const sub = event.data.object
-    const u = Users.findByStripeCustomer(sub.customer)
-    if (u) {
-      let plan = 'free'
-      if (event.type !== 'customer.subscription.deleted' && sub.status === 'active') {
-        const priceId = sub.items?.data?.[0]?.price?.id
-        if (priceId && priceId === PRICE.pro) plan = 'pro'
-        else if (priceId && priceId === PRICE.creator) plan = 'creator'
+    // Abonnement modifié / annulé → recalcule le plan.
+    if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+      const sub = event.data.object
+      const u = await Users.findByStripeCustomer(sub.customer)
+      if (u) {
+        let plan = 'free'
+        if (event.type !== 'customer.subscription.deleted' && sub.status === 'active') {
+          const priceId = sub.items?.data?.[0]?.price?.id
+          if (priceId && priceId === PRICE.pro) plan = 'pro'
+          else if (priceId && priceId === PRICE.creator) plan = 'creator'
+        }
+        await Users.setPlan(u.id, plan)
       }
-      Users.setPlan(u.id, plan)
     }
-  }
-  // Compte Connect mis à jour → met à jour l'état des versements.
-  if (event.type === 'account.updated') {
-    const acct = event.data.object
-    Users.setPayouts(acct.id, !!acct.charges_enabled)
+    // Compte Connect mis à jour → met à jour l'état des versements.
+    if (event.type === 'account.updated') {
+      const acct = event.data.object
+      await Users.setPayouts(acct.id, !!acct.charges_enabled)
+    }
+  } catch (e) {
+    console.error('  Webhook handler error:', e.message)
+    return res.status(500).json({ error: 'handler' })
   }
   res.json({ received: true })
 }
 
 // ================= STATIC (production) =================
 const dist = path.join(__dirname, '..', 'dist')
+
+// Échappe le HTML pour injecter du contenu utilisateur dans les balises meta.
+const escapeHtml = (s) =>
+  String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+// Routes de l'app (SPA) à NE PAS traiter comme des slugs de page publique.
+const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'stats', 'buy-success', 'tip-success', 'api', 'assets'])
+
+// Injecte des balises meta (OG/Twitter/title) spécifiques au profil → aperçus de partage corrects.
+function renderPublicMeta(template, page) {
+  const title = `${page.title || page.slug} · BioBoost`
+  const desc = page.headline || page.bio || `La page de ${page.title || page.slug} sur BioBoost.`
+  let image = page.avatarUrl || page.theme?.bgImage || '/og-image.svg'
+  if (image.startsWith('/')) image = `${APP_URL}${image}`
+  const url = `${APP_URL}/${page.slug}`
+
+  let html = template
+  html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
+  const set = (attr, key, val) => {
+    const re = new RegExp(`(<meta ${attr}="${key}" content=")[^"]*(")`)
+    html = re.test(html) ? html.replace(re, `$1${escapeHtml(val)}$2`) : html
+  }
+  set('name', 'description', desc)
+  set('property', 'og:type', 'profile')
+  set('property', 'og:title', title)
+  set('property', 'og:description', desc)
+  set('property', 'og:image', image)
+  set('name', 'twitter:title', title)
+  set('name', 'twitter:description', desc)
+  set('name', 'twitter:image', image)
+  // og:url absent du template → on l'ajoute avant </head>
+  html = html.replace('</head>', `    <meta property="og:url" content="${escapeHtml(url)}" />\n  </head>`)
+  return html
+}
+
 if (fs.existsSync(dist)) {
   app.use(express.static(dist))
+
+  // Pages publiques : on sert index.html enrichi des meta du profil (aperçus sociaux).
+  let indexTemplate = ''
+  try { indexTemplate = fs.readFileSync(path.join(dist, 'index.html'), 'utf8') } catch { /* build absent */ }
+  app.get('/:slug', async (req, res, next) => {
+    try {
+      const { slug } = req.params
+      if (!indexTemplate || RESERVED_SLUGS.has(slug) || slug.includes('.')) return next()
+      const page = await Pages.bySlug(slug)
+      if (!page) return next()
+      res.set('Content-Type', 'text/html; charset=utf-8').send(renderPublicMeta(indexTemplate, page))
+    } catch (e) { next(e) }
+  })
+
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' })
     res.sendFile(path.join(dist, 'index.html'))
   })
 }
 
+// Gestionnaire d'erreurs global : toute erreur async non rattrapée → 500 JSON propre.
+app.use((err, req, res, next) => {
+  console.error('  Erreur serveur:', err?.message || err)
+  if (res.headersSent) return next(err)
+  res.status(500).json({ error: 'Erreur serveur' })
+})
+
 app.listen(PORT, () => {
   console.log(`\n  BioBoost API → http://localhost:${PORT}`)
+  console.log(`  Base données : ${process.env.DATABASE_URL ? 'PostgreSQL (Supabase) ✓' : 'SQLite (dev local)'}`)
+  console.log(`  Stockage     : ${storageMode === 'supabase' ? 'Supabase Storage ✓' : 'disque local (dev)'}`)
   console.log(`  Google OAuth : ${googleConfigured ? 'configuré ✓' : 'mode démo (dev-login)'}`)
   console.log(`  Stripe       : ${stripe ? 'configuré ✓' : 'mode démo (paiement simulé)'}\n`)
 })

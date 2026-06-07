@@ -49,6 +49,19 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ---------- POSITIONNEMENT ---------- */}
+      <section className="border-t-2 border-ink bg-cream py-12">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <h2 className="font-display text-4xl">{t('pos.title')}</h2>
+          <p className="mx-auto mt-4 max-w-xl text-lg font-medium text-ink/70">{t('pos.body')}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+            {['pos.a1', 'pos.a2', 'pos.a3', 'pos.a4'].map((k) => (
+              <span key={k} className="rounded-full border-2 border-ink bg-white px-4 py-2 font-display text-sm font-extrabold shadow-hard-sm">{t(k)}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- SOCIAL PROOF (stats) ---------- */}
       <section className="border-y-2 border-ink bg-ink py-7 text-cream">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-4 md:grid-cols-4">

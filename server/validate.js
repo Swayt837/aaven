@@ -45,6 +45,43 @@ export function clampStr(s, max) {
   return String(s).slice(0, max)
 }
 
+// Config spécifique par type de bouton (stockée en JSON).
+export function sanitizeButtonConfig(type, config) {
+  if (!config || typeof config !== 'object') return null
+  if (type === 'services') {
+    const items = (Array.isArray(config.items) ? config.items : [])
+      .slice(0, 30)
+      .map((it) => ({
+        name: clampStr(it && it.name, 80),
+        price: clampStr(it && it.price, 24),
+        desc: clampStr(it && it.desc, 160),
+        ctaUrl: sanitizeUrl(it && it.ctaUrl),
+        ctaLabel: clampStr(it && it.ctaLabel, 40),
+      }))
+      .filter((it) => it.name || it.price)
+    return items.length ? { items } : null
+  }
+  if (type === 'reserve') {
+    const mode = ['link', 'phone', 'form'].includes(config.mode) ? config.mode : 'link'
+    const phone = clampStr(config.phone, 40)
+    return { mode, phone }
+  }
+  if (type === 'quote') {
+    const mode = ['whatsapp', 'email', 'form'].includes(config.mode) ? config.mode : 'form'
+    const phone = clampStr(config.phone, 40)
+    const email = clampStr(config.email, 160)
+    return { mode, phone, email }
+  }
+  if (type === 'link') {
+    const links = (Array.isArray(config.links) ? config.links : [])
+      .slice(0, 30)
+      .map((l) => ({ url: sanitizeUrl(l && l.url), label: clampStr(l && l.label, 60) }))
+      .filter((l) => l.url)
+    return links.length ? { links } : null
+  }
+  return null // autres types : config ajoutée dans les prochaines features
+}
+
 // ---------- Thème de page ----------
 const LAYOUTS = ['cover', 'magazine', 'fullbleed', 'frame', 'spotlight']
 const BG_TYPES = ['solid', 'gradient', 'image']

@@ -1,0 +1,42 @@
+# Blueprint Render — déploiement BioBoost (serveur Node persistant).
+# Render lit ce fichier si tu crées le service via "New + → Blueprint".
+# Sinon, tu peux configurer les mêmes valeurs à la main dans le dashboard.
+services:
+  - type: web
+    name: bioboost
+    runtime: node
+    plan: free # passe en "starter" (~7$/mois) pour éviter la mise en veille (cold start ~30s)
+    region: frankfurt # proche de l'UE / de ta base Supabase eu-west
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/me
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true # Render génère un secret fort automatiquement
+      - key: DATABASE_URL
+        sync: false # à coller dans le dashboard (chaîne Supabase, %3F pour le ?)
+      - key: APP_URL
+        sync: false # ex: https://bioboost.onrender.com (ou ton domaine)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: upload
+      - key: SUPABASE_PRIVATE_BUCKET
+        value: product-files
+      # --- À ajouter plus tard (login Google, paiements, e-mails) ---
+      # - key: GOOGLE_CLIENT_ID
+      #   sync: false
+      # - key: GOOGLE_CLIENT_SECRET
+      #   sync: false
+      # - key: STRIPE_SECRET_KEY
+      #   sync: false
+      # - key: STRIPE_WEBHOOK_SECRET
+      #   sync: false
+      # - key: STRIPE_PRICE_CREATOR
+      #   sync: false
+      # - key: STRIPE_PRICE_PRO
+      #   sync: false

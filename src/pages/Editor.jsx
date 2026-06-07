@@ -7,7 +7,10 @@ import { PhoneFrame, BioImmersive } from '../components/PhoneMockup'
 import { ThemeEditor } from '../components/ThemeEditor'
 import { ImageFramer } from '../components/ImageFramer'
 import { ProductsEditor } from '../components/ProductsEditor'
+import { ServicesItemsEditor } from '../components/ServicesItemsEditor'
+import { LinksEditor } from '../components/LinksEditor'
 import { QRModal } from '../components/QRModal'
+import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
@@ -179,6 +182,7 @@ export default function Editor() {
           label: b.label,
           icon: b.icon,
           url: b.url,
+          config: b.config,
           isActive: b.isActive,
           featured: b.featured,
           position: i,
@@ -216,6 +220,12 @@ export default function Editor() {
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-2">
         {/* Colonne formulaire */}
         <div className="space-y-6">
+          {/* LIEN PUBLIC */}
+          <Card className="p-5">
+            <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('share.yourLink')}</h2>
+            <ShareLink url={publicUrl} className="mt-3" />
+          </Card>
+
           {/* IDENTITÉ */}
           <Card className="p-5">
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('edit.identity')}</h2>
@@ -309,7 +319,7 @@ export default function Editor() {
                     </button>
                     <button onClick={() => removeBtn(b.id)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
                   </div>
-                  {b.type !== 'tip' && BUTTON_TYPES[b.type]?.action !== 'contact' && (
+                  {b.type !== 'tip' && b.type !== 'link' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
                     <div className="mt-2 flex gap-2">
                       <input
                         value={b.url || ''}
@@ -320,6 +330,86 @@ export default function Editor() {
                       <button type="button" onClick={() => pickBtnFile(b.id)} title={t('edit.uploadFile')} className="press grid shrink-0 place-items-center rounded-lg border-2 border-ink bg-white px-2.5">
                         <Upload size={15} />
                       </button>
+                    </div>
+                  )}
+                  {BUTTON_TYPES[b.type]?.action === 'services' && (
+                    <ServicesItemsEditor
+                      items={b.config?.items}
+                      onChange={(items) => updateBtn(b.id, { config: { ...(b.config || {}), items } })}
+                    />
+                  )}
+                  {b.type === 'link' && (
+                    <LinksEditor
+                      items={b.config?.links?.length ? b.config.links : (b.url ? [{ url: b.url, label: '' }] : [])}
+                      onChange={(links) => updateBtn(b.id, { config: { ...(b.config || {}), links } })}
+                    />
+                  )}
+                  {b.type === 'reserve' && (
+                    <div className="mt-2">
+                      <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.reserve.mode')}</p>
+                      <div className="flex gap-1.5">
+                        {['link', 'phone', 'form'].map((m) => {
+                          const cur = b.config?.mode || 'link'
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
+                              className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${cur === m ? 'bg-ink text-white' : 'bg-white'}`}
+                            >
+                              {t('edit.reserve.' + m)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {(b.config?.mode || 'link') === 'phone' && (
+                        <input
+                          value={b.config?.phone || ''}
+                          onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), phone: e.target.value } })}
+                          placeholder="+33 6 12 34 56 78"
+                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                        />
+                      )}
+                      {(b.config?.mode || 'link') === 'form' && (
+                        <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.reserve.formHint')}</p>
+                      )}
+                    </div>
+                  )}
+                  {b.type === 'quote' && (
+                    <div className="mt-2">
+                      <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.quote.mode')}</p>
+                      <div className="flex gap-1.5">
+                        {['whatsapp', 'email', 'form'].map((m) => {
+                          const cur = b.config?.mode || 'form'
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
+                              className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${cur === m ? 'bg-ink text-white' : 'bg-white'}`}
+                            >
+                              {t('edit.quote.' + m)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {(b.config?.mode || 'form') === 'whatsapp' && (
+                        <input
+                          value={b.config?.phone || ''}
+                          onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), phone: e.target.value } })}
+                          placeholder="+33 6 12 34 56 78"
+                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                        />
+                      )}
+                      {(b.config?.mode || 'form') === 'email' && (
+                        <input
+                          value={b.config?.email || ''}
+                          onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), email: e.target.value } })}
+                          placeholder="contact@exemple.com"
+                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                        />
+                      )}
+                      <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.quote.hint')}</p>
                     </div>
                   )}
                   {b.type === 'tip' && (

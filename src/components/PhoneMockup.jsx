@@ -1,6 +1,6 @@
 import { ArrowRight, Heart } from 'lucide-react'
 import { Icon } from './Icon'
-import { modeOf, BUTTON_TYPES } from '../lib/modes'
+import { modeOf, BUTTON_TYPES, faviconUrl } from '../lib/modes'
 import { useI18n } from '../lib/i18n'
 import { getTheme, backgroundStyle, isLight, textColor } from '../lib/themes'
 import { STYLES, surfaceTokens, buttonTokens, iconBoxTokens, fontCss, readableOn, frameScale } from '../lib/templates'
@@ -352,7 +352,7 @@ function ProductsSection({ products, txt, accent, headFont, light, t, onBuy }) {
 }
 
 // Rendu d'une page bio (en-tête + supporters + boutons + produits). Themable + skinnable.
-export function BioRender({ page, buttons, onButtonClick, onTip, onContact, supporters, products, onBuy, branding = true, immersive = false }) {
+export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, immersive = false }) {
   const { t } = useI18n()
   const theme = getTheme(page)
   const mode = modeOf(page.mode)
@@ -389,9 +389,36 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, supp
           const act = BUTTON_TYPES[b.type]?.action
           const handle = () => {
             if (act === 'tip' && onTip) return onTip(b)
+            if (b.type === 'quote') {
+              const m = b.config?.mode || 'form'
+              const tpl = 'Projet : \nBudget : \nDélai : '
+              if (m === 'whatsapp' && b.config?.phone) {
+                const num = b.config.phone.replace(/\D/g, '')
+                return onButtonClick && onButtonClick({ ...b, url: `https://wa.me/${num}?text=${encodeURIComponent(tpl)}` })
+              }
+              if (m === 'email' && b.config?.email) {
+                return onButtonClick && onButtonClick({ ...b, url: `mailto:${b.config.email}?subject=${encodeURIComponent('Devis express')}&body=${encodeURIComponent(tpl)}` })
+              }
+              if (onQuote) return onQuote(b)
+            }
             if (act === 'contact' && onContact) return onContact(b)
+            if (act === 'services' && b.config?.items?.length && onServices) return onServices(b)
+            if (b.type === 'reserve') {
+              const m = b.config?.mode || 'link'
+              if (m === 'form' && onReserve) return onReserve(b)
+              if (m === 'phone' && b.config?.phone) return onButtonClick && onButtonClick({ ...b, url: `tel:${b.config.phone}` })
+            }
+            if (b.type === 'link') {
+              const links = (b.config?.links || []).filter((l) => l && l.url)
+              if (links.length > 1 && onLinks) return onLinks(b)
+              if (links.length === 1) return onButtonClick && onButtonClick({ ...b, url: links[0].url })
+            }
             if (onButtonClick) return onButtonClick(b)
           }
+          // Lien personnalisé : favicon du site affiché si un seul lien (sinon icône générique).
+          const linkList = b.type === 'link' ? (b.config?.links || []).filter((l) => l && l.url) : []
+          const oneLink = b.type === 'link' && (linkList.length === 1 ? linkList[0].url : linkList.length === 0 && b.url ? b.url : null)
+          const favicon = oneLink ? faviconUrl(oneLink) : null
           const bt = buttonTokens(btn, light, accent, isPrimary, radius)
           const ib = iconBoxTokens(btn, light, isPrimary)
           const btnEl = (
@@ -400,8 +427,12 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, supp
               className={`${hoverClass} flex w-full items-center gap-3 text-left font-extrabold ${isPrimary ? 'px-5 py-5 text-lg' : 'px-5 py-4'}`}
               style={{ ...bt, fontFamily: headFont }}
             >
-              <span className={`flex shrink-0 items-center justify-center rounded-lg ${isPrimary ? 'h-9 w-9' : 'h-8 w-8'}`} style={ib}>
-                <Icon name={b.icon} size={isPrimary ? 20 : 18} />
+              <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg ${isPrimary ? 'h-9 w-9' : 'h-8 w-8'}`} style={ib}>
+                {favicon ? (
+                  <img src={favicon} alt="" width={isPrimary ? 20 : 18} height={isPrimary ? 20 : 18} className="rounded" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                ) : (
+                  <Icon name={b.icon} size={isPrimary ? 20 : 18} />
+                )}
               </span>
               <span className="flex-1 leading-tight">{b.label}</span>
               {isPrimary && <ArrowRight size={18} strokeWidth={3} className="shrink-0" />}
@@ -488,9 +519,15 @@ export function BioSurface({ page, buttons, onButtonClick, onTip, onContact, sup
 
 // Scène immersive plein écran (cinématique, sans carte) : fond + overlays + contenu flottant.
 // Se place dans un parent `relative` qui a une hauteur (viewport ou écran du mockup).
-export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, supporters, products, onBuy, branding = true, kenBurns = true }) {
+export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true }) {
   const theme = getTheme(page)
   const accent = theme.accent || modeOf(page.mode).accent
+  // Base affichée DERRIÈRE la vidéo pendant son chargement : dégradé si fond dégradé,
+  // sinon une base sombre neutre — JAMAIS l'ancienne image (pas de poster qui flashe).
+  const videoBase = theme.bgType === 'gradient' ? backgroundStyle(theme) : { background: '#0b0b10' }
+  // Vidéo importée par l'utilisateur = cadrage manuel (frameScale). Vidéo de template
+  // premium = pas de sur-zoom (scale = zoom choisi, défaut 1) → moins zoomé sur desktop.
+  const videoScale = theme.bgVideoOwn ? frameScale(theme.bgZoom ?? 1) : (theme.bgZoom ?? 1)
   return (
     <div className="absolute inset-0 overflow-hidden">
       {/* Fond plein écran (par priorité) :
@@ -498,27 +535,32 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, s
           2) vidéo de fond en boucle
           3) image (léger zoom cinématique) */}
       {theme.introVideo ? (
-        <video
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          poster={theme.bgImage || undefined}
-          src={theme.introVideo}
-        />
+        <>
+          <div className="absolute inset-0" style={videoBase} aria-hidden />
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            src={theme.introVideo}
+            style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${frameScale(theme.bgZoom ?? 1)})` }}
+          />
+        </>
       ) : theme.bgVideo ? (
-        <video
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster={theme.bgImage || undefined}
-          src={theme.bgVideo}
-          style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${frameScale(theme.bgZoom ?? 1)})` }}
-        />
+        <>
+          <div className="absolute inset-0" style={videoBase} aria-hidden />
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            src={theme.bgVideo}
+            style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${videoScale})` }}
+          />
+        </>
       ) : theme.bgType === 'image' && theme.bgImage ? (
         <FramedImage src={theme.bgImage} posX={theme.bgPosX ?? 50} posY={theme.bgPosY ?? 50} zoom={theme.bgZoom ?? 1} className="absolute inset-0" />
       ) : (
@@ -535,7 +577,7 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, s
       {/* Contenu flottant, défilable — position selon la disposition */}
       <div className="absolute inset-0 overflow-y-auto">
         <div className={`mx-auto flex min-h-full max-w-md flex-col px-6 py-16 ${['cover', 'magazine', 'fullbleed'].includes(theme.layout) ? 'justify-end' : 'justify-center'}`}>
-          <BioRender immersive page={page} buttons={buttons} onButtonClick={onButtonClick} onTip={onTip} onContact={onContact} supporters={supporters} products={products} onBuy={onBuy} branding={branding} />
+          <BioRender immersive page={page} buttons={buttons} onButtonClick={onButtonClick} onTip={onTip} onContact={onContact} onServices={onServices} onReserve={onReserve} onQuote={onQuote} onLinks={onLinks} supporters={supporters} products={products} onBuy={onBuy} branding={branding} />
         </div>
       </div>
     </div>

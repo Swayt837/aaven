@@ -41,7 +41,7 @@ export const BUTTON_TYPES = {
   bookcall: { icon: 'CalendarClock', label: { fr: 'Réserver un call', en: 'Book a call' }, urlPh: 'https://calendly.com/...' },
   reserve: { icon: 'CalendarCheck', label: { fr: 'Réserver une table', en: 'Book a table' }, urlPh: 'https://...' },
   quote: { icon: 'FileText', label: { fr: 'Devis express', en: 'Quick quote' }, action: 'contact', urlPh: '' },
-  services: { icon: 'Briefcase', label: { fr: 'Services & tarifs', en: 'Services & pricing' }, urlPh: 'https://...' },
+  services: { icon: 'Briefcase', label: { fr: 'Services & tarifs', en: 'Services & pricing' }, action: 'services', urlPh: 'https://...' },
   contact: { icon: 'Mail', label: { fr: 'Me contacter', en: 'Contact me' }, action: 'contact', urlPh: '' },
   link: { icon: 'Link', label: { fr: 'Lien personnalisé', en: 'Custom link' }, urlPh: 'https://...' },
 }
@@ -74,4 +74,15 @@ export const PRESETS = {
 
 export function modeOf(mode) {
   return MODES[mode] || MODES.creator
+}
+
+// Favicon (petit logo) d'un lien, via le service Google. Renvoie null si URL invalide.
+export function faviconUrl(u) {
+  try {
+    const host = new URL(/^https?:\/\//.test(u) ? u : `https://${u}`).hostname
+    if (!host) return null
+    return `https://www.google.com/s/favicons?sz=64&domain=${host}`
+  } catch {
+    return null
+  }
 }

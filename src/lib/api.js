@@ -107,6 +107,7 @@ export const api = {
   publicPage: (slug) => req('GET', `/public/${slug}`),
   trackClick: (slug, buttonId) => req('POST', `/public/${slug}/click/${buttonId}`),
   sendMessage: (slug, b) => req('POST', `/public/${slug}/contact`, b),
+  reserve: (slug, b) => req('POST', `/public/${slug}/reserve`, b),
   supporters: (slug) => req('GET', `/public/${slug}/supporters`),
   publicProducts: (slug) => req('GET', `/public/${slug}/products`),
   buyProduct: (slug, id) => req('POST', `/public/${slug}/products/${id}/buy`, {}),

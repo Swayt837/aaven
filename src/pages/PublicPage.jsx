@@ -4,6 +4,10 @@ import { Volume2, VolumeX } from 'lucide-react'
 import { BioImmersive } from '../components/PhoneMockup'
 import { TipModal } from '../components/TipModal'
 import { ContactModal } from '../components/ContactModal'
+import { ServicesModal } from '../components/ServicesModal'
+import { ReservationModal } from '../components/ReservationModal'
+import { QuoteModal } from '../components/QuoteModal'
+import { LinksModal } from '../components/LinksModal'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { getTheme } from '../lib/themes'
@@ -15,6 +19,10 @@ export default function PublicPage() {
   const [data, setData] = useState(undefined) // undefined=loading, null=404
   const [tip, setTip] = useState(false)
   const [contact, setContact] = useState(null) // bouton ayant déclenché le formulaire
+  const [services, setServices] = useState(null) // bouton services ouvert
+  const [reserve, setReserve] = useState(null) // bouton réservation (formulaire) ouvert
+  const [quote, setQuote] = useState(null) // bouton devis express (formulaire) ouvert
+  const [links, setLinks] = useState(null) // bouton multi-liens ouvert
   const [supporters, setSupporters] = useState(null)
   const [products, setProducts] = useState([])
   const [soundOn, setSoundOn] = useState(false)
@@ -76,9 +84,17 @@ export default function PublicPage() {
         onButtonClick={handleClick}
         onTip={(b) => { api.trackClick(slug, b.id).catch(() => {}); setTip(true) }}
         onContact={(b) => { api.trackClick(slug, b.id).catch(() => {}); setContact(b) }}
+        onServices={(b) => { api.trackClick(slug, b.id).catch(() => {}); setServices(b) }}
+        onReserve={(b) => { api.trackClick(slug, b.id).catch(() => {}); setReserve(b) }}
+        onQuote={(b) => { api.trackClick(slug, b.id).catch(() => {}); setQuote(b) }}
+        onLinks={(b) => { api.trackClick(slug, b.id).catch(() => {}); setLinks(b) }}
       />
       {tip && <TipModal slug={slug} amounts={theme.tipAmounts} onClose={() => setTip(false)} />}
       {contact && <ContactModal slug={slug} subject={contact.label} onClose={() => setContact(null)} />}
+      {services && <ServicesModal title={services.label} items={services.config?.items} accent={theme.accent} onClose={() => setServices(null)} />}
+      {reserve && <ReservationModal slug={slug} title={reserve.label} accent={theme.accent} onClose={() => setReserve(null)} />}
+      {quote && <QuoteModal slug={slug} title={quote.label} accent={theme.accent} onClose={() => setQuote(null)} />}
+      {links && <LinksModal title={links.label} links={links.config?.links} accent={theme.accent} onClose={() => setLinks(null)} />}
 
       {/* Son d'ambiance (premium, opt-in) */}
       {theme.ambientAudio && (
