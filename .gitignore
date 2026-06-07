@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+server/data.json
+server/data.json.*.bak
+server/bioboost.db
+server/bioboost.db-shm
+server/bioboost.db-wal
+server/uploads
+server/product-files
+*.log
+.DS_Store

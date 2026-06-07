@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="'Bricolage Grotesque', 'Arial Black', sans-serif">
+  <rect width="1200" height="630" fill="#FAF6EE"/>
+  <!-- logo badge -->
+  <g transform="translate(80,70)">
+    <rect x="0" y="0" width="92" height="92" rx="20" fill="#F7C948" stroke="#111" stroke-width="5"/>
+    <text x="46" y="62" font-size="40" font-weight="900" text-anchor="middle" fill="#111">Bio</text>
+    <text x="112" y="62" font-size="44" font-weight="900" fill="#111">Boost</text>
+  </g>
+  <!-- title -->
+  <text x="80" y="290" font-size="84" font-weight="900" fill="#111">Une page bio qui te</text>
+  <g>
+    <rect x="76" y="322" width="430" height="100" rx="14" fill="#EF5A4C" transform="rotate(-1.5 291 372)"/>
+    <text x="100" y="392" font-size="84" font-weight="900" fill="#fff" transform="rotate(-1.5 291 372)">rapporte.</text>
+  </g>
+  <!-- subtitle -->
+  <text x="80" y="500" font-size="34" font-weight="700" fill="#111" opacity="0.7">L'alternative à Linktree qui convertit · Tips · QR code · Analytics</text>
+  <!-- badges -->
+  <g transform="translate(80,540)">
+    <rect x="0" y="0" width="190" height="54" rx="27" fill="#FCE7EF" stroke="#111" stroke-width="4"/>
+    <text x="95" y="36" font-size="24" font-weight="800" text-anchor="middle" fill="#111">🎥 Créateur</text>
+    <rect x="210" y="0" width="170" height="54" rx="27" fill="#EFEDE6" stroke="#111" stroke-width="4"/>
+    <text x="295" y="36" font-size="24" font-weight="800" text-anchor="middle" fill="#111">🍸 Bar</text>
+    <rect x="400" y="0" width="220" height="54" rx="27" fill="#E8EDFC" stroke="#111" stroke-width="4"/>
+    <text x="510" y="36" font-size="24" font-weight="800" text-anchor="middle" fill="#111">💼 Freelance</text>
+  </g>
+  <!-- phone mockup right -->
+  <g transform="translate(820,120)">
+    <rect x="0" y="0" width="300" height="430" rx="34" fill="#FCE7EF" stroke="#111" stroke-width="6"/>
+    <circle cx="150" cy="80" r="40" fill="#fff" stroke="#111" stroke-width="5"/>
+    <text x="150" y="95" font-size="40" text-anchor="middle">🎬</text>
+    <rect x="40" y="150" width="220" height="56" rx="14" fill="#F0426B" stroke="#111" stroke-width="5"/>
+    <text x="150" y="186" font-size="24" font-weight="800" text-anchor="middle" fill="#fff">Me soutenir</text>
+    <rect x="40" y="220" width="220" height="56" rx="14" fill="#fff" stroke="#111" stroke-width="5"/>
+    <text x="150" y="256" font-size="24" font-weight="800" text-anchor="middle" fill="#111">Ma chaîne</text>
+    <rect x="40" y="290" width="220" height="56" rx="14" fill="#fff" stroke="#111" stroke-width="5"/>
+    <text x="150" y="326" font-size="24" font-weight="800" text-anchor="middle" fill="#111">Mes produits</text>
+  </g>
+</svg>

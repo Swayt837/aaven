@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Décale l'ancre sous le header sticky */
+:where([id]) {
+  scroll-margin-top: 72px;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+/* Respecte la préférence "réduire les animations" */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: #faf6ee;
+  color: #111111;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Titres : grotesque très gras */
+.font-display {
+  font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+@layer components {
+  /* ---- Effet "press" néo-brutaliste ---- */
+  .press {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .press:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 3px 4px 0 0 #111111;
+  }
+  .press:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 2px 0 0 #111111;
+  }
+
+  /* Hover doux pour boutons des styles non-brutalistes (clean/minimal/premium) */
+  .bb-hover {
+    transition: transform 140ms ease, filter 140ms ease, box-shadow 140ms ease;
+  }
+  .bb-hover:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+  }
+  .bb-hover:active {
+    transform: translateY(0);
+  }
+
+  /* Remerciement : pop + confettis emoji */
+  .bb-pop {
+    animation: bb-pop-in 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes bb-pop-in {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .bb-confetti {
+    position: absolute;
+    top: -48px;
+    will-change: transform;
+    animation: bb-confetti-fall linear forwards;
+  }
+  @keyframes bb-confetti-fall {
+    to { transform: translateY(112vh) rotate(540deg); }
+  }
+
+  /* ---- Page immersive (cinématique) ---- */
+  .bb-vignette {
+    background: radial-gradient(120% 85% at 50% 38%, transparent 42%, rgba(0, 0, 0, 0.55) 100%);
+  }
+  .bb-textsh {
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+  .bb-stage-img {
+    animation: bb-kenburns 28s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  @keyframes bb-kenburns {
+    from { transform: scale(1.06); }
+    to { transform: scale(1.16) translateY(-1.5%); }
+  }
+  .bb-float {
+    animation: bb-floaty 7s ease-in-out infinite;
+    will-change: transform;
+  }
+  @keyframes bb-floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+
+  /* ---- Ambiances premium (vivantes) ---- */
+  .bb-amb { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
+  /* Pulsations lumineuses (concert) */
+  .bb-pulse {
+    position: absolute; inset: -25%;
+    mix-blend-mode: screen; opacity: 0.3;
+    animation: bb-pulse-a 4s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+  .bb-pulse-2 { animation-duration: 5.5s; animation-delay: 0.9s; }
+  @keyframes bb-pulse-a {
+    0%, 100% { transform: scale(1); opacity: 0.16; }
+    50% { transform: scale(1.3); opacity: 0.42; }
+  }
+  /* Lumière qui balaie (bar) */
+  .bb-shimmer {
+    position: absolute; top: -10%; bottom: -10%; left: -60%; width: 55%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.28), transparent);
+    mix-blend-mode: screen;
+    animation: bb-shimmer-a 5s linear infinite;
+    will-change: transform;
+  }
+  @keyframes bb-shimmer-a { to { transform: translateX(330%); } }
+  /* Dégradé qui respire */
+  .bb-breathe {
+    position: absolute; inset: 0; mix-blend-mode: screen;
+    animation: bb-breathe-a 6.5s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+  @keyframes bb-breathe-a {
+    0%, 100% { opacity: 0.22; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.12); }
+  }
+
+  /* Entrée premium de la carte (page publique) */
+  .bb-rise {
+    animation: bb-rise-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes bb-rise-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Boutons "bulles" qui flottent légèrement (style bubble) */
+  .bb-bubble {
+    animation: bb-float 3.6s ease-in-out infinite;
+    will-change: transform;
+  }
+  @keyframes bb-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  /* Apparition douce (rotation du mockup hero) */
+  .bb-fade {
+    animation: bb-fade-in 420ms ease both;
+  }
+  @keyframes bb-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Mot surligné dans un bloc de couleur (effet signature) */
+  .highlight {
+    display: inline-block;
+    background: #ef5a4c;
+    color: #fff;
+    padding: 0 0.2em;
+    border-radius: 8px;
+    transform: rotate(-1.5deg);
+  }
+}
+
+/* Accessibilité : focus visible partout */
+*:focus-visible {
+  outline: 3px solid #111111;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar discrète */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #111;
+  border-radius: 999px;
+}
