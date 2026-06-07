@@ -56,6 +56,8 @@ export default function Editor() {
   const [avatarBusy, setAvatarBusy] = useState(false)
   const dragIndex = useRef(null)
   const avatarRef = useRef(null)
+  const btnFileRef = useRef(null)
+  const pendingBtn = useRef(null)
 
   function loadProducts() {
     api.products(routeSlug).then((r) => setProducts(r.products || [])).catch(() => {})
@@ -88,6 +90,25 @@ export default function Editor() {
     const arr = [...(getTheme(page).tipAmounts || [3, 5, 10, 20])]
     arr[idx] = Math.max(1, Math.round(Number(val) || 0))
     setTheme({ tipAmounts: arr })
+  }
+
+  function pickBtnFile(id) {
+    pendingBtn.current = id
+    btnFileRef.current?.click()
+  }
+  async function onBtnFile(e) {
+    const file = e.target.files?.[0]
+    const id = pendingBtn.current
+    if (!file || !id) return
+    try {
+      const { url } = await api.uploadMedia(routeSlug, file)
+      updateBtn(id, { url })
+    } catch (ex) {
+      alert(ex.message)
+    } finally {
+      pendingBtn.current = null
+      if (btnFileRef.current) btnFileRef.current.value = ''
+    }
   }
 
   async function onAvatarFile(e) {
@@ -288,13 +309,18 @@ export default function Editor() {
                     </button>
                     <button onClick={() => removeBtn(b.id)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
                   </div>
-                  {b.type !== 'tip' && (
-                    <input
-                      value={b.url || ''}
-                      onChange={(e) => updateBtn(b.id, { url: e.target.value })}
-                      placeholder={BUTTON_TYPES[b.type]?.urlPh || t('edit.url')}
-                      className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
-                    />
+                  {b.type !== 'tip' && BUTTON_TYPES[b.type]?.action !== 'contact' && (
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={b.url || ''}
+                        onChange={(e) => updateBtn(b.id, { url: e.target.value })}
+                        placeholder={BUTTON_TYPES[b.type]?.urlPh || t('edit.url')}
+                        className="min-w-0 flex-1 rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                      />
+                      <button type="button" onClick={() => pickBtnFile(b.id)} title={t('edit.uploadFile')} className="press grid shrink-0 place-items-center rounded-lg border-2 border-ink bg-white px-2.5">
+                        <Upload size={15} />
+                      </button>
+                    </div>
                   )}
                   {b.type === 'tip' && (
                     <div className="mt-2">
@@ -345,6 +371,7 @@ export default function Editor() {
                 </Card>
               )}
             </div>
+            <input ref={btnFileRef} type="file" accept="application/pdf,image/*" onChange={onBtnFile} className="hidden" />
           </Card>
 
           {/* PRODUITS DIGITAUX */}

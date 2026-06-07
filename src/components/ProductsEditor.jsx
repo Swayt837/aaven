@@ -15,7 +15,24 @@ export function ProductsEditor({ slug, products, onReload }) {
   const [coverImage, setCoverImage] = useState('')
   const [file, setFile] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [coverBusy, setCoverBusy] = useState(false)
   const [err, setErr] = useState('')
+  const coverRef = useRef(null)
+
+  async function onCoverFile(e) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setCoverBusy(true)
+    try {
+      const { url } = await api.uploadImage(slug, f)
+      setCoverImage(url)
+    } catch (ex) {
+      setErr(ex.message)
+    } finally {
+      setCoverBusy(false)
+      if (coverRef.current) coverRef.current.value = ''
+    }
+  }
 
   async function add() {
     setErr('')
@@ -84,7 +101,17 @@ export function ProductsEditor({ slug, products, onReload }) {
               <div className="w-24"><Label>{t('edit.prodPrice')}</Label><Input type="number" min="1" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
             </div>
             <div><Label>{t('edit.prodDesc')}</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-            <div><Label>{t('edit.prodCover')}</Label><Input value={coverImage} onChange={(e) => setCoverImage(e.target.value)} placeholder="https://…" /></div>
+            <div>
+              <Label>{t('edit.prodCover')}</Label>
+              <div className="flex gap-2">
+                <Input value={coverImage} onChange={(e) => setCoverImage(e.target.value)} placeholder="https://…" />
+                <button type="button" onClick={() => coverRef.current?.click()} disabled={coverBusy} title={t('edit.uploadCover')} className="press grid shrink-0 place-items-center rounded-brutal border-2 border-ink bg-white px-3 shadow-hard-sm disabled:opacity-50">
+                  <Upload size={16} />
+                </button>
+                <input ref={coverRef} type="file" accept="image/*" onChange={onCoverFile} className="hidden" />
+              </div>
+              {coverImage ? <img src={coverImage} alt="" className="mt-2 h-14 w-14 rounded-lg border-2 border-ink object-cover" /> : null}
+            </div>
             <div>
               <Label>{t('edit.prodFile')}</Label>
               <button type="button" onClick={() => fileRef.current?.click()} className="press flex w-full items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 text-sm font-extrabold shadow-hard-sm">

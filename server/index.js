@@ -79,7 +79,7 @@ function productUploadSingle(req, res, next) {
 }
 
 // ---------- Médias d'ambiance (vidéo/audio/image) — servis en statique ----------
-const ALLOWED_MEDIA = /^(image|video|audio)\//
+const ALLOWED_MEDIA = /^(image|video|audio)\/|^application\/pdf$/
 const mediaUpload = multer({
   storage: multer.diskStorage({
     destination: uploadsDir,
