@@ -7,7 +7,7 @@ services:
     runtime: node
     plan: free # passe en "starter" (~7$/mois) pour éviter la mise en veille (cold start ~30s)
     region: frankfurt # proche de l'UE / de ta base Supabase eu-west
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/me
     envVars:
