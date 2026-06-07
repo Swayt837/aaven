@@ -11,9 +11,9 @@ const DOCS = {
     title: 'Mentions légales',
     sections: [
       ['Éditeur du site', [
-        'Le site BioBoost est édité par [RAISON SOCIALE / NOM PRÉNOM], [forme juridique : ex. auto-entrepreneur / SAS au capital de … €].',
-        'Adresse : [ADRESSE COMPLÈTE]. SIRET : [N° SIRET]. [N° TVA intracommunautaire si applicable].',
-        'Directeur de la publication : [NOM]. Contact : [EMAIL DE CONTACT].',
+        'Le site BioBoost est édité par BioBoost, entreprise individuelle (auto-entreprise) — exploitant : [NOM PRÉNOM].',
+        'Adresse : [ADRESSE COMPLÈTE]. SIRET : [N° SIRET]. TVA non applicable, art. 293 B du CGI (sauf dépassement des seuils).',
+        'Directeur de la publication : [NOM PRÉNOM]. Contact : [EMAIL DE CONTACT].',
       ]],
       ['Hébergement', [
         'Application hébergée par Render Services, Inc. (525 Brannan Street, San Francisco, CA, USA) — render.com.',
@@ -65,7 +65,7 @@ const DOCS = {
   confidentialite: {
     title: 'Politique de confidentialité',
     sections: [
-      ['Responsable du traitement', ['[RAISON SOCIALE / NOM], contact : [EMAIL DE CONTACT].']],
+      ['Responsable du traitement', ['BioBoost (entreprise individuelle / auto-entreprise), exploitant : [NOM PRÉNOM]. Contact : [EMAIL DE CONTACT].']],
       ['Données collectées', [
         'Compte : nom, e-mail et photo fournis par Google lors de la connexion.',
         'Contenu : pages, liens, textes, images/fichiers que tu publies.',
