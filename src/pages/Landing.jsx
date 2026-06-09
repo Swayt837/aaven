@@ -1,493 +1,509 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, X, Plus, Minus, Star, ArrowRight, MousePointerClick, Palette, Share2 } from 'lucide-react'
-import { Header } from '../components/Header'
-import { Button, Card, Badge } from '../components/ui'
-import { Reveal } from '../components/Reveal'
-import { PhoneFrame, Avatar } from '../components/PhoneMockup'
-import { useI18n } from '../lib/i18n'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import Marquee from 'react-fast-marquee'
+import { ResponsiveContainer, LineChart, Line } from 'recharts'
+import {
+  Sparkles, ArrowRight, Check, Star, Menu, X, Instagram, Youtube, CalendarCheck,
+  ShoppingBag, MapPin, Dumbbell, Palette, UserCircle2, Wand2, Rocket, Zap, BarChart3,
+  Mail, QrCode, Smartphone, Globe,
+} from 'lucide-react'
 import { useAuth } from '../lib/auth'
-import { MODES } from '../lib/modes'
 
-// Position de scroll (rAF, passive) → parallaxe ultra subtile.
-function useScrollY() {
-  const [y, setY] = useState(0)
-  useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    let raf = 0
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(() => { setY(window.scrollY); raf = 0 }) }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf) }
-  }, [])
-  return y
+const EASE = [0.22, 1, 0.36, 1]
+const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } }
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } } }
+const viewport = { once: true, margin: '-100px' }
+
+/* ============================ Primitives ============================ */
+function Logo() {
+  return (
+    <a href="/" data-testid="logo" className="inline-flex items-center gap-2">
+      <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-brand-neon font-display text-base font-extrabold text-brand-ink">Bio</span>
+      <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-brand-ink">Boost</span>
+    </a>
+  )
 }
 
-// CTA à inertie : suit légèrement le curseur puis revient (ressort).
-function MagneticButton({ children, onClick, className = '' }) {
-  const ref = useRef(null)
-  function move(e) {
-    const el = ref.current
-    if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    const r = el.getBoundingClientRect()
-    const x = (e.clientX - r.left - r.width / 2) * 0.25
-    const y = (e.clientY - r.top - r.height / 2) * 0.35
-    el.style.transform = `translate(${x}px, ${y}px)`
-  }
-  function reset() { if (ref.current) ref.current.style.transform = '' }
+function PrimaryButton({ children, className = '', testid, ...props }) {
   return (
     <button
-      ref={ref}
-      onClick={onClick}
-      onMouseMove={move}
-      onMouseLeave={reset}
-      className={`group relative inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-b from-[#F2695B] to-coral px-8 py-4 font-display text-lg font-extrabold text-white shadow-glow-coral transition-[box-shadow,transform] duration-400 ease-spring hover:shadow-[0_26px_60px_-12px_rgba(239,90,76,.7)] ${className}`}
-      style={{ transition: 'transform 600ms cubic-bezier(0.22,1,0.36,1), box-shadow 400ms ease' }}
+      data-testid={testid}
+      className={`group inline-flex items-center justify-center gap-2 rounded-full bg-brand-coral px-7 py-3.5 font-display text-base font-extrabold text-white shadow-[5px_5px_0px_#0A0A0A] transition-transform duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 ${className}`}
+      {...props}
     >
-      <span className="bb-sheen opacity-60" aria-hidden />
-      <span className="relative">{children}</span>
-      <ArrowRight size={20} strokeWidth={3} className="relative transition-transform duration-300 group-hover:translate-x-1" />
+      {children}
     </button>
   )
 }
 
-export default function Landing() {
-  const { t } = useI18n()
-  const { user } = useAuth()
-  const nav = useNavigate()
-  const go = () => nav(user ? '/onboarding' : '/login')
-  const sy = useScrollY()
-
+function SecondaryButton({ children, className = '', testid, ...props }) {
   return (
-    <div className="min-h-screen bg-cream" style={{ background: 'radial-gradient(120% 70% at 80% -5%, #FFF4EC 0%, transparent 55%), radial-gradient(110% 60% at 0% 0%, #FBF3FF 0%, transparent 50%), #FAF6EE' }}>
-      <Header />
-
-      {/* ---------- HERO (cinématique) ---------- */}
-      <section className="relative flex min-h-[92vh] items-center overflow-hidden px-5 pb-20 pt-8">
-        {/* Atmosphère : halos qui dérivent + parallaxe ultra subtile */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div style={{ transform: `translateY(${sy * 0.18}px)` }} className="absolute -left-32 -top-24 h-[26rem] w-[26rem]">
-            <div className="bb-glow bb-drift h-full w-full bg-coral/30" />
-          </div>
-          <div style={{ transform: `translateY(${sy * 0.32}px)` }} className="absolute -right-24 top-4 h-[22rem] w-[22rem]">
-            <div className="bb-glow bb-drift-slow bb-breathe-soft h-full w-full bg-sun/40" />
-          </div>
-          <div style={{ transform: `translateY(${sy * 0.1}px)` }} className="absolute bottom-[-6rem] left-1/3 h-[24rem] w-[24rem]">
-            <div className="bb-glow bb-drift-rev h-full w-full bg-pink/20" />
-          </div>
-        </div>
-
-        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-6">
-          {/* Colonne texte — composition éditoriale */}
-          <div className="bb-reveal max-w-xl">
-            <Badge color="white" className="bb-glass">{t('hero.badge')}</Badge>
-            <h1 className="font-display mt-6 text-[3.1rem] leading-[0.92] sm:text-6xl md:text-[4.2rem]">
-              {t('hero.title.a')}{' '}
-              <span className="highlight">{t('hero.title.b')}</span>{' '}
-              <span className="text-ink/45">{t('hero.title.c')}</span>{' '}
-              <em className="font-editorial text-coral font-medium italic">{t('hero.title.d')}</em>
-              <span className="text-ink/45">{t('hero.title.e')}</span>
-            </h1>
-            <p className="mt-7 max-w-md text-lg font-medium leading-relaxed text-ink/60">{t('hero.subtitle')}</p>
-
-            <div className="mt-9 flex flex-col items-start gap-3">
-              <MagneticButton onClick={go}>{t('hero.cta')}</MagneticButton>
-              <p className="text-sm font-semibold text-ink/50">{t('hero.note')}</p>
-            </div>
-
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2.5">
-              {['hero.f1', 'hero.f2', 'hero.f3'].map((k) => (
-                <li key={k} className="flex items-center gap-1.5 text-sm font-bold text-ink/70">
-                  <Check size={17} className="text-coral" strokeWidth={3} /> {t(k)}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Colonne visuelle — mockup flottant + cartes de profondeur */}
-          <div className="relative bb-reveal bb-reveal-2" style={{ transform: `translateY(${sy * -0.05}px)` }}>
-            <div className="bb-float-slow">
-              <HeroMockup />
-            </div>
-            {/* Cartes flottantes (profondeur) */}
-            <div className="bb-float-slow-2 absolute -left-3 top-10 hidden rounded-2xl bg-white/80 px-3.5 py-2.5 shadow-float backdrop-blur sm:block" style={{ '--r': '-5deg' }}>
-              <p className="font-display text-sm font-extrabold">+427€ <span className="text-ink/50">ce mois</span></p>
-            </div>
-            <div className="bb-float-slow absolute -right-2 bottom-16 hidden rounded-2xl bg-white/80 px-3.5 py-2.5 shadow-float backdrop-blur sm:block" style={{ '--r': '4deg', animationDelay: '-1.5s' }}>
-              <p className="flex items-center gap-1.5 font-display text-sm font-extrabold"><Star size={14} className="text-sun" fill="#F7C948" /> 4,9 · 1.2k</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Indice de scroll */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
-          <span className="bb-float-slow text-xs font-bold uppercase tracking-[0.25em] text-ink/30">scroll</span>
-        </div>
-      </section>
-
-      {/* ---------- POSITIONNEMENT ---------- */}
-      <section className="py-20">
-        <Reveal className="mx-auto max-w-3xl px-5 text-center">
-          <h2 className="font-display text-4xl md:text-[2.8rem]">{t('pos.title')}</h2>
-          <p className="mx-auto mt-5 max-w-xl text-lg font-medium leading-relaxed text-ink/60">{t('pos.body')}</p>
-          <div className="mt-7 flex flex-wrap justify-center gap-2.5">
-            {['pos.a1', 'pos.a2', 'pos.a3', 'pos.a4'].map((k) => (
-              <span key={k} className="rounded-full border border-ink/10 bg-white/80 px-4 py-2 font-display text-sm font-extrabold shadow-soft backdrop-blur">{t(k)}</span>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ---------- SOCIAL PROOF (panneau flottant) ---------- */}
-      <section className="px-5 pb-4">
-        <Reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-card bg-ink py-9 text-cream shadow-float">
-          <div className="bb-glow bb-drift-slow absolute -right-10 -top-10 h-48 w-48 bg-coral/30" aria-hidden />
-          <div className="relative grid grid-cols-2 gap-6 px-6 md:grid-cols-4">
-            {[
-              ['social.s1.n', 'social.s1.l'],
-              ['social.s2.n', 'social.s2.l'],
-              ['social.s3.n', 'social.s3.l'],
-              ['social.s4.n', 'social.s4.l'],
-            ].map(([n, l]) => (
-              <div key={n} className="text-center">
-                <p className="font-display text-3xl font-extrabold text-sun md:text-4xl">{t(n)}</p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-cream/60">{t(l)}</p>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ---------- 3 MODES ---------- */}
-      <section id="modes" className="scroll-mt-24 py-20">
-        <div className="mx-auto max-w-5xl px-5">
-          <Reveal>
-            <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em]" style={{ color: '#caa511' }}>
-              {t('modes.eyebrow')}
-            </p>
-            <h2 className="font-display mt-3 max-w-2xl text-4xl md:text-5xl">{t('modes.title')}</h2>
-            <p className="mt-4 max-w-xl text-lg font-medium leading-relaxed text-ink/60">{t('modes.subtitle')}</p>
-          </Reveal>
-
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {[
-              { m: MODES.creator, eb: 'modes.creator.eyebrow', b: 'modes.creator.b', name: 'Créateur' },
-              { m: MODES.bar, eb: 'modes.bar.eyebrow', b: 'modes.bar.b', name: 'Établissement' },
-              { m: MODES.freelance, eb: 'modes.freelance.eyebrow', b: 'modes.freelance.b', name: 'Freelance' },
-            ].map(({ m, eb, b, name }, i) => (
-              <Reveal key={m.key} delay={i * 110} className="bb-hover">
-                <Card className="relative h-full overflow-hidden p-6" style={{ background: m.cardBg }}>
-                  <span className="bb-sheen" aria-hidden />
-                  <div className="relative text-4xl">{m.emoji}</div>
-                  <p className="relative mt-4 font-display text-xs font-extrabold uppercase tracking-[0.2em] text-ink/50">{t(eb)}</p>
-                  <h3 className="relative mt-1 font-display text-2xl font-extrabold">{name}</h3>
-                  <p className="relative mt-2 text-sm font-medium text-ink/65">{t(b)}</p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- COMMENT ÇA MARCHE ---------- */}
-      <section id="how" className="scroll-mt-24 py-20">
-        <div className="mx-auto max-w-5xl px-5">
-          <Reveal>
-            <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em]" style={{ color: '#caa511' }}>
-              {t('how.eyebrow')}
-            </p>
-            <h2 className="font-display mt-3 max-w-2xl text-4xl md:text-5xl">{t('how.title')}</h2>
-            <p className="mt-4 max-w-xl text-lg font-medium leading-relaxed text-ink/60">{t('how.subtitle')}</p>
-          </Reveal>
-
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
-            {[
-              { n: '1', icon: MousePointerClick, bg: '#FCE7EF', t: 'how.s1.t', d: 'how.s1.d' },
-              { n: '2', icon: Palette, bg: '#E8EDFC', t: 'how.s2.t', d: 'how.s2.d' },
-              { n: '3', icon: Share2, bg: '#FFF3CC', t: 'how.s3.t', d: 'how.s3.d' },
-            ].map(({ n, icon: I, bg, t: tk, d }, i) => (
-              <Reveal key={n} delay={i * 110} className="bb-hover">
-                <Card className="relative h-full p-6">
-                  <span className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink font-display text-lg font-extrabold text-white shadow-float">
-                    {n}
-                  </span>
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-soft" style={{ background: bg }}>
-                    <I size={24} strokeWidth={2.5} />
-                  </span>
-                  <h3 className="font-display mt-5 text-xl font-extrabold">{t(tk)}</h3>
-                  <p className="mt-2 text-sm font-medium leading-relaxed text-ink/65">{t(d)}</p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- COMPARATIF ---------- */}
-      <section className="py-20">
-        <div className="mx-auto max-w-3xl px-5">
-          <Reveal>
-            <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em] text-coral">
-              {t('compare.eyebrow')}
-            </p>
-            <h2 className="font-display mt-3 text-4xl md:text-5xl">{t('compare.title')}</h2>
-          </Reveal>
-
-          <Reveal className="mt-10">
-            <Card className="overflow-hidden p-0">
-            <div className="grid grid-cols-[1fr_auto_auto] items-stretch">
-              <div className="border-b border-ink/10 bg-cream px-5 py-3" />
-              <div className="flex items-center justify-center border-b-2 border-l border-ink/10 bg-cream px-5 py-3 font-display text-xs font-extrabold uppercase tracking-wide text-ink/60">
-                {t('compare.them')}
-              </div>
-              <div className="flex items-center justify-center border-b-2 border-l border-ink/10 bg-sun px-5 py-3 font-display text-xs font-extrabold uppercase tracking-wide">
-                {t('compare.us')}
-              </div>
-
-              {['compare.r1', 'compare.r2', 'compare.r3', 'compare.r4', 'compare.r5', 'compare.r6'].map((k, i, arr) => {
-                const last = i === arr.length - 1
-                const edge = last ? '' : 'border-b border-ink/10'
-                return (
-                  <div key={k} className="contents">
-                    <div className={`px-5 py-3.5 text-sm font-bold ${edge}`}>{t(k)}</div>
-                    <div className={`flex items-center justify-center border-l border-ink/10 px-5 py-3.5 ${edge}`}>
-                      <X size={20} strokeWidth={3} className="text-ink/30" />
-                    </div>
-                    <div className={`flex items-center justify-center border-l border-ink/10 bg-sun/20 px-5 py-3.5 ${edge}`}>
-                      <Check size={20} strokeWidth={3} className="text-coral" />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            </Card>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---------- TÉMOIGNAGES ---------- */}
-      <section className="py-20">
-        <div className="mx-auto max-w-5xl px-5">
-          <Reveal>
-            <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em]" style={{ color: '#caa511' }}>
-              {t('testi.eyebrow')}
-            </p>
-            <h2 className="font-display mt-3 text-4xl md:text-5xl">{t('testi.title')}</h2>
-          </Reveal>
-
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {[
-              { q: 'testi.1.q', a: 'testi.1.a', emoji: '🎬' },
-              { q: 'testi.2.q', a: 'testi.2.a', emoji: '🍸' },
-              { q: 'testi.3.q', a: 'testi.3.a', emoji: '💼' },
-            ].map(({ q, a, emoji }, i) => (
-              <Reveal key={q} delay={i * 110} className="bb-hover">
-                <Card className="flex h-full flex-col p-6">
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <Star key={j} size={16} className="text-sun" fill="#F7C948" strokeWidth={2} />
-                    ))}
-                  </div>
-                  <p className="mt-4 flex-1 font-editorial text-lg italic leading-snug text-ink/85">“{t(q)}”</p>
-                  <div className="mt-6 flex items-center gap-3">
-                    <Avatar emoji={emoji} size={40} />
-                    <span className="text-sm font-extrabold">{t(a)}</span>
-                  </div>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- FAQ ---------- */}
-      <Faq />
-
-      {/* ---------- PRICING ---------- */}
-      <section id="pricing" className="scroll-mt-24 py-20">
-        <div className="mx-auto max-w-5xl px-5">
-          <Reveal>
-            <p className="font-display text-sm font-extrabold uppercase tracking-[0.2em] text-coral">
-              {t('pricing.eyebrow')}
-            </p>
-            <h2 className="font-display mt-3 text-4xl md:text-5xl">{t('pricing.title')}</h2>
-          </Reveal>
-
-          <div className="mt-12 grid items-start gap-5 md:grid-cols-3">
-            {[
-              { key: 'free', highlight: false, per: false },
-              { key: 'creator', highlight: true, per: true },
-              { key: 'pro', highlight: false, per: true },
-            ].map((tier, i) => (
-              <Reveal key={tier.key} delay={i * 110} className={tier.highlight ? 'md:-mt-3' : ''}>
-                <Card
-                  className={`relative flex h-full flex-col overflow-hidden p-6 ${tier.highlight ? 'shadow-glow-sun' : ''}`}
-                  style={tier.highlight ? { background: '#F7C948' } : undefined}
-                >
-                  {tier.highlight && <span className="bb-sheen" aria-hidden />}
-                  {tier.key === 'creator' && (
-                    <Badge color="ink" className="absolute right-5 top-5">{t('pricing.creator.tag')}</Badge>
-                  )}
-                  <h3 className="relative font-display text-xl font-extrabold">{t(`pricing.${tier.key}.name`)}</h3>
-                  <p className="relative mt-1 font-display text-5xl font-extrabold tracking-tight">
-                    {t(`pricing.${tier.key}.price`)}
-                    {tier.per && <span className="text-lg font-bold text-ink/50">{t('pricing.perMonth')}</span>}
-                  </p>
-                  <ul className="relative mt-5 flex-1 space-y-2.5">
-                    {['f1', 'f2', 'f3', 'f4'].map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm font-semibold">
-                        <Check size={16} className="text-coral" strokeWidth={3} /> {t(`pricing.${tier.key}.${f}`)}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="relative mt-5 rounded-xl bg-white/60 px-3 py-2.5 text-center backdrop-blur">
-                    <p className="font-display text-sm font-extrabold">{t(`pricing.${tier.key}.fee`)}</p>
-                    {tier.key === 'creator' && (
-                      <p className="text-[11px] font-bold text-ink/55">{t('pricing.creator.feeNote')}</p>
-                    )}
-                  </div>
-                  <Button variant={tier.highlight ? 'dark' : 'primary'} className="relative mt-5 w-full" onClick={go}>
-                    {t(`pricing.${tier.key}.cta`)}
-                  </Button>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- CTA FINAL (cinématique) ---------- */}
-      <section className="px-5 py-20">
-        <Reveal className="relative mx-auto max-w-4xl overflow-hidden rounded-xl2 bg-coral px-6 py-20 text-center text-white shadow-glow-coral">
-          <div className="bb-glow bb-drift absolute -left-10 top-0 h-56 w-56 bg-pink/40" aria-hidden />
-          <div className="bb-glow bb-drift-rev absolute -right-10 bottom-0 h-56 w-56 bg-sun/40" aria-hidden />
-          <span className="bb-sheen opacity-40" aria-hidden />
-          <h2 className="relative mx-auto max-w-2xl font-display text-4xl leading-tight md:text-5xl">{t('cta.title')}</h2>
-          <p className="relative mx-auto mt-5 max-w-lg text-lg font-medium text-white/90">{t('cta.sub')}</p>
-          <div className="relative mt-8 flex justify-center">
-            <Button variant="dark" size="lg" onClick={go}>{t('cta.btn')}</Button>
-          </div>
-        </Reveal>
-      </section>
-
-      <footer className="border-t border-ink/10 py-8 text-center text-sm font-bold text-ink/50">
-        <div className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-2">
-          <a href="/legal/mentions-legales" className="hover:text-ink">{t('legal.mentions')}</a>
-          <a href="/legal/cgu" className="hover:text-ink">{t('legal.cgu')}</a>
-          <a href="/legal/cgv" className="hover:text-ink">{t('legal.cgv')}</a>
-          <a href="/legal/confidentialite" className="hover:text-ink">{t('legal.privacy')}</a>
-        </div>
-        {t('common.madeWith')} · © 2026 BioBoost
-      </footer>
-    </div>
+    <button
+      data-testid={testid}
+      className={`inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand-ink bg-white px-7 py-3.5 font-display text-base font-extrabold text-brand-ink transition-colors duration-200 hover:bg-brand-ink hover:text-white ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
   )
 }
 
-/* ---------- Mockup hero rotatif (3 modes) ---------- */
-const DEMOS = [
-  { key: 'creator', emoji: '🎬', bg: MODES.creator.cardBg, accent: MODES.creator.accent },
-  { key: 'bar', emoji: '🍸', bg: MODES.bar.cardBg, accent: MODES.bar.accent },
-  { key: 'freelance', emoji: '💼', bg: MODES.freelance.cardBg, accent: MODES.freelance.accent },
-]
+function Badge({ children, tone = 'neon', className = '', testid }) {
+  const tones = { neon: 'bg-brand-neon text-brand-ink', coral: 'bg-brand-coral text-white', white: 'bg-white text-brand-ink' }
+  return (
+    <span data-testid={testid} className={`inline-flex items-center gap-1.5 rounded-full border-2 border-brand-ink px-3 py-1 font-display text-[11px] font-extrabold uppercase tracking-[0.18em] shadow-[3px_3px_0px_#0A0A0A] ${tones[tone]} ${className}`}>
+      {children}
+    </span>
+  )
+}
 
-function HeroMockup() {
-  const { t } = useI18n()
-  const [i, setI] = useState(0)
+const Container = ({ children, className = '' }) => <div className={`mx-auto max-w-7xl px-5 md:px-10 ${className}`}>{children}</div>
 
+/* ============================ Header ============================ */
+function Header({ onStart }) {
+  const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
   useEffect(() => {
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    if (reduce) return
-    const id = setInterval(() => setI((p) => (p + 1) % DEMOS.length), 3200)
-    return () => clearInterval(id)
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  const d = DEMOS[i]
-  const p = `hero.demo.${d.key}.`
-
+  const links = [
+    ['#features', 'Fonctionnalités'],
+    ['#examples', 'Exemples'],
+    ['#testimonials', 'Témoignages'],
+    ['#final', 'Tarifs'],
+  ]
   return (
-    <div className="relative">
-      <PhoneFrame bg={d.bg} className="transition-colors duration-500">
-        <div key={d.key} className="flex flex-col items-center text-center bb-fade">
-          <Avatar emoji={d.emoji} size={72} />
-          <h3 className="font-display mt-2 text-xl font-extrabold">{t(p + 'handle')}</h3>
-          <p className="text-xs font-bold uppercase tracking-wide text-ink/60">{t(p + 'mode')}</p>
-          <div className="mt-4 flex w-full flex-col gap-2.5">
-            <div className="rounded-brutal border-2 border-ink py-3 font-display font-extrabold text-white shadow-hard" style={{ background: d.accent }}>
-              {t(p + 'b1')}
-            </div>
-            <div className="rounded-brutal border-2 border-ink bg-white py-3 font-display font-extrabold shadow-hard">
-              {t(p + 'b2')}
-            </div>
-            <div className="rounded-brutal border-2 border-ink bg-white py-3 font-display font-extrabold shadow-hard">
-              {t(p + 'b3')}
-            </div>
+    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-brand-cream/75 backdrop-blur-xl border-b border-brand-line' : 'bg-transparent'}`}>
+      <Container className="flex h-16 items-center justify-between md:h-20">
+        <Logo />
+        <nav className="hidden items-center gap-8 md:flex">
+          {links.map(([href, label]) => (
+            <a key={href} href={href} data-testid={`nav-${label.toLowerCase()}`} className="font-sans text-sm font-semibold text-brand-muted transition-colors hover:text-brand-ink">{label}</a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center overflow-hidden rounded-full border-2 border-brand-ink text-[11px] font-extrabold sm:flex">
+            <span className="bg-brand-ink px-2.5 py-1 text-white">FR</span>
+            <span className="px-2.5 py-1 text-brand-muted">EN</span>
           </div>
+          <button data-testid="header-start" onClick={onStart} className="hidden rounded-full bg-brand-ink px-5 py-2.5 font-display text-sm font-extrabold text-white transition-transform hover:-translate-y-0.5 sm:inline-flex">Commencer</button>
+          <button data-testid="mobile-menu-toggle" onClick={() => setOpen((o) => !o)} aria-label="Menu" className="grid h-10 w-10 place-items-center rounded-xl border-2 border-brand-ink bg-white md:hidden">
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
-      </PhoneFrame>
-
-      <div className="absolute -right-2 -top-3 rotate-6">
-        <Badge color="sun" className="text-sm shadow-hard">{t(p + 'badge')}</Badge>
-      </div>
-
-      {/* Indicateurs de mode */}
-      <div className="mt-5 flex justify-center gap-2">
-        {DEMOS.map((dm, idx) => (
-          <button
-            key={dm.key}
-            onClick={() => setI(idx)}
-            aria-label={dm.key}
-            className={`h-2.5 rounded-full border-2 border-ink transition-all ${idx === i ? 'w-7 bg-ink' : 'w-2.5 bg-white'}`}
-          />
-        ))}
-      </div>
-    </div>
+      </Container>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden border-b border-brand-line bg-brand-cream/95 backdrop-blur-xl md:hidden">
+            <Container className="flex flex-col gap-1 py-4">
+              {links.map(([href, label]) => (
+                <a key={href} href={href} onClick={() => setOpen(false)} className="py-2.5 font-display text-lg font-extrabold text-brand-ink">{label}</a>
+              ))}
+              <PrimaryButton testid="mobile-start" onClick={() => { setOpen(false); onStart() }} className="mt-2 w-full">Commencer <ArrowRight size={18} strokeWidth={3} /></PrimaryButton>
+            </Container>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   )
 }
 
-/* ---------- FAQ (accordéon) ---------- */
-function Faq() {
-  const { t } = useI18n()
-  const [open, setOpen] = useState(0)
-  const items = [
-    ['faq.q1', 'faq.a1'],
-    ['faq.q2', 'faq.a2'],
-    ['faq.q3', 'faq.a3'],
-    ['faq.q4', 'faq.a4'],
-    ['faq.q5', 'faq.a5'],
-  ]
-
+/* ============================ Hero ============================ */
+function Hero({ onStart }) {
   return (
-    <section id="faq" className="bg-white py-14">
-      <div className="mx-auto max-w-2xl px-4">
-        <p className="font-display text-sm font-extrabold uppercase tracking-widest text-coral">
-          {t('faq.eyebrow')}
-        </p>
-        <h2 className="font-display mt-2 text-4xl">{t('faq.title')}</h2>
+    <section className="relative overflow-hidden pb-16 pt-28 md:pt-36" data-testid="hero">
+      {/* Blobs ambiants */}
+      <div aria-hidden className="pointer-events-none absolute -left-24 -top-10 h-[26rem] w-[26rem] rounded-full bg-brand-neon/40 blur-[90px]" />
+      <div aria-hidden className="pointer-events-none absolute -right-24 top-0 h-[24rem] w-[24rem] rounded-full bg-brand-coral/30 blur-[90px]" />
 
-        <div className="mt-8 space-y-3">
-          {items.map(([q, a], i) => {
-            const isOpen = open === i
-            return (
-              <Card key={q} className="overflow-hidden p-0">
-                <button
-                  onClick={() => setOpen(isOpen ? -1 : i)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-display text-lg font-extrabold"
-                  aria-expanded={isOpen}
-                >
-                  <span>{t(q)}</span>
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-2 border-ink bg-sun">
-                    {isOpen ? <Minus size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
-                  </span>
-                </button>
-                {isOpen && (
-                  <p className="border-t border-ink/10 px-5 py-4 text-sm font-medium text-ink/75">
-                    {t(a)}
-                  </p>
-                )}
-              </Card>
-            )
-          })}
-        </div>
+      <Container className="relative">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="mx-auto max-w-4xl text-center">
+          <motion.div variants={fadeUp} className="flex justify-center">
+            <Badge testid="hero-badge"><Sparkles size={13} strokeWidth={3} /> Ta carte d’identité digitale</Badge>
+          </motion.div>
+
+          <motion.h1 variants={fadeUp} className="mt-7 font-display text-[44px] font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink sm:text-6xl md:text-7xl lg:text-[88px]">
+            Ta bio se transforme en{' '}
+            <span className="font-serif font-medium italic">carte</span>{' '}
+            <span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identité</span>{' '}
+            digitale qui{' '}
+            <span className="font-serif font-medium italic">génère</span> du business.
+          </motion.h1>
+
+          <motion.p variants={fadeUp} className="mx-auto mt-7 max-w-2xl font-sans text-lg text-brand-muted md:text-xl">
+            Pas une simple page de liens. Une interface vivante qui montre qui tu es, ce que tu fais, et transforme tes visiteurs en clients, réservations ou revenus.
+          </motion.p>
+
+          <motion.div variants={fadeUp} className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <PrimaryButton testid="hero-primary-cta" onClick={onStart}>Créer ma page gratuite <ArrowRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" /></PrimaryButton>
+            <SecondaryButton testid="hero-secondary-cta" onClick={() => document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' })}>Voir les exemples</SecondaryButton>
+          </motion.div>
+
+          <motion.p variants={fadeUp} className="mt-5 font-sans text-sm font-semibold text-brand-muted">✦ Gratuit pour démarrer · Évolue quand tu veux</motion.p>
+          <motion.ul variants={fadeUp} className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            {['30 secondes', 'Sans carte bancaire', 'Sans engagement'].map((f) => (
+              <li key={f} className="flex items-center gap-1.5 font-sans text-sm font-bold text-brand-ink"><Check size={16} className="text-brand-coral" strokeWidth={3} /> {f}</li>
+            ))}
+          </motion.ul>
+        </motion.div>
+
+        {/* Floating cards (desktop) */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.7, ease: EASE }} className="pointer-events-none absolute left-2 top-40 hidden -rotate-6 lg:block" data-testid="hero-float-left">
+          <div className="animate-float rounded-2xl border-2 border-brand-ink bg-white px-4 py-3 shadow-[5px_5px_0px_#0A0A0A]">
+            <div className="flex items-center gap-2.5">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=70" alt="" className="h-9 w-9 rounded-full object-cover" />
+              <div><p className="font-display text-sm font-extrabold">Nouveau client</p><p className="font-sans text-xs text-brand-muted">Léa vient de réserver</p></div>
+            </div>
+          </div>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.7, ease: EASE }} className="pointer-events-none absolute right-2 top-52 hidden rotate-[5deg] lg:block" data-testid="hero-float-right">
+          <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-neon px-4 py-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.5s' }}>
+            <p className="font-display text-sm font-extrabold text-brand-ink">+12 DEVIS</p>
+            <p className="font-sans text-xs font-semibold text-brand-ink/70">Cette semaine</p>
+          </div>
+        </motion.div>
+      </Container>
+
+      {/* Marquee strip */}
+      <div className="mt-16 border-y-2 border-brand-ink bg-brand-ink py-4">
+        <Marquee speed={42} autoFill>
+          {['10 000+ créateurs', 'Réservations', 'Lead capture', 'Analytics', 'Sans code'].map((w, i) => (
+            <span key={i} className="mx-6 inline-flex items-center gap-6 font-display text-lg font-extrabold uppercase tracking-wide text-brand-cream">
+              {w} <Star size={16} className={i % 2 ? 'text-brand-neon' : 'text-brand-coral'} fill="currentColor" />
+            </span>
+          ))}
+        </Marquee>
       </div>
     </section>
+  )
+}
+
+/* ============================ Profile Showcase (sticky) ============================ */
+const PROFILES = [
+  {
+    id: 'lea-creator', name: 'Léa', handle: '@lea.mode', role: 'Créatrice mode', bio: 'Outfits quotidiens & bons plans shopping.',
+    img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', theme: 'cream',
+    links: [['Instagram', Instagram], ['YouTube', Youtube], ['Mes pièces favorites', ShoppingBag]],
+  },
+  {
+    id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', role: 'Restaurant', bio: 'Cuisine italienne de saison à Lyon.',
+    img: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=200&q=70', theme: 'ink',
+    links: [['Réserver une table', CalendarCheck], ['Le menu', ShoppingBag], ['Itinéraire', MapPin]],
+  },
+  {
+    id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', role: 'Coach fitness', bio: 'Programmes & coaching en ligne.',
+    img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=70', theme: 'neon',
+    links: [['Réserver une séance', CalendarCheck], ['Mes programmes', Dumbbell], ['Instagram', Instagram]],
+  },
+  {
+    id: 'noah-designer', name: 'Noah', handle: '@noah.studio', role: 'Designer freelance', bio: 'Identités de marque & sites premium.',
+    img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=70', theme: 'beige',
+    links: [['Voir mes projets', Palette], ['Demander un devis', Mail], ['Réserver un call', CalendarCheck]],
+  },
+]
+
+function PhoneCard({ p }) {
+  const dark = p.theme === 'ink'
+  const bg = { cream: 'bg-brand-cream', ink: 'bg-brand-ink text-white', neon: 'bg-brand-neon', beige: 'bg-[#EFEDE6]' }[p.theme]
+  const rowCls = dark ? 'border-2 border-white/15 bg-white/10 text-white' : 'border-2 border-brand-ink bg-white shadow-[3px_3px_0px_#0A0A0A]'
+  return (
+    <div className="relative mx-auto w-[320px]" data-testid={`profile-card-${p.id}`}>
+      <div className="relative overflow-hidden rounded-[42px] border-[10px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]">
+        <div className="absolute left-1/2 top-0 z-10 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
+        <div className={`min-h-[560px] px-6 pb-8 pt-12 ${bg}`}>
+          <div className="flex flex-col items-center text-center">
+            <div className="relative">
+              <img src={p.img} alt={p.name} className="h-24 w-24 rounded-full border-4 border-brand-ink object-cover" />
+              <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-brand-ink bg-brand-coral" />
+            </div>
+            <h3 className="mt-4 font-display text-2xl font-extrabold tracking-[-0.02em]">{p.name}</h3>
+            <p className={`font-sans text-sm font-semibold ${dark ? 'text-white/60' : 'text-brand-muted'}`}>{p.handle}</p>
+            <span className={`mt-2 rounded-full border-2 px-3 py-0.5 font-display text-[11px] font-extrabold uppercase tracking-[0.15em] ${dark ? 'border-brand-neon text-brand-neon' : 'border-brand-ink'}`}>{p.role}</span>
+            <p className={`mt-3 font-sans text-sm ${dark ? 'text-white/70' : 'text-brand-muted'}`}>{p.bio}</p>
+          </div>
+          <div className="mt-6 space-y-3">
+            {p.links.map(([label, Icon], i) => (
+              <div key={i} className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 font-display text-sm font-extrabold ${rowCls}`}>
+                <Icon size={18} strokeWidth={2.5} /> {label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* Notif flottante */}
+      <div className="absolute -right-4 top-24 rotate-3 animate-float rounded-2xl border-2 border-brand-ink bg-white px-3 py-2 shadow-[4px_4px_0px_#0A0A0A]">
+        <p className="font-display text-xs font-extrabold">+1 réservation</p>
+      </div>
+    </div>
+  )
+}
+
+function ProfileShowcase({ onStart }) {
+  return (
+    <section id="examples" className="scroll-mt-24 bg-white py-24 md:py-32" data-testid="profile-showcase">
+      <Container>
+        <div className="grid gap-16 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-32">
+              <Badge tone="coral" testid="showcase-badge">Profils en action</Badge>
+              <h2 className="mt-6 font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
+                Ils ont boosté leur business.{' '}
+                <span className="font-serif font-medium italic text-brand-coral">À ton tour.</span>
+              </h2>
+              <p className="mt-6 max-w-md font-sans text-lg text-brand-muted">Une page qui s’adapte à ton métier — créateur, restaurant, coach, freelance, artiste.</p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {['Créateur', 'Restaurant', 'Coach', 'Freelance', 'Artiste'].map((tag) => (
+                  <span key={tag} className="rounded-full border-2 border-brand-ink px-3 py-1 font-display text-xs font-extrabold">{tag}</span>
+                ))}
+              </div>
+              <PrimaryButton testid="showcase-cta" onClick={onStart} className="mt-8">Créer la mienne <ArrowRight size={18} strokeWidth={3} /></PrimaryButton>
+            </div>
+          </div>
+          <div className="space-y-36 lg:col-span-7">
+            {PROFILES.map((p) => (
+              <motion.div key={p.id} initial={{ opacity: 0, y: 80 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.7, ease: EASE }}>
+                <PhoneCard p={p} />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+/* ============================ How it works ============================ */
+function HowItWorks() {
+  const steps = [
+    { n: '01', icon: UserCircle2, title: 'Choisis ton identité', card: 'bg-brand-ink text-white', accent: 'text-brand-neon' },
+    { n: '02', icon: Wand2, title: 'Personnalise en 30 secondes', card: 'bg-brand-coral text-white', accent: 'text-white' },
+    { n: '03', icon: Rocket, title: 'Partage. Capture. Convertis.', card: 'bg-brand-neon text-brand-ink', accent: 'text-brand-ink' },
+  ]
+  return (
+    <section className="bg-brand-cream py-24 md:py-32" data-testid="how-it-works">
+      <Container>
+        <Badge testid="how-badge">Comment ça marche</Badge>
+        <h2 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
+          Trois étapes. <span className="font-serif font-medium italic">Zéro</span> excuse.
+        </h2>
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="mt-12 grid gap-6 md:grid-cols-3">
+          {steps.map((s, i) => (
+            <motion.div key={s.n} variants={fadeUp} transition={{ delay: i * 0.12 }} className={`group relative h-[340px] overflow-hidden rounded-[28px] border-2 border-brand-ink p-7 shadow-[6px_6px_0px_#0A0A0A] ${s.card}`} data-testid={`step-${i}`}>
+              <span className={`font-display text-7xl font-extrabold opacity-30 transition-opacity duration-300 group-hover:opacity-100 ${s.accent}`}>{s.n}</span>
+              <s.icon size={40} strokeWidth={2.5} className={`mt-6 ${s.accent}`} />
+              <h3 className="mt-4 font-display text-2xl font-extrabold leading-tight tracking-[-0.02em]">{s.title}</h3>
+            </motion.div>
+          ))}
+        </motion.div>
+      </Container>
+    </section>
+  )
+}
+
+/* ============================ Bento features ============================ */
+const CHART = [{ v: 8 }, { v: 14 }, { v: 11 }, { v: 22 }, { v: 18 }, { v: 30 }, { v: 26 }, { v: 38 }]
+
+function BentoFeatures() {
+  return (
+    <section id="features" className="scroll-mt-24 bg-brand-cream py-24 md:py-32" data-testid="bento-features">
+      <Container>
+        <Badge tone="coral" testid="features-badge">Toutes les armes</Badge>
+        <h2 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
+          Un seul lien. Des possibilités <span className="font-serif font-medium italic">infinies.</span>
+        </h2>
+
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-8 lg:grid-cols-12">
+          {/* Analytics */}
+          <motion.div variants={fadeUp} className="rounded-[28px] border-2 border-brand-ink bg-brand-ink p-7 text-white shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-7" data-testid="feature-analytics">
+            <div className="flex items-start justify-between">
+              <div>
+                <BarChart3 className="text-brand-neon" />
+                <h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">Analytics Pro</h3>
+                <p className="mt-1 font-sans text-sm text-white/60">Sache exactement ce qui convertit.</p>
+              </div>
+              <div className="text-right">
+                <p className="font-display text-3xl font-extrabold text-brand-neon">+842</p>
+                <p className="font-sans text-xs text-white/60">clics · +34% vs sem.</p>
+              </div>
+            </div>
+            <div className="mt-4 h-28">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={CHART}><Line type="monotone" dataKey="v" stroke="#D6FF00" strokeWidth={3} dot={false} /></LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* Lead capture */}
+          <motion.div variants={fadeUp} className="rounded-[28px] border-2 border-brand-ink bg-white p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-5" data-testid="feature-leads">
+            <Mail className="text-brand-coral" />
+            <h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">Capture de leads</h3>
+            <p className="mt-1 font-sans text-sm text-brand-muted">Transforme tes visiteurs en contacts.</p>
+            <div className="mt-5 flex gap-2">
+              <input data-testid="feature-leads-input" placeholder="ton@email.com" className="min-w-0 flex-1 rounded-full border-2 border-brand-ink px-4 py-2.5 font-sans text-sm outline-none" />
+              <button className="rounded-full bg-brand-coral px-4 py-2.5 font-display text-sm font-extrabold text-white shadow-[3px_3px_0px_#0A0A0A]">OK</button>
+            </div>
+          </motion.div>
+
+          {/* Réservations */}
+          <motion.div variants={fadeUp} className="rounded-[28px] border-2 border-brand-ink bg-brand-neon p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-4 lg:col-span-4" data-testid="feature-bookings">
+            <CalendarCheck className="text-brand-ink" />
+            <h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em] text-brand-ink">Réservations</h3>
+            <div className="mt-4 grid grid-cols-7 gap-1.5">
+              {Array.from({ length: 21 }).map((_, i) => (
+                <span key={i} className={`grid h-7 place-items-center rounded-md font-sans text-xs font-bold ${i === 12 ? 'bg-brand-coral text-white' : 'bg-brand-ink/5 text-brand-ink/50'}`}>{i + 1}</span>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Personnalisation */}
+          <motion.div variants={fadeUp} className="rounded-[28px] border-2 border-brand-ink bg-white p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-4 lg:col-span-5" data-testid="feature-custom">
+            <Palette className="text-brand-coral" />
+            <h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">Personnalisation</h3>
+            <p className="mt-1 font-sans text-sm text-brand-muted">Des templates qui te ressemblent.</p>
+            <div className="mt-5 flex gap-2.5">
+              {['#FF4D42', '#D6FF00', '#0A0A0A', '#F0426B', '#38BDF8', '#F7C948'].map((c) => (
+                <span key={c} className="h-8 w-8 rounded-full border-2 border-brand-ink" style={{ background: c }} />
+              ))}
+            </div>
+          </motion.div>
+
+          {/* 30 secondes */}
+          <motion.div variants={fadeUp} className="flex flex-col justify-between rounded-[28px] border-2 border-brand-ink bg-brand-coral p-7 text-white shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-3" data-testid="feature-speed">
+            <Zap fill="currentColor" />
+            <div><p className="font-display text-4xl font-extrabold">30s</p><p className="font-sans text-sm text-white/80">pour être en ligne.</p></div>
+          </motion.div>
+
+          {/* Domaine + QR + Mobile */}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5 rounded-[28px] border-2 border-brand-ink bg-white p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-12 lg:flex-row lg:justify-between" data-testid="feature-domain">
+            <div className="flex items-center gap-6">
+              <Globe className="text-brand-ink" />
+              <QrCode className="text-brand-ink" />
+              <Smartphone className="text-brand-ink" />
+            </div>
+            <div className="rounded-full border-2 border-brand-ink bg-brand-cream px-5 py-2.5 font-display text-lg font-extrabold">bioboost.fr/<span className="text-brand-coral">toi</span></div>
+            <p className="font-sans text-sm font-semibold text-brand-muted">Domaine perso · QR code · 100% mobile</p>
+          </motion.div>
+        </motion.div>
+      </Container>
+    </section>
+  )
+}
+
+/* ============================ Testimonials ============================ */
+const TESTI = [
+  { name: 'Camille', role: 'Créatrice mode', quote: 'Mes ventes ont doublé en 2 mois. La page convertit vraiment.' },
+  { name: 'Antoine', role: 'Restaurateur', quote: 'Les réservations arrivent directement depuis mon lien Insta.' },
+  { name: 'Sofia', role: 'Coach', quote: 'Mes clients réservent leurs séances en 2 clics. Magique.' },
+  { name: 'Noah', role: 'Designer', quote: 'Mes devis ont explosé. L’interface fait premium direct.' },
+  { name: 'Marco', role: 'Chef étoilé', quote: 'Enfin une page à la hauteur de mon restaurant.' },
+]
+
+function TestiCard({ t }) {
+  return (
+    <div className="mx-3 w-[380px] rounded-[28px] border-2 border-brand-ink bg-brand-cream p-6 shadow-[5px_5px_0px_#0A0A0A]">
+      <div className="flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={16} className="text-brand-coral" fill="currentColor" />)}</div>
+      <p className="mt-4 font-display text-lg font-bold leading-snug tracking-[-0.01em] text-brand-ink">“{t.quote}”</p>
+      <div className="mt-5 flex items-center gap-3">
+        <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-brand-ink bg-brand-neon font-display font-extrabold">{t.name[0]}</span>
+        <div><p className="font-display text-sm font-extrabold">{t.name}</p><p className="font-sans text-xs text-brand-muted">{t.role}</p></div>
+      </div>
+    </div>
+  )
+}
+
+function Testimonials() {
+  const stats = [['10 000+', 'créateurs'], ['2,4M', 'clics générés'], ['94%', 'recommandent'], ['4,9★', 'note moyenne']]
+  return (
+    <section id="testimonials" className="scroll-mt-24 overflow-hidden bg-white py-24 md:py-32" data-testid="testimonials">
+      <Container>
+        <Badge testid="testi-badge">Ils en parlent</Badge>
+        <h2 className="mt-6 max-w-4xl font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
+          Rejoins +10 000 créateurs qui ont <span className="font-serif font-medium italic">changé de ligue.</span>
+        </h2>
+        <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
+          {stats.map(([n, l], i) => (
+            <div key={l} className="text-center md:text-left" data-testid={`stat-${i}`}>
+              <p className="font-display text-4xl font-extrabold tracking-[-0.03em] text-brand-ink md:text-5xl">{n}</p>
+              <p className="mt-1 font-sans text-sm font-semibold text-brand-muted">{l}</p>
+            </div>
+          ))}
+        </div>
+      </Container>
+      <div className="mt-14 space-y-5">
+        <Marquee speed={32} gradient gradientColor="#FFFFFF" pauseOnHover>{TESTI.map((t, i) => <TestiCard key={i} t={t} />)}</Marquee>
+        <Marquee speed={28} direction="right" gradient gradientColor="#FFFFFF" pauseOnHover>{[...TESTI].reverse().map((t, i) => <TestiCard key={i} t={t} />)}</Marquee>
+      </div>
+    </section>
+  )
+}
+
+/* ============================ Final CTA + Footer ============================ */
+function FinalCTA({ onStart }) {
+  const ref = useRef(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const y = useTransform(scrollYProgress, [0, 1], [60, -60])
+  const features = ['Sans code', 'Paiements Stripe', 'Analytics', 'QR code', 'Domaine perso', 'Mobile-first']
+  return (
+    <section ref={ref} className="relative overflow-hidden rounded-t-[60px] bg-brand-ink px-5 py-32 text-white md:py-40" data-testid="final-cta">
+      <div aria-hidden className="pointer-events-none absolute -left-10 top-10 h-72 w-72 rounded-full bg-brand-coral/40 blur-[100px]" />
+      <div aria-hidden className="pointer-events-none absolute -right-10 bottom-10 h-72 w-72 rounded-full bg-brand-neon/30 blur-[100px]" />
+      <Container className="relative text-center">
+        <motion.div style={{ y }} className="flex justify-center">
+          <Badge testid="final-badge">Dernière étape</Badge>
+        </motion.div>
+        <h2 className="mx-auto mt-7 max-w-4xl font-display text-6xl font-extrabold leading-[0.92] tracking-[-0.04em] md:text-8xl lg:text-[112px]">
+          Prêt à <span className="font-serif font-medium italic text-brand-coral">dominer</span> ton marché ?
+        </h2>
+        <p className="mx-auto mt-7 max-w-xl font-sans text-lg text-white/70">Crée ta page en 30 secondes. Sans carte bancaire, sans engagement.</p>
+        <div className="mt-10 flex flex-col items-center justify-center gap-5 sm:flex-row">
+          <button data-testid="final-cta-button" onClick={onStart} className="group inline-flex items-center gap-2 rounded-full bg-brand-coral px-9 py-4 font-display text-lg font-extrabold text-white shadow-[6px_6px_0px_#D6FF00] transition-transform hover:-translate-y-0.5">
+            Créer ma page gratuite <ArrowRight size={20} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />
+          </button>
+          <a href="#examples" className="font-display text-base font-extrabold underline underline-offset-4 hover:text-brand-neon">Voir les exemples</a>
+        </div>
+        <div className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3">
+          {features.map((f) => (
+            <div key={f} className="rounded-full border border-white/15 bg-white/5 px-4 py-2.5 font-sans text-sm font-semibold backdrop-blur">{f}</div>
+          ))}
+        </div>
+
+        <footer className="mt-24 border-t border-white/10 pt-10">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+            <div className="flex items-center gap-2">
+              <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-brand-neon font-display text-sm font-extrabold text-brand-ink">Bio</span>
+              <span className="font-display text-lg font-extrabold">Boost</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 font-sans text-sm font-semibold text-white/60">
+              <a href="/legal/mentions-legales" className="hover:text-white">Mentions légales</a>
+              <a href="/legal/cgu" className="hover:text-white">CGU</a>
+              <a href="/legal/confidentialite" className="hover:text-white">Confidentialité</a>
+              <a href="/legal/cgv" className="hover:text-white">Contact</a>
+            </div>
+            <p className="font-sans text-sm text-white/40">© 2026 BioBoost</p>
+          </div>
+        </footer>
+      </Container>
+    </section>
+  )
+}
+
+/* ============================ Page ============================ */
+export default function Landing() {
+  const { user } = useAuth()
+  const nav = useNavigate()
+  const onStart = () => nav(user ? '/onboarding' : '/login')
+  return (
+    <div className="min-h-screen bg-brand-cream font-sans text-brand-ink antialiased">
+      <Header onStart={onStart} />
+      <Hero onStart={onStart} />
+      <ProfileShowcase onStart={onStart} />
+      <HowItWorks />
+      <BentoFeatures />
+      <Testimonials />
+      <FinalCTA onStart={onStart} />
+    </div>
   )
 }

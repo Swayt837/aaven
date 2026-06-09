@@ -1,3 +1,5 @@
+import tailwindcssAnimate from 'tailwindcss-animate'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
@@ -14,11 +16,21 @@ export default {
         creator: '#FCE7EF',
         bar: '#EFEDE6',
         freelance: '#E8EDFC',
+        // Palette de marque (nouvelle landing cinématique)
+        brand: {
+          cream: '#F7F7F5',
+          ink: '#0A0A0A',
+          coral: '#FF4D42',
+          neon: '#D6FF00',
+          muted: '#575756',
+          line: '#E2E2E0',
+        },
       },
       fontFamily: {
         display: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         editorial: ['Fraunces', 'Georgia', 'serif'], // italique éditoriale premium
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'], // accents italiques landing
+        sans: ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
       },
       // Système d'élévation DOUX (premium) — l'identité reste portée par les contours encre.
       boxShadow: {
@@ -48,11 +60,16 @@ export default {
           from: { opacity: '0', transform: 'translateY(16px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
       },
       animation: {
         reveal: 'bb-reveal 700ms cubic-bezier(0.22,1,0.36,1) both',
+        float: 'float 4s ease-in-out infinite',
       },
     },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 }

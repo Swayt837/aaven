@@ -282,3 +282,8 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(17, 17, 17, 0.35);
 }
+
+::selection {
+  background: #ff4d42;
+  color: #fff;
+}
