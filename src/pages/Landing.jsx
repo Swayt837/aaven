@@ -128,7 +128,7 @@ function Hero({ onStart }) {
           <motion.h1 variants={fadeUp} className="mt-7 font-display text-[44px] font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink sm:text-6xl md:text-7xl lg:text-[88px]">
             Ta bio se transforme en{' '}
             <span className="font-serif font-medium italic">carte</span>{' '}
-            <span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identité</span>{' '}
+            d’<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identité</span>{' '}
             digitale qui{' '}
             <span className="font-serif font-medium italic">génère</span> du business.
           </motion.h1>
@@ -163,6 +163,12 @@ function Hero({ onStart }) {
           <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-neon px-4 py-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.5s' }}>
             <p className="font-display text-sm font-extrabold text-brand-ink">+12 DEVIS</p>
             <p className="font-sans text-xs font-semibold text-brand-ink/70">Cette semaine</p>
+          </div>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="pointer-events-none absolute bottom-24 left-8 hidden -rotate-3 lg:block" data-testid="hero-float-tips">
+          <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-coral px-4 py-3 text-white shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-0.8s' }}>
+            <p className="flex items-center gap-1.5 font-display text-sm font-extrabold"><Heart size={13} fill="currentColor" /> +427€</p>
+            <p className="font-sans text-xs font-semibold text-white/80">de tips ce mois</p>
           </div>
         </motion.div>
       </Container>
@@ -293,10 +299,10 @@ function ProfileShowcase({ onStart }) {
             <div className="lg:sticky lg:top-32">
               <Badge tone="coral" testid="showcase-badge">Profils en action</Badge>
               <h2 className="mt-6 font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
-                Ils ont boosté leur business.{' '}
+                Ils ont boosté leurs revenus et leur visibilité.{' '}
                 <span className="font-serif font-medium italic text-brand-coral">À ton tour.</span>
               </h2>
-              <p className="mt-6 max-w-md font-sans text-lg text-brand-muted">Une page qui s’adapte à ton métier — créateur, restaurant, coach, freelance, artiste.</p>
+              <p className="mt-6 max-w-md font-sans text-lg text-brand-muted">Une présence digitale unique, pensée pour toi.</p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {['Créateur', 'Restaurant', 'Coach', 'Freelance', 'Artiste'].map((tag) => (
                   <span key={tag} className="rounded-full border-2 border-brand-ink px-3 py-1 font-display text-xs font-extrabold">{tag}</span>
@@ -488,11 +494,11 @@ function Testimonials() {
 /* ============================ Pricing ============================ */
 const TIERS = [
   { key: 'free', name: 'Free', price: '0€', per: '', fee: '5% de commission', highlight: false,
-    features: ['1 page + tous les boutons', 'Templates basiques', '1 template vidéo offert', 'Tips & analytics inclus'] },
+    features: ['1 page + tous les boutons', '3 produits digitaux', '3 templates vidéo offerts', 'CTA personnalisés', 'Tips & analytics inclus'] },
   { key: 'creator', name: 'Creator', price: '7€', per: '/mois', fee: '1% de commission', highlight: true,
-    features: ['Sans branding BioBoost', 'Templates vidéo premium', 'Produits illimités', 'CTA personnalisés'] },
+    features: ['Sans branding BioBoost', 'Templates vidéo premium', 'Produits illimités', 'Ton lien pro perso'] },
   { key: 'pro', name: 'Pro', price: '15€', per: '/mois', fee: '0% de commission', highlight: false,
-    features: ['Tout de Creator', 'Ton lien pro perso', 'Widgets premium', 'Support prioritaire'] },
+    features: ['Tout de Creator', 'Importe ta propre vidéo', 'Support prioritaire'] },
 ]
 
 function Pricing({ onStart }) {
