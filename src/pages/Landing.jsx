@@ -496,9 +496,9 @@ const TIERS = [
   { key: 'free', name: 'Free', price: '0€', per: '', fee: '5% de commission', highlight: false,
     features: ['1 page + tous les boutons', '3 produits digitaux', '3 templates vidéo offerts', 'CTA personnalisés', 'Tips & analytics inclus'] },
   { key: 'creator', name: 'Creator', price: '7€', per: '/mois', fee: '1% de commission', highlight: true,
-    features: ['Sans branding BioBoost', 'Templates vidéo premium', 'Produits illimités', 'Ton lien pro perso'] },
+    features: ['Sans branding BioBoost', 'Templates vidéo premium', 'Importe GIF/vidéo (5 s)', 'Produits illimités', 'Ton lien pro perso'] },
   { key: 'pro', name: 'Pro', price: '15€', per: '/mois', fee: '0% de commission', highlight: false,
-    features: ['Tout de Creator', 'Importe ta propre vidéo', 'Support prioritaire'] },
+    features: ['Tout de Creator', 'Importe ta vidéo (15 s max)', 'Support prioritaire'] },
 ]
 
 function Pricing({ onStart }) {

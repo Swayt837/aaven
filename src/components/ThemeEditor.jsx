@@ -46,17 +46,27 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
     })
   }
 
+  // Upload média perso : Creator = GIF/vidéo 5 s max · Pro = vidéo 15 s max · Free = verrouillé.
   async function onVideoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!isPro) { e.target.value = ''; return alert(t('edit.proLocked')) }
+    if (isFree) { e.target.value = ''; return alert(t('edit.mediaLocked')) }
     setErr('')
     try {
-      const dur = await readDuration(file).catch(() => 0)
-      if (dur > 15.5) { e.target.value = ''; return alert(t('edit.videoMax15')) }
+      const isGif = file.type === 'image/gif'
+      if (!isGif) {
+        const dur = await readDuration(file).catch(() => 0)
+        const max = isPro ? 15.5 : 5.5
+        if (dur > max) { e.target.value = ''; return alert(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
+      }
       setUploadingVideo(true)
       const { url } = await api.uploadMedia(slug, file)
-      set({ bgVideo: url, bgVideoOwn: true, introVideo: '', animation: 'none', bgPosX: 50, bgPosY: 50, bgZoom: 1 })
+      if (isGif) {
+        // GIF animé → fond image (l'<img> anime tout seul).
+        set({ preset: 'upload', bgType: 'image', bgImage: url, bgVideo: '', bgVideoOwn: false, introVideo: '', animation: 'none', text: 'light', overlay: 0.4, bgPosX: 50, bgPosY: 50, bgZoom: 1 })
+      } else {
+        set({ bgVideo: url, bgVideoOwn: true, bgImage: '', introVideo: '', animation: 'none', bgPosX: 50, bgPosY: 50, bgZoom: 1 })
+      }
     } catch (ex) {
       setErr(ex.message || 'Upload échoué')
     } finally {
@@ -158,16 +168,16 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
           </button>
           <button
             type="button"
-            onClick={() => (isPro ? videoRef.current?.click() : alert(t('edit.proLocked')))}
+            onClick={() => (!isFree ? videoRef.current?.click() : alert(t('edit.mediaLocked')))}
             disabled={uploadingVideo}
             className="press flex flex-1 items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 font-display text-sm font-extrabold shadow-hard-sm disabled:opacity-50"
           >
-            {isPro ? <Film size={16} /> : <Lock size={14} />} {uploadingVideo ? t('edit.uploading') : t('edit.uploadVideo')}
+            {!isFree ? <Film size={16} /> : <Lock size={14} />} {uploadingVideo ? t('edit.uploading') : t('edit.uploadMedia')}
           </button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
-        <input ref={videoRef} type="file" accept="video/*" onChange={onVideoFile} className="hidden" />
-        <p className="mt-1 text-center text-[11px] font-semibold text-ink/50">{t('edit.uploadHint')} · {t('edit.videoMaxHint')}</p>
+        <input ref={videoRef} type="file" accept="video/*,image/gif" onChange={onVideoFile} className="hidden" />
+        <p className="mt-1 text-center text-[11px] font-semibold text-ink/50">{t('edit.uploadHint')} · {t('edit.mediaHint')}</p>
         {err && <p className="mt-1 text-center text-xs font-bold text-coral">{err}</p>}
 
         {theme.bgVideo && theme.bgVideoOwn ? (
