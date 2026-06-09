@@ -19,25 +19,30 @@ export default function Landing() {
       <Header />
 
       {/* ---------- HERO ---------- */}
-      <section className="mx-auto max-w-5xl px-4 pb-12 pt-10">
-        <div className="grid items-center gap-10 md:grid-cols-2">
-          <div>
-            <Badge color="sun">{t('hero.badge')}</Badge>
+      <section className="relative overflow-hidden px-4 pb-16 pt-12 sm:pt-16">
+        {/* Halos lumineux ambiants */}
+        <div className="bb-glow -left-24 -top-24 h-80 w-80 bg-coral/30" aria-hidden />
+        <div className="bb-glow right-0 top-10 h-72 w-72 bg-sun/40 bb-glow-soft" aria-hidden />
+        <div className="bb-glow bottom-0 left-1/3 h-72 w-72 bg-pink/20 bb-glow-soft" aria-hidden />
+
+        <div className="relative mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
+          <div className="bb-reveal">
+            <Badge color="white">{t('hero.badge')}</Badge>
             <h1 className="font-display mt-5 text-5xl leading-[0.95] md:text-6xl">
               {t('hero.title.a')} <span className="highlight">{t('hero.title.b')}</span>{' '}
-              {t('hero.title.c')} <em className="italic">{t('hero.title.d')}</em>{' '}
+              {t('hero.title.c')} <em className="font-editorial font-medium italic">{t('hero.title.d')}</em>{' '}
               {t('hero.title.e')}
             </h1>
-            <p className="mt-5 max-w-md text-lg font-medium text-ink/70">{t('hero.subtitle')}</p>
+            <p className="mt-6 max-w-md text-lg font-medium leading-relaxed text-ink/65">{t('hero.subtitle')}</p>
 
-            <div className="mt-7">
+            <div className="mt-8">
               <Button size="lg" onClick={go}>{t('hero.cta')}</Button>
-              <p className="mt-2 text-sm font-semibold text-ink/60">{t('hero.note')}</p>
+              <p className="mt-3 text-sm font-semibold text-ink/55">{t('hero.note')}</p>
             </div>
 
-            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+            <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2">
               {['hero.f1', 'hero.f2', 'hero.f3'].map((k) => (
-                <li key={k} className="flex items-center gap-1.5 text-sm font-bold">
+                <li key={k} className="flex items-center gap-1.5 text-sm font-bold text-ink/80">
                   <Check size={18} className="text-coral" strokeWidth={3} /> {t(k)}
                 </li>
               ))}
@@ -45,12 +50,12 @@ export default function Landing() {
           </div>
 
           {/* Mockup démo — rotation des 3 modes */}
-          <HeroMockup />
+          <div className="bb-reveal bb-reveal-2"><HeroMockup /></div>
         </div>
       </section>
 
       {/* ---------- POSITIONNEMENT ---------- */}
-      <section className="border-t-2 border-ink bg-cream py-12">
+      <section className="border-t border-ink/10 bg-cream py-12">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h2 className="font-display text-4xl">{t('pos.title')}</h2>
           <p className="mx-auto mt-4 max-w-xl text-lg font-medium text-ink/70">{t('pos.body')}</p>
@@ -63,7 +68,7 @@ export default function Landing() {
       </section>
 
       {/* ---------- SOCIAL PROOF (stats) ---------- */}
-      <section className="border-y-2 border-ink bg-ink py-7 text-cream">
+      <section className="border-y border-ink/10 bg-ink py-7 text-cream">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-4 md:grid-cols-4">
           {[
             ['social.s1.n', 'social.s1.l'],
@@ -108,7 +113,7 @@ export default function Landing() {
       </section>
 
       {/* ---------- COMMENT ÇA MARCHE ---------- */}
-      <section id="how" className="border-y-2 border-ink py-14">
+      <section id="how" className="border-y border-ink/10 py-14">
         <div className="mx-auto max-w-5xl px-4">
           <p className="font-display text-sm font-extrabold uppercase tracking-widest" style={{ color: '#caa511' }}>
             {t('how.eyebrow')}
@@ -176,7 +181,7 @@ export default function Landing() {
       </section>
 
       {/* ---------- TÉMOIGNAGES ---------- */}
-      <section className="border-y-2 border-ink py-14">
+      <section className="border-y border-ink/10 py-14">
         <div className="mx-auto max-w-5xl px-4">
           <p className="font-display text-sm font-extrabold uppercase tracking-widest" style={{ color: '#caa511' }}>
             {t('testi.eyebrow')}
@@ -210,7 +215,7 @@ export default function Landing() {
       <Faq />
 
       {/* ---------- PRICING ---------- */}
-      <section id="pricing" className="border-t-2 border-ink py-14">
+      <section id="pricing" className="border-t border-ink/10 py-14">
         <div className="mx-auto max-w-5xl px-4">
           <p className="font-display text-sm font-extrabold uppercase tracking-widest text-coral">
             {t('pricing.eyebrow')}
@@ -259,7 +264,7 @@ export default function Landing() {
       </section>
 
       {/* ---------- CTA FINAL ---------- */}
-      <section className="border-t-2 border-ink bg-coral py-16 text-white">
+      <section className="border-t border-ink/10 bg-coral py-16 text-white">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h2 className="font-display text-4xl leading-tight md:text-5xl">{t('cta.title')}</h2>
           <p className="mx-auto mt-4 max-w-lg text-lg font-medium text-white/90">{t('cta.sub')}</p>
@@ -269,7 +274,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t-2 border-ink py-8 text-center text-sm font-bold text-ink/50">
+      <footer className="border-t border-ink/10 py-8 text-center text-sm font-bold text-ink/50">
         <div className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-2">
           <a href="/legal/mentions-legales" className="hover:text-ink">{t('legal.mentions')}</a>
           <a href="/legal/cgu" className="hover:text-ink">{t('legal.cgu')}</a>
@@ -379,7 +384,7 @@ function Faq() {
                   </span>
                 </button>
                 {isOpen && (
-                  <p className="border-t-2 border-ink px-5 py-4 text-sm font-medium text-ink/75">
+                  <p className="border-t border-ink/10 px-5 py-4 text-sm font-medium text-ink/75">
                     {t(a)}
                   </p>
                 )}

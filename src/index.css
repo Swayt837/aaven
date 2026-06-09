@@ -51,29 +51,58 @@ body {
 }
 
 @layer components {
-  /* ---- Effet "press" néo-brutaliste ---- */
+  /* ---- Interaction premium (lift fluide + tap iOS) ---- */
   .press {
-    transition: transform 120ms ease, box-shadow 120ms ease;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1), filter 220ms ease;
   }
   .press:hover {
-    transform: translate(1px, 1px);
-    box-shadow: 3px 4px 0 0 #111111;
+    transform: translateY(-1.5px);
+    filter: brightness(1.02);
   }
   .press:active {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 2px 0 0 #111111;
+    transform: translateY(0) scale(0.975);
+    filter: brightness(0.99);
   }
 
-  /* Hover doux pour boutons des styles non-brutalistes (clean/minimal/premium) */
+  /* Hover doux (cartes / styles non-brutalistes) */
   .bb-hover {
-    transition: transform 140ms ease, filter 140ms ease, box-shadow 140ms ease;
+    transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1), filter 250ms ease, box-shadow 250ms ease;
   }
   .bb-hover:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.04);
+    transform: translateY(-3px);
+    filter: brightness(1.03);
   }
   .bb-hover:active {
-    transform: translateY(0);
+    transform: translateY(-1px) scale(0.99);
+  }
+
+  /* ---- Glassmorphism subtil ---- */
+  .bb-glass {
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  /* ---- Halo lumineux ambiant (derrière le hero / sections) ---- */
+  .bb-glow {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(72px);
+    opacity: 0.5;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .bb-glow-soft { filter: blur(96px); opacity: 0.4; }
+
+  /* Apparition élégante au montage (hero, blocs clés) */
+  .bb-reveal { animation: bb-reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .bb-reveal-1 { animation-delay: 0.06s; }
+  .bb-reveal-2 { animation-delay: 0.14s; }
+  .bb-reveal-3 { animation-delay: 0.22s; }
+  @keyframes bb-reveal {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   /* Remerciement : pop + confettis emoji */
@@ -180,22 +209,23 @@ body {
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Mot surligné dans un bloc de couleur (effet signature) */
+  /* Mot surligné dans un bloc de couleur (effet signature, adouci) */
   .highlight {
     display: inline-block;
-    background: #ef5a4c;
+    background: linear-gradient(180deg, #f2695b, #ef5a4c);
     color: #fff;
-    padding: 0 0.2em;
-    border-radius: 8px;
-    transform: rotate(-1.5deg);
+    padding: 0 0.22em;
+    border-radius: 12px;
+    transform: rotate(-1.2deg);
+    box-shadow: 0 10px 26px -8px rgba(239, 90, 76, 0.55);
   }
 }
 
-/* Accessibilité : focus visible partout */
+/* Accessibilité : focus visible premium */
 *:focus-visible {
-  outline: 3px solid #111111;
+  outline: 2px solid #ef5a4c;
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 10px;
 }
 
 /* Scrollbar discrète */
@@ -204,6 +234,9 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #111;
+  background: rgba(17, 17, 17, 0.22);
   border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 17, 17, 0.35);
 }
