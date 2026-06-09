@@ -6,12 +6,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        cream: '#FAF6EE',
-        ink: '#111111',
-        coral: '#EF5A4C',
+        // Tokens de base alignés sur l'identité « brand » (cohérence app entière).
+        cream: '#F7F7F5',
+        ink: '#0A0A0A',
+        coral: '#FF4D42',
         sun: '#F7C948',
         pink: '#F0426B',
-        lime: '#C8F050', // accent néon (glow / ponctuel)
+        lime: '#D6FF00', // accent néon (= brand.neon)
         // Fonds de carte par mode
         creator: '#FCE7EF',
         bar: '#EFEDE6',
@@ -39,9 +40,10 @@ export default {
         'hard-lg': '0 26px 64px -18px rgba(17,17,17,.30), 0 6px 16px -6px rgba(17,17,17,.12)',
         soft: '0 1px 2px rgba(17,17,17,.05), 0 8px 22px -8px rgba(17,17,17,.14)',
         float: '0 20px 52px -16px rgba(17,17,17,.32)',
-        'glow-coral': '0 12px 38px -10px rgba(239,90,76,.55)',
+        'glow-coral': '0 12px 38px -10px rgba(255,77,66,.55)',
         'glow-sun': '0 12px 38px -10px rgba(247,201,72,.5)',
         'glow-pink': '0 12px 38px -10px rgba(240,66,107,.5)',
+        'glow-neon': '0 12px 38px -10px rgba(214,255,0,.5)',
         inset1: 'inset 0 1px 0 0 rgba(255,255,255,.18)',
         pop: '3px 4px 0 0 #111111', // touche brutaliste, usage ponctuel
       },

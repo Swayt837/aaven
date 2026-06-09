@@ -38,7 +38,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream" style={{ background: 'radial-gradient(110% 60% at 85% -5%, #FFF1EC 0%, transparent 55%), radial-gradient(90% 50% at 0% 0%, #FBFCEB 0%, transparent 50%), #F7F7F5' }}>
       <Header variant="dashboard" />
       <main className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="font-display text-4xl">{t('onb.title')}</h1>

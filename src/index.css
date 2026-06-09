@@ -36,9 +36,9 @@ body,
 
 body {
   margin: 0;
-  background: #faf6ee;
-  color: #111111;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: #f7f7f5;
+  color: #0a0a0a;
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -254,18 +254,18 @@ body {
   /* Mot surligné dans un bloc de couleur (effet signature, adouci) */
   .highlight {
     display: inline-block;
-    background: linear-gradient(180deg, #f2695b, #ef5a4c);
+    background: linear-gradient(180deg, #ff5d52, #ff4d42);
     color: #fff;
     padding: 0 0.22em;
     border-radius: 12px;
     transform: rotate(-1.2deg);
-    box-shadow: 0 10px 26px -8px rgba(239, 90, 76, 0.55);
+    box-shadow: 0 10px 26px -8px rgba(255, 77, 66, 0.55);
   }
 }
 
 /* Accessibilité : focus visible premium */
 *:focus-visible {
-  outline: 2px solid #ef5a4c;
+  outline: 2px solid #ff4d42;
   outline-offset: 2px;
   border-radius: 10px;
 }

@@ -6,7 +6,7 @@ function cx(...a) {
 
 // CTA & boutons : contour net + ombre douce/glow, interactions fluides (lift + tap).
 const VARIANTS = {
-  primary: 'bg-gradient-to-b from-[#F2695B] to-coral text-white border border-coral/40 shadow-glow-coral hover:shadow-[0_18px_48px_-10px_rgba(239,90,76,.6)]',
+  primary: 'bg-gradient-to-b from-[#FF5D52] to-coral text-white border border-coral/40 shadow-glow-coral hover:shadow-[0_18px_48px_-10px_rgba(255,77,66,.6)]',
   secondary: 'bg-white text-ink border border-ink/12 shadow-soft hover:border-ink/25',
   dark: 'bg-ink text-white border border-ink shadow-float',
   pink: 'bg-pink text-white border border-pink/40 shadow-glow-pink',
