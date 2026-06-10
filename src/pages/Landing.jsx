@@ -191,9 +191,9 @@ function Hero({ onStart }) {
           </motion.div>
           <motion.h1 variants={fadeUp} className="mt-7 font-display text-[44px] font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink sm:text-6xl md:text-7xl lg:text-[88px]">
             {lang === 'en' ? (
-              <>Your bio turns into a digital{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">business</span>{' '}card that{' '}<span className="font-serif font-medium italic">generates</span> revenue.</>
+              <>Your{' '}<span className="font-serif font-medium italic">personalized</span> digital business card, built to{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">convert</span>.</>
             ) : (
-              <>Ta bio se transforme en{' '}<span className="font-serif font-medium italic">carte</span>{' '}de{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">visite</span>{' '}digitale qui{' '}<span className="font-serif font-medium italic">génère</span> du business.</>
+              <>Ta carte de visite digitale{' '}<span className="font-serif font-medium italic">personnalisée</span>, pensée pour{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">convertir</span>.</>
             )}
           </motion.h1>
           <motion.p variants={fadeUp} className="mx-auto mt-7 max-w-2xl font-sans text-lg text-brand-muted md:text-xl">{c.heroSub}</motion.p>
