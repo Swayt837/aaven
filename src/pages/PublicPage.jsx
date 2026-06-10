@@ -48,7 +48,7 @@ export default function PublicPage() {
         <div>
           <div className="text-6xl">🤷</div>
           <h1 className="font-display mt-3 text-3xl">404</h1>
-          <button onClick={() => nav('/')} className="mt-4 font-bold underline">BioBoost →</button>
+          <button onClick={() => nav('/')} className="mt-4 font-bold underline">Aaven →</button>
         </div>
       </div>
     )
@@ -81,6 +81,7 @@ export default function PublicPage() {
         products={products}
         onBuy={handleBuy}
         branding={data.branding !== false}
+        sound
         onButtonClick={handleClick}
         onTip={(b) => { api.trackClick(slug, b.id).catch(() => {}); setTip(true) }}
         onContact={(b) => { api.trackClick(slug, b.id).catch(() => {}); setContact(b) }}

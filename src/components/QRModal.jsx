@@ -13,7 +13,7 @@ export function QRModal({ url, slug, onClose }) {
     const canvas = ref.current?.querySelector('canvas')
     if (!canvas) return
     const link = document.createElement('a')
-    link.download = `bioboost-${slug}.png`
+    link.download = `aaven-${slug}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
   }

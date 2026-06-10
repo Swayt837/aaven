@@ -1,4 +1,4 @@
-# BioBoost 🚀
+# Aaven 🚀
 
 Un « link-in-bio » intelligent orienté conversion — l'alternative à Linktree qui s'adapte à ton métier via **3 modes** : Créateur, Bar / Business local, Freelance.
 

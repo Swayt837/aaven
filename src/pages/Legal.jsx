@@ -11,16 +11,16 @@ const DOCS = {
     title: 'Mentions légales',
     sections: [
       ['Éditeur du site', [
-        'Le site BioBoost est édité par BioBoost, entreprise individuelle (auto-entreprise) — exploitant : [NOM PRÉNOM].',
-        'Adresse : [ADRESSE COMPLÈTE]. SIRET : [N° SIRET]. TVA non applicable, art. 293 B du CGI (sauf dépassement des seuils).',
-        'Directeur de la publication : [NOM PRÉNOM]. Contact : [EMAIL DE CONTACT].',
+        'Le site Aaven est édité par Aaven, entreprise individuelle (auto-entreprise) — exploitant : Florian Boutot.',
+        'Adresse : 820 Avenue de Vaugrenier, 06270 Villeneuve-Loubet. SIRET : [N° SIRET]. TVA non applicable, art. 293 B du CGI (sauf dépassement des seuils).',
+        'Directeur de la publication : Florian Boutot. Contact : [EMAIL DE CONTACT].',
       ]],
       ['Hébergement', [
         'Application hébergée par Render Services, Inc. (525 Brannan Street, San Francisco, CA, USA) — render.com.',
         'Base de données et stockage des fichiers : Supabase (Supabase, Inc.) — supabase.com. Paiements : Stripe Payments Europe, Ltd.',
       ]],
       ['Propriété intellectuelle', [
-        'La marque, le logo et l’interface de BioBoost sont protégés. Les contenus publiés par les utilisateurs (textes, images, liens) restent leur propriété et relèvent de leur seule responsabilité.',
+        'La marque, le logo et l’interface d’Aaven sont protégés. Les contenus publiés par les utilisateurs (textes, images, liens) restent leur propriété et relèvent de leur seule responsabilité.',
       ]],
       ['Contact', ['Pour toute question : [EMAIL DE CONTACT].']],
     ],
@@ -28,11 +28,11 @@ const DOCS = {
   cgu: {
     title: 'Conditions Générales d’Utilisation',
     sections: [
-      ['1. Objet', ['Les présentes CGU régissent l’accès et l’utilisation du service BioBoost, qui permet de créer une page de profil (« link-in-bio ») regroupant liens, contenus et actions (soutien, réservation, contact, vente de produits numériques).']],
+      ['1. Objet', ['Les présentes CGU régissent l’accès et l’utilisation du service Aaven, qui permet de créer une page de profil (« link-in-bio ») regroupant liens, contenus et actions (soutien, réservation, contact, vente de produits numériques).']],
       ['2. Compte', ['La création d’un compte se fait via Google. Tu es responsable de l’exactitude de tes informations et de la confidentialité de l’accès à ton compte.']],
       ['3. Utilisation acceptable', [
         'Tu t’engages à ne pas publier de contenu illégal, trompeur, haineux, contrefaisant, ou portant atteinte aux droits de tiers.',
-        'BioBoost peut suspendre ou supprimer un compte/une page en cas de manquement, sans préavis en cas d’abus grave.',
+        'Aaven peut suspendre ou supprimer un compte/une page en cas de manquement, sans préavis en cas d’abus grave.',
       ]],
       ['4. Disponibilité', ['Le service est fourni « en l’état ». Nous visons une disponibilité maximale sans garantie d’absence d’interruption. Des maintenances peuvent survenir.']],
       ['5. Responsabilité', ['L’utilisateur est seul responsable des contenus et des liens qu’il publie, ainsi que des produits/services qu’il propose via sa page.']],
@@ -44,15 +44,15 @@ const DOCS = {
     title: 'Conditions Générales de Vente',
     sections: [
       ['1. Champ d’application', [
-        'Les présentes CGV s’appliquent (a) aux abonnements payants BioBoost (Creator, Pro) souscrits par les utilisateurs, et (b) au rôle de BioBoost en tant qu’intermédiaire technique pour les paiements reçus par les créateurs (soutiens/tips et ventes de produits numériques), encaissés via Stripe.',
+        'Les présentes CGV s’appliquent (a) aux abonnements payants Aaven (Creator, Pro) souscrits par les utilisateurs, et (b) au rôle d’Aaven en tant qu’intermédiaire technique pour les paiements reçus par les créateurs (soutiens/tips et ventes de produits numériques), encaissés via Stripe.',
       ]],
       ['2. Abonnements et prix', [
         'Creator : 7 €/mois. Pro : 15 €/mois. Plan Free : 0 €. Prix TTC le cas échéant ; la TVA applicable est calculée par Stripe.',
         'L’abonnement est mensuel, sans engagement, renouvelé automatiquement jusqu’à résiliation depuis l’espace client / le portail Stripe.',
       ]],
-      ['3. Paiement', ['Les paiements sont traités par Stripe. BioBoost ne stocke aucune donnée de carte bancaire.']],
+      ['3. Paiement', ['Les paiements sont traités par Stripe. Aaven ne stocke aucune donnée de carte bancaire.']],
       ['4. Commissions', [
-        'Sur les soutiens et ventes encaissés par les créateurs via Stripe Connect, BioBoost prélève une commission selon le plan (Free 5 %, Creator 1 %, Pro 0 %), en sus des frais Stripe. Les créateurs sont responsables de leurs obligations fiscales et, le cas échéant, de la conformité de leurs offres.',
+        'Sur les soutiens et ventes encaissés par les créateurs via Stripe Connect, Aaven prélève une commission selon le plan (Free 5 %, Creator 1 %, Pro 0 %), en sus des frais Stripe. Les créateurs sont responsables de leurs obligations fiscales et, le cas échéant, de la conformité de leurs offres.',
       ]],
       ['5. Droit de rétractation', [
         'Abonnements : conformément au Code de la consommation, le service numérique débutant immédiatement, tu reconnais renoncer à ton droit de rétractation une fois l’accès activé.',
@@ -65,7 +65,7 @@ const DOCS = {
   confidentialite: {
     title: 'Politique de confidentialité',
     sections: [
-      ['Responsable du traitement', ['BioBoost (entreprise individuelle / auto-entreprise), exploitant : [NOM PRÉNOM]. Contact : [EMAIL DE CONTACT].']],
+      ['Responsable du traitement', ['Aaven (entreprise individuelle / auto-entreprise), exploitant : Florian Boutot. Contact : [EMAIL DE CONTACT].']],
       ['Données collectées', [
         'Compte : nom, e-mail et photo fournis par Google lors de la connexion.',
         'Contenu : pages, liens, textes, images/fichiers que tu publies.',
@@ -81,7 +81,7 @@ const DOCS = {
       ['Sous-traitants', ['Google (authentification), Supabase (base de données & stockage), Render (hébergement), Stripe (paiements). Des transferts hors UE peuvent intervenir, encadrés par des garanties appropriées.']],
       ['Durée de conservation', ['Les données sont conservées tant que ton compte est actif, puis supprimées après clôture (sauf obligations légales, ex. comptables pour les factures).']],
       ['Tes droits', ['Accès, rectification, effacement, portabilité, opposition. Tu peux supprimer ta page/ton compte à tout moment, ou nous écrire à [EMAIL DE CONTACT]. Réclamation possible auprès de la CNIL (cnil.fr).']],
-      ['Cookies', ['BioBoost n’utilise qu’un cookie strictement nécessaire (session de connexion). Aucun cookie publicitaire ni traceur tiers. La mesure d’audience est anonyme et côté serveur.']],
+      ['Cookies', ['Aaven n’utilise qu’un cookie strictement nécessaire (session de connexion). Aucun cookie publicitaire ni traceur tiers. La mesure d’audience est anonyme et côté serveur.']],
     ],
   },
 }

@@ -27,7 +27,7 @@ export function ShareLink({ url, className = '' }) {
   }
 
   async function share() {
-    try { await navigator.share({ url, title: 'BioBoost' }) } catch { /* annulé */ }
+    try { await navigator.share({ url, title: 'Aaven' }) } catch { /* annulé */ }
   }
 
   return (

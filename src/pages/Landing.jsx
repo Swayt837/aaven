@@ -5,7 +5,7 @@ import Marquee from 'react-fast-marquee'
 import { ResponsiveContainer, LineChart, Line } from 'recharts'
 import {
   Sparkles, ArrowRight, Check, Star, Menu, X, Instagram, CalendarCheck,
-  ShoppingBag, MapPin, Dumbbell, Palette, UserCircle2, Wand2, Rocket, Zap, BarChart3,
+  ShoppingBag, MapPin, Dumbbell, Palette, Zap, BarChart3,
   Mail, QrCode, Smartphone, Globe, Heart,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
@@ -16,12 +16,25 @@ const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transi
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } } }
 const viewport = { once: true, margin: '-100px' }
 
+// Vitesse de marquee responsive : un peu plus rapide sur mobile.
+function useMarqueeSpeed(base, mobile) {
+  const [speed, setSpeed] = useState(base)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setSpeed(mq.matches ? mobile : base)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [base, mobile])
+  return speed
+}
+
 /* ============================ Copy (FR / EN) ============================ */
 const T = {
   fr: {
     nav: { features: 'Fonctionnalités', examples: 'Exemples', pricing: 'Tarifs', testimonials: 'Témoignages' },
     start: 'Commencer',
-    heroBadge: 'Ta carte d’identité digitale',
+    heroBadge: 'Ta carte de visite digitale',
     heroSub: 'Pas une simple page de liens. Une interface vivante qui montre qui tu es, ce que tu fais, et transforme tes visiteurs en clients, réservations ou revenus.',
     heroCta: 'Créer ma page gratuite', heroSee: 'Voir les exemples',
     heroMicro: '✦ Gratuit pour démarrer · Évolue quand tu veux',
@@ -29,7 +42,7 @@ const T = {
     marquee: ['10 000+ créateurs', 'Tips & dons', 'Réservations', 'Lead capture', 'Analytics'],
     floatClient: ['Nouveau client', 'Léa vient de réserver'], floatQuotes: ['+12 DEVIS', 'Cette semaine'], floatTips: 'de tips ce mois',
     showBadge: 'Profils en action', showSub: 'Une présence digitale unique, pensée pour toi.',
-    showTags: ['Créateur', 'Restaurant', 'Coach', 'Freelance', 'Artiste'], showCta: 'Créer la mienne', notif: '+1 soutien',
+    showTags: ['Créateur', 'Restaurant', 'Coach', 'Freelance', 'Artiste'], showCta: 'Créer la mienne', notif: '+1 soutien', wallLabel: 'soutiens',
     howBadge: 'Comment ça marche', howSteps: ['Choisis ton identité', 'Personnalise en 30 secondes', 'Partage. Capture. Convertis.'],
     feBadge: 'Toutes les armes',
     fe: {
@@ -42,17 +55,17 @@ const T = {
     },
     tBadge: 'Ils en parlent',
     stats: [['10 000+', 'créateurs'], ['2,4M', 'clics générés'], ['94%', 'recommandent'], ['4,9★', 'note moyenne']],
-    prBadge: 'Tarifs', prSub: 'Sur les tips et les ventes, BioBoost ne prélève qu’une petite commission — tu gardes presque tout.',
+    prBadge: 'Tarifs', prSub: 'Sur les tips et les ventes, Aaven ne prélève qu’une petite commission — tu gardes presque tout.',
     popular: 'Populaire', feeWord: 'de commission', ctaFree: 'Commencer gratuitement', ctaGo: 'Passer',
     finalBadge: 'Dernière étape', finalSub: 'Crée ta page en 30 secondes. Sans carte bancaire, sans engagement.',
     finalCta: 'Créer ma page gratuite', finalSee: 'Voir les exemples',
-    finalFeatures: ['Sans code', 'Paiements Stripe', 'Analytics', 'QR code', 'Domaine perso', 'Mobile-first'],
+    finalFeatures: ['Zéro compétence technique', 'Encaisse en 1 clic', 'Analytics', 'QR code', 'Domaine perso', 'Sublime sur mobile'],
     footer: ['Mentions légales', 'CGU', 'Confidentialité', 'Contact'],
   },
   en: {
     nav: { features: 'Features', examples: 'Examples', pricing: 'Pricing', testimonials: 'Reviews' },
     start: 'Get started',
-    heroBadge: 'Your digital identity card',
+    heroBadge: 'Your digital business card',
     heroSub: 'Not just a list of links. A living interface that shows who you are, what you do, and turns visitors into clients, bookings or revenue.',
     heroCta: 'Create my free page', heroSee: 'See examples',
     heroMicro: '✦ Free to start · Upgrade anytime',
@@ -60,7 +73,7 @@ const T = {
     marquee: ['10,000+ creators', 'Tips & donations', 'Bookings', 'Lead capture', 'Analytics'],
     floatClient: ['New client', 'Léa just booked'], floatQuotes: ['+12 QUOTES', 'This week'], floatTips: 'in tips this month',
     showBadge: 'Profiles in action', showSub: 'A unique digital presence, built for you.',
-    showTags: ['Creator', 'Restaurant', 'Coach', 'Freelance', 'Artist'], showCta: 'Create mine', notif: '+1 support',
+    showTags: ['Creator', 'Restaurant', 'Coach', 'Freelance', 'Artist'], showCta: 'Create mine', notif: '+1 support', wallLabel: 'supporters',
     howBadge: 'How it works', howSteps: ['Choose your identity', 'Customize in 30 seconds', 'Share. Capture. Convert.'],
     feBadge: 'Every tool',
     fe: {
@@ -73,11 +86,11 @@ const T = {
     },
     tBadge: 'What they say',
     stats: [['10,000+', 'creators'], ['2.4M', 'clicks generated'], ['94%', 'recommend'], ['4.9★', 'average rating']],
-    prBadge: 'Pricing', prSub: 'On tips and sales, BioBoost only takes a small fee — you keep almost everything.',
+    prBadge: 'Pricing', prSub: 'On tips and sales, Aaven only takes a small fee — you keep almost everything.',
     popular: 'Popular', feeWord: 'fee', ctaFree: 'Start for free', ctaGo: 'Go',
     finalBadge: 'Last step', finalSub: 'Create your page in 30 seconds. No credit card, no commitment.',
     finalCta: 'Create my free page', finalSee: 'See examples',
-    finalFeatures: ['No code', 'Stripe payments', 'Analytics', 'QR code', 'Custom domain', 'Mobile-first'],
+    finalFeatures: ['No tech skills needed', 'Get paid in 1 tap', 'Analytics', 'QR code', 'Custom domain', 'Stunning on mobile'],
     footer: ['Legal notice', 'Terms', 'Privacy', 'Contact'],
   },
 }
@@ -87,8 +100,11 @@ const useCopy = () => { const { lang } = useI18n(); return T[lang] || T.fr }
 function Logo() {
   return (
     <a href="/" data-testid="logo" className="inline-flex items-center gap-2">
-      <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-brand-neon font-display text-base font-extrabold text-brand-ink">Bio</span>
-      <span className="font-display text-xl font-extrabold tracking-[-0.03em] text-brand-ink">Boost</span>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" className="text-brand-ink" aria-hidden>
+        <path d="M4.5 20 L12 4 L19.5 20" />
+        <path d="M8.2 13.6 H15.8" />
+      </svg>
+      <span className="font-sans text-[1.4rem] font-bold tracking-[-0.04em] text-brand-ink">Aaven</span>
     </a>
   )
 }
@@ -163,6 +179,7 @@ function Header({ onStart }) {
 function Hero({ onStart }) {
   const c = useCopy()
   const { lang } = useI18n()
+  const marqueeSpeed = useMarqueeSpeed(42, 75)
   return (
     <section className="relative overflow-hidden pb-16 pt-28 md:pt-36" data-testid="hero">
       <div aria-hidden className="pointer-events-none absolute -left-24 -top-10 h-[26rem] w-[26rem] rounded-full bg-brand-neon/40 blur-[90px]" />
@@ -174,9 +191,9 @@ function Hero({ onStart }) {
           </motion.div>
           <motion.h1 variants={fadeUp} className="mt-7 font-display text-[44px] font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink sm:text-6xl md:text-7xl lg:text-[88px]">
             {lang === 'en' ? (
-              <>Your bio turns into a digital{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identity</span>{' '}card that{' '}<span className="font-serif font-medium italic">generates</span> business.</>
+              <>Your bio turns into a digital{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">business</span>{' '}card that{' '}<span className="font-serif font-medium italic">generates</span> revenue.</>
             ) : (
-              <>Ta bio se transforme en{' '}<span className="font-serif font-medium italic">carte</span>{' '}d’<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identité</span>{' '}digitale qui{' '}<span className="font-serif font-medium italic">génère</span> du business.</>
+              <>Ta bio se transforme en{' '}<span className="font-serif font-medium italic">carte</span>{' '}de{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">visite</span>{' '}digitale qui{' '}<span className="font-serif font-medium italic">génère</span> du business.</>
             )}
           </motion.h1>
           <motion.p variants={fadeUp} className="mx-auto mt-7 max-w-2xl font-sans text-lg text-brand-muted md:text-xl">{c.heroSub}</motion.p>
@@ -213,7 +230,7 @@ function Hero({ onStart }) {
       </Container>
 
       <div className="mt-16 border-y-2 border-brand-ink bg-brand-ink py-4">
-        <Marquee speed={42} autoFill>
+        <Marquee speed={marqueeSpeed} autoFill>
           {c.marquee.map((w, i) => <span key={i} className="mx-6 inline-flex items-center gap-6 font-display text-lg font-extrabold uppercase tracking-wide text-brand-cream">{w} <Star size={16} className={i % 2 ? 'text-brand-neon' : 'text-brand-coral'} fill="currentColor" /></span>)}
         </Marquee>
       </div>
@@ -224,22 +241,22 @@ function Hero({ onStart }) {
 /* ============================ Profile Showcase ============================ */
 const SUPA = 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium'
 const PROFILE_META = [
-  { id: 'lea-creator', name: 'Léa', handle: '@lea.mode', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`, accent: '#FF4D42', icons: [Heart, Instagram, ShoppingBag] },
+  { id: 'lea-creator', name: 'Léa', handle: '@lea.mode', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`, accent: '#FF4D42', icons: [Heart, Instagram, ShoppingBag], wall: '1,2k' },
   { id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', img: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`, accent: '#F7C948', icons: [CalendarCheck, ShoppingBag, MapPin] },
-  { id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4`, accent: '#D6FF00', icons: [Heart, CalendarCheck, Dumbbell] },
+  { id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4`, accent: '#D6FF00', icons: [Heart, CalendarCheck, Dumbbell], wall: '480' },
   { id: 'noah-designer', name: 'Noah', handle: '@noah.studio', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`, accent: '#38BDF8', icons: [Palette, Mail, CalendarCheck] },
 ]
 const PROFILE_COPY = {
   fr: {
-    'lea-creator': { role: 'Créatrice mode', bio: 'Outfits quotidiens & bons plans shopping.', links: ['Me soutenir (tip)', 'Instagram', 'Mes pièces favorites'] },
+    'lea-creator': { role: 'Créatrice mode', bio: 'Outfits quotidiens & bons plans shopping.', links: ['Me soutenir (tip)', 'Instagram', 'Mes pièces favorites'], supporters: [{ name: 'Manon', msg: 'Tes lookbooks sont incroyables 😍', reply: 'Merci Manon, ça me touche ! 💕' }, { name: 'Inès', msg: 'Hâte de la prochaine collab !' }] },
     'marco-resto': { role: 'Restaurant', bio: 'Cuisine italienne de saison à Lyon.', links: ['Réserver une table', 'Le menu', 'Itinéraire'] },
-    'sofia-coach': { role: 'Coach fitness', bio: 'Programmes & coaching en ligne.', links: ['Me soutenir (tip)', 'Réserver une séance', 'Mes programmes'] },
+    'sofia-coach': { role: 'Coach fitness', bio: 'Programmes & coaching en ligne.', links: ['Me soutenir (tip)', 'Réserver une séance', 'Mes programmes'], supporters: [{ name: 'Karim', msg: 'Programme au top, merci coach 💪', reply: 'On lâche rien Karim ! 🔥' }, { name: 'Julie', msg: '+3 kg de muscle en 2 mois !' }] },
     'noah-designer': { role: 'Designer freelance', bio: 'Identités de marque & sites premium.', links: ['Voir mes projets', 'Demander un devis', 'Réserver un call'] },
   },
   en: {
-    'lea-creator': { role: 'Fashion creator', bio: 'Daily outfits & shopping tips.', links: ['Support me (tip)', 'Instagram', 'My favorite picks'] },
+    'lea-creator': { role: 'Fashion creator', bio: 'Daily outfits & shopping tips.', links: ['Support me (tip)', 'Instagram', 'My favorite picks'], supporters: [{ name: 'Manon', msg: 'Your lookbooks are incredible 😍', reply: 'Thank you Manon, means a lot! 💕' }, { name: 'Inès', msg: 'Can’t wait for the next collab!' }] },
     'marco-resto': { role: 'Restaurant', bio: 'Seasonal Italian cuisine in Lyon.', links: ['Book a table', 'Menu', 'Directions'] },
-    'sofia-coach': { role: 'Fitness coach', bio: 'Online programs & coaching.', links: ['Support me (tip)', 'Book a session', 'My programs'] },
+    'sofia-coach': { role: 'Fitness coach', bio: 'Online programs & coaching.', links: ['Support me (tip)', 'Book a session', 'My programs'], supporters: [{ name: 'Karim', msg: 'Best program ever, thanks coach 💪', reply: 'Keep pushing Karim! 🔥' }, { name: 'Julie', msg: '+3 kg of muscle in 2 months!' }] },
     'noah-designer': { role: 'Freelance designer', bio: 'Brand identities & premium sites.', links: ['See my work', 'Request a quote', 'Book a call'] },
   },
 }
@@ -258,7 +275,7 @@ function VideoBg({ src }) {
   return <video ref={ref} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" aria-hidden />
 }
 
-function PhoneCard({ p, copy, notif }) {
+function PhoneCard({ p, copy, notif, wallLabel }) {
   const rowCls = 'border border-white/20 bg-white/10 text-white backdrop-blur-md'
   return (
     <div className="relative mx-auto w-[320px]" data-testid={`profile-card-${p.id}`}>
@@ -286,6 +303,23 @@ function PhoneCard({ p, copy, notif }) {
                 </div>
               ))}
             </div>
+            {p.wall && (
+              <div className="mt-6" data-testid={`supporter-wall-${p.id}`}>
+                <div className="mb-3 flex items-center justify-center gap-1.5 font-display text-sm font-extrabold text-white">
+                  <Heart size={14} fill={p.accent} stroke={p.accent} /> {p.wall} {wallLabel}
+                </div>
+                {copy.supporters?.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {copy.supporters.map((s, i) => (
+                      <div key={i} className="rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 backdrop-blur-md">
+                        <p className="font-sans text-sm text-white/90"><span className="font-display font-extrabold text-white">{s.name}</span> <span className="text-white/70">· {s.msg}</span></p>
+                        {s.reply && <p className="mt-1 font-sans text-xs font-semibold" style={{ color: p.accent }}>↳ {s.reply}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -320,41 +354,11 @@ function ProfileShowcase({ onStart }) {
           <div className="space-y-36 lg:col-span-7">
             {PROFILE_META.map((p) => (
               <motion.div key={p.id} initial={{ opacity: 0, y: 80 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.7, ease: EASE }}>
-                <PhoneCard p={p} copy={pc[p.id]} notif={c.notif} />
+                <PhoneCard p={p} copy={pc[p.id]} notif={c.notif} wallLabel={c.wallLabel} />
               </motion.div>
             ))}
           </div>
         </div>
-      </Container>
-    </section>
-  )
-}
-
-/* ============================ How it works ============================ */
-function HowItWorks() {
-  const c = useCopy()
-  const { lang } = useI18n()
-  const meta = [
-    { n: '01', icon: UserCircle2, card: 'bg-brand-ink text-white', accent: 'text-brand-neon' },
-    { n: '02', icon: Wand2, card: 'bg-brand-coral text-white', accent: 'text-white' },
-    { n: '03', icon: Rocket, card: 'bg-brand-neon text-brand-ink', accent: 'text-brand-ink' },
-  ]
-  return (
-    <section className="bg-brand-cream py-24 md:py-32" data-testid="how-it-works">
-      <Container>
-        <Badge testid="how-badge">{c.howBadge}</Badge>
-        <h2 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
-          {lang === 'en' ? (<>Three steps. <span className="font-serif font-medium italic">Zero</span> excuses.</>) : (<>Trois étapes. <span className="font-serif font-medium italic">Zéro</span> excuse.</>)}
-        </h2>
-        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="mt-12 grid gap-6 md:grid-cols-3">
-          {meta.map((s, i) => (
-            <motion.div key={s.n} variants={fadeUp} transition={{ delay: i * 0.12 }} className={`group relative h-[340px] overflow-hidden rounded-[28px] border-2 border-brand-ink p-7 shadow-[6px_6px_0px_#0A0A0A] ${s.card}`} data-testid={`step-${i}`}>
-              <span className={`font-display text-7xl font-extrabold opacity-30 transition-opacity duration-300 group-hover:opacity-100 ${s.accent}`}>{s.n}</span>
-              <s.icon size={40} strokeWidth={2.5} className={`mt-6 ${s.accent}`} />
-              <h3 className="mt-4 font-display text-2xl font-extrabold leading-tight tracking-[-0.02em]">{c.howSteps[i]}</h3>
-            </motion.div>
-          ))}
-        </motion.div>
       </Container>
     </section>
   )
@@ -399,7 +403,7 @@ function BentoFeatures() {
           </motion.div>
           <motion.div variants={fadeUp} className="flex flex-col items-center gap-5 rounded-[28px] border-2 border-brand-ink bg-white p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-12 lg:flex-row lg:justify-between" data-testid="feature-domain">
             <div className="flex items-center gap-6"><Globe className="text-brand-ink" /><QrCode className="text-brand-ink" /><Smartphone className="text-brand-ink" /></div>
-            <div className="rounded-full border-2 border-brand-ink bg-brand-cream px-5 py-2.5 font-display text-lg font-extrabold">bioboost.fr/<span className="text-brand-coral">toi</span></div>
+            <div className="rounded-full border-2 border-brand-ink bg-brand-cream px-5 py-2.5 font-display text-lg font-extrabold">aaven.bio/<span className="text-brand-coral">toi</span></div>
             <p className="font-sans text-sm font-semibold text-brand-muted">{fe.domain}</p>
           </motion.div>
         </motion.div>
@@ -409,26 +413,33 @@ function BentoFeatures() {
 }
 
 /* ============================ Testimonials ============================ */
+const TESTI_IMG = {
+  camille: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=120&q=70',
+  antoine: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=70',
+  sofia: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=70',
+  noah: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=70',
+  marco: 'https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?auto=format&fit=crop&w=120&q=70',
+}
 const TESTI_FR = [
-  { name: 'Camille', role: 'Créatrice mode', quote: 'Mes ventes ont doublé en 2 mois. La page convertit vraiment.' },
-  { name: 'Antoine', role: 'Restaurateur', quote: 'Les réservations arrivent directement depuis mon lien Insta.' },
-  { name: 'Sofia', role: 'Coach', quote: 'Mes clients réservent leurs séances en 2 clics. Magique.' },
-  { name: 'Noah', role: 'Designer', quote: 'Mes devis ont explosé. L’interface fait premium direct.' },
-  { name: 'Marco', role: 'Chef étoilé', quote: 'Enfin une page à la hauteur de mon restaurant.' },
+  { name: 'Camille', role: 'Créatrice mode', img: TESTI_IMG.camille, quote: 'Mes ventes ont doublé en 2 mois. La page convertit vraiment.' },
+  { name: 'Antoine', role: 'Restaurateur', img: TESTI_IMG.antoine, quote: 'Les réservations arrivent directement depuis mon lien Insta.' },
+  { name: 'Sofia', role: 'Coach', img: TESTI_IMG.sofia, quote: 'Mes clients réservent leurs séances en 2 clics. Magique.' },
+  { name: 'Noah', role: 'Designer', img: TESTI_IMG.noah, quote: 'Mes devis ont explosé. L’interface fait premium direct.' },
+  { name: 'Marco', role: 'Chef étoilé', img: TESTI_IMG.marco, quote: 'Enfin une page à la hauteur de mon restaurant.' },
 ]
 const TESTI_EN = [
-  { name: 'Camille', role: 'Fashion creator', quote: 'My sales doubled in 2 months. The page really converts.' },
-  { name: 'Antoine', role: 'Restaurant owner', quote: 'Bookings come straight from my Insta link.' },
-  { name: 'Sofia', role: 'Coach', quote: 'My clients book sessions in 2 taps. Magic.' },
-  { name: 'Noah', role: 'Designer', quote: 'My quotes exploded. The interface feels instantly premium.' },
-  { name: 'Marco', role: 'Michelin chef', quote: 'Finally a page worthy of my restaurant.' },
+  { name: 'Camille', role: 'Fashion creator', img: TESTI_IMG.camille, quote: 'My sales doubled in 2 months. The page really converts.' },
+  { name: 'Antoine', role: 'Restaurant owner', img: TESTI_IMG.antoine, quote: 'Bookings come straight from my Insta link.' },
+  { name: 'Sofia', role: 'Coach', img: TESTI_IMG.sofia, quote: 'My clients book sessions in 2 taps. Magic.' },
+  { name: 'Noah', role: 'Designer', img: TESTI_IMG.noah, quote: 'My quotes exploded. The interface feels instantly premium.' },
+  { name: 'Marco', role: 'Michelin chef', img: TESTI_IMG.marco, quote: 'Finally a page worthy of my restaurant.' },
 ]
 function TestiCard({ t }) {
   return (
     <div className="mx-3 w-[380px] rounded-[28px] border-2 border-brand-ink bg-brand-cream p-6 shadow-[5px_5px_0px_#0A0A0A]">
       <div className="flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={16} className="text-brand-coral" fill="currentColor" />)}</div>
       <p className="mt-4 font-display text-lg font-bold leading-snug tracking-[-0.01em] text-brand-ink">“{t.quote}”</p>
-      <div className="mt-5 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full border-2 border-brand-ink bg-brand-neon font-display font-extrabold">{t.name[0]}</span><div><p className="font-display text-sm font-extrabold">{t.name}</p><p className="font-sans text-xs text-brand-muted">{t.role}</p></div></div>
+      <div className="mt-5 flex items-center gap-3"><img src={t.img} alt={t.name} loading="lazy" className="h-10 w-10 rounded-full border-2 border-brand-ink object-cover" /><div><p className="font-display text-sm font-extrabold">{t.name}</p><p className="font-sans text-xs text-brand-muted">{t.role}</p></div></div>
     </div>
   )
 }
@@ -463,13 +474,13 @@ const TIERS_BASE = [
 ]
 const TIER_FEATURES = {
   fr: {
-    free: ['1 page + tous les boutons', '3 produits digitaux', '3 templates vidéo offerts', 'CTA personnalisés', 'Tips & analytics inclus'],
-    creator: ['Sans branding BioBoost', 'Templates vidéo premium', 'Importe GIF/vidéo (5 s)', 'Produits illimités', 'Ton lien pro perso'],
+    free: ['1 page + tous les boutons', '3 produits digitaux', '3 templates vidéo offerts', 'Importe ta photo de fond', 'Tips & analytics inclus'],
+    creator: ['Sans branding Aaven', 'Templates vidéo premium', 'Importe GIF/vidéo (5 s)', 'Produits illimités', 'Ton lien pro perso'],
     pro: ['Tout de Creator', 'Importe ta vidéo (15 s max)', 'Support prioritaire'],
   },
   en: {
-    free: ['1 page + all buttons', '3 digital products', '3 free video templates', 'Custom CTAs', 'Tips & analytics included'],
-    creator: ['No BioBoost branding', 'Premium video templates', 'Upload GIF/video (5s)', 'Unlimited products', 'Your pro custom link'],
+    free: ['1 page + all buttons', '3 digital products', '3 free video templates', 'Upload your background photo', 'Tips & analytics included'],
+    creator: ['No Aaven branding', 'Premium video templates', 'Upload GIF/video (5s)', 'Unlimited products', 'Your pro custom link'],
     pro: ['Everything in Creator', 'Upload your video (15s max)', 'Priority support'],
   },
 }
@@ -483,7 +494,7 @@ function Pricing({ onStart }) {
       <Container>
         <Badge tone="neon" testid="pricing-badge">{c.prBadge}</Badge>
         <h2 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink md:text-6xl lg:text-7xl">
-          {lang === 'en' ? (<>Start free. <span className="font-serif font-medium italic text-brand-coral">Monetize</span> when you want.</>) : (<>Commence gratuit. <span className="font-serif font-medium italic text-brand-coral">Monétise</span> quand tu veux.</>)}
+          {lang === 'en' ? (<>Start free. <span className="font-serif font-medium italic text-brand-coral">Upgrade</span> when you want.</>) : (<>Commence gratuit. <span className="font-serif font-medium italic text-brand-coral">Évolue</span> quand tu veux.</>)}
         </h2>
         <p className="mt-6 max-w-xl font-sans text-lg text-brand-muted">{c.prSub}</p>
         <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="mt-12 grid items-start gap-6 md:grid-cols-3">
@@ -536,14 +547,14 @@ function FinalCTA({ onStart }) {
         </div>
         <footer className="mt-24 border-t border-white/10 pt-10">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-[9px] bg-brand-neon font-display text-sm font-extrabold text-brand-ink">Bio</span><span className="font-display text-lg font-extrabold">Boost</span></div>
+            <div className="flex items-center gap-2 text-white"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4.5 20 L12 4 L19.5 20" /><path d="M8.2 13.6 H15.8" /></svg><span className="font-sans text-lg font-bold tracking-[-0.04em]">Aaven</span></div>
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 font-sans text-sm font-semibold text-white/60">
               <a href="/legal/mentions-legales" className="hover:text-white">{c.footer[0]}</a>
               <a href="/legal/cgu" className="hover:text-white">{c.footer[1]}</a>
               <a href="/legal/confidentialite" className="hover:text-white">{c.footer[2]}</a>
               <a href="/legal/cgv" className="hover:text-white">{c.footer[3]}</a>
             </div>
-            <p className="font-sans text-sm text-white/40">© 2026 BioBoost</p>
+            <p className="font-sans text-sm text-white/40">© 2026 Aaven</p>
           </div>
         </footer>
       </Container>
@@ -561,7 +572,6 @@ export default function Landing() {
       <Header onStart={onStart} />
       <Hero onStart={onStart} />
       <ProfileShowcase onStart={onStart} />
-      <HowItWorks />
       <BentoFeatures />
       <Testimonials />
       <Pricing onStart={onStart} />

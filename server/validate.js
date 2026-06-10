@@ -72,7 +72,13 @@ export function sanitizeButtonConfig(type, config) {
     const email = clampStr(config.email, 160)
     return { mode, phone, email }
   }
-  if (type === 'link') {
+  if (type === 'contact') {
+    const mode = ['form', 'email', 'whatsapp'].includes(config.mode) ? config.mode : 'form'
+    const phone = clampStr(config.phone, 40)
+    const email = clampStr(config.email, 160)
+    return { mode, phone, email }
+  }
+  if (type === 'link' || type === 'products') {
     const links = (Array.isArray(config.links) ? config.links : [])
       .slice(0, 30)
       .map((l) => ({ url: sanitizeUrl(l && l.url), label: clampStr(l && l.label, 60) }))

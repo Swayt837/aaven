@@ -4,7 +4,7 @@ import { useI18n } from '../lib/i18n'
 
 const KEY = 'bb_cookie_ack'
 
-// Bandeau d'information cookies. BioBoost n'utilise qu'un cookie de session
+// Bandeau d'information cookies. Aaven n'utilise qu'un cookie de session
 // strictement nécessaire (exempté de consentement) + une mesure d'audience
 // anonyme côté serveur → bandeau informatif avec acquittement.
 export function CookieBanner() {

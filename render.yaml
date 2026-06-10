@@ -1,9 +1,9 @@
-# Blueprint Render — déploiement BioBoost (serveur Node persistant).
+# Blueprint Render — déploiement Aaven (serveur Node persistant).
 # Render lit ce fichier si tu crées le service via "New + → Blueprint".
 # Sinon, tu peux configurer les mêmes valeurs à la main dans le dashboard.
 services:
   - type: web
-    name: bioboost
+    name: aaven
     runtime: node
     plan: free # passe en "starter" (~7$/mois) pour éviter la mise en veille (cold start ~30s)
     region: frankfurt # proche de l'UE / de ta base Supabase eu-west
@@ -18,7 +18,7 @@ services:
       - key: DATABASE_URL
         sync: false # à coller dans le dashboard (chaîne Supabase, %3F pour le ?)
       - key: APP_URL
-        sync: false # ex: https://bioboost.onrender.com (ou ton domaine)
+        sync: false # ex: https://aaven.onrender.com (ou ton domaine)
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY

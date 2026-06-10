@@ -1,4 +1,4 @@
-// Composants UI BioBoost — néo-brutalisme premium (contours bold + élévation douce).
+// Composants UI Aaven — néo-brutalisme premium (contours bold + élévation douce).
 
 function cx(...a) {
   return a.filter(Boolean).join(' ')

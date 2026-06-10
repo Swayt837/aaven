@@ -1,4 +1,5 @@
-import { ArrowRight, Heart } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowRight, Heart, Volume2, VolumeX } from 'lucide-react'
 import { Icon } from './Icon'
 import { modeOf, BUTTON_TYPES, faviconUrl } from '../lib/modes'
 import { useI18n } from '../lib/i18n'
@@ -401,6 +402,17 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
               }
               if (onQuote) return onQuote(b)
             }
+            if (b.type === 'contact') {
+              const m = b.config?.mode || 'form'
+              if (m === 'email' && b.config?.email) {
+                return onButtonClick && onButtonClick({ ...b, url: `mailto:${b.config.email}` })
+              }
+              if (m === 'whatsapp' && b.config?.phone) {
+                const num = b.config.phone.replace(/\D/g, '')
+                return onButtonClick && onButtonClick({ ...b, url: `https://wa.me/${num}` })
+              }
+              if (onContact) return onContact(b)
+            }
             if (act === 'contact' && onContact) return onContact(b)
             if (act === 'services' && b.config?.items?.length && onServices) return onServices(b)
             if (b.type === 'reserve') {
@@ -408,7 +420,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
               if (m === 'form' && onReserve) return onReserve(b)
               if (m === 'phone' && b.config?.phone) return onButtonClick && onButtonClick({ ...b, url: `tel:${b.config.phone}` })
             }
-            if (b.type === 'link') {
+            if (b.type === 'link' || b.type === 'products') {
               const links = (b.config?.links || []).filter((l) => l && l.url)
               if (links.length > 1 && onLinks) return onLinks(b)
               if (links.length === 1) return onButtonClick && onButtonClick({ ...b, url: links[0].url })
@@ -517,9 +529,78 @@ export function BioSurface({ page, buttons, onButtonClick, onTip, onContact, sup
   )
 }
 
+// Vidéo de fond. Démarre TOUJOURS en muet (sinon les navigateurs bloquent l'autoplay).
+// Si `sound`, on tente d'activer le son (volume d'ambiance modéré) immédiatement, puis au
+// 1er geste du visiteur (tap/scroll/clic) — c'est la règle des navigateurs. Un petit bouton
+// permet de couper/réactiver à tout moment.
+function BgVideo({ src, loop = false, sound = false, className, style }) {
+  const ref = useRef(null)
+  const [muted, setMuted] = useState(true)
+
+  useEffect(() => {
+    if (!sound) return
+    const v = ref.current
+    if (!v) return
+
+    const tryUnmute = () => {
+      v.muted = false
+      v.volume = 0.3 // ambiance, pas fort
+      const p = v.play()
+      if (p && p.then) {
+        p.then(() => setMuted(false)).catch(() => {
+          // refusé sans geste → on reste muet et on continue de jouer
+          v.muted = true
+          setMuted(true)
+          const r = v.play()
+          if (r && r.catch) r.catch(() => {})
+        })
+      } else {
+        setMuted(v.muted)
+      }
+    }
+
+    const events = ['pointerdown', 'touchstart', 'keydown', 'click']
+    const onGesture = () => {
+      tryUnmute()
+      events.forEach((e) => window.removeEventListener(e, onGesture))
+    }
+    tryUnmute() // tentative immédiate (échoue souvent → activée au 1er geste)
+    events.forEach((e) => window.addEventListener(e, onGesture, { passive: true }))
+    return () => events.forEach((e) => window.removeEventListener(e, onGesture))
+  }, [sound, src])
+
+  const toggle = () => {
+    const v = ref.current
+    if (!v) return
+    v.muted = !v.muted
+    if (!v.muted) {
+      v.volume = 0.3
+      const p = v.play()
+      if (p && p.catch) p.catch(() => {})
+    }
+    setMuted(v.muted)
+  }
+
+  return (
+    <>
+      <video ref={ref} className={className} style={style} src={src} autoPlay muted loop={loop} playsInline preload="auto" />
+      {sound && (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={muted ? 'Activer le son' : 'Couper le son'}
+          className="absolute right-4 top-4 z-30 grid h-10 w-10 place-items-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60"
+        >
+          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>
+      )}
+    </>
+  )
+}
+
 // Scène immersive plein écran (cinématique, sans carte) : fond + overlays + contenu flottant.
 // Se place dans un parent `relative` qui a une hauteur (viewport ou écran du mockup).
-export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true }) {
+export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false }) {
   const theme = getTheme(page)
   const accent = theme.accent || modeOf(page.mode).accent
   // Base affichée DERRIÈRE la vidéo pendant son chargement : dégradé si fond dégradé,
@@ -537,27 +618,21 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
       {theme.introVideo ? (
         <>
           <div className="absolute inset-0" style={videoBase} aria-hidden />
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
+          <BgVideo
             src={theme.introVideo}
+            sound={sound}
+            className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${frameScale(theme.bgZoom ?? 1)})` }}
           />
         </>
       ) : theme.bgVideo ? (
         <>
           <div className="absolute inset-0" style={videoBase} aria-hidden />
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
+          <BgVideo
             src={theme.bgVideo}
+            loop
+            sound={sound}
+            className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${videoScale})` }}
           />
         </>

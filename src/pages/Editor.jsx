@@ -319,7 +319,7 @@ export default function Editor() {
                     </button>
                     <button onClick={() => removeBtn(b.id)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
                   </div>
-                  {b.type !== 'tip' && b.type !== 'link' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
+                  {b.type !== 'tip' && b.type !== 'link' && b.type !== 'products' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
                     <div className="mt-2 flex gap-2">
                       <input
                         value={b.url || ''}
@@ -342,6 +342,13 @@ export default function Editor() {
                     <LinksEditor
                       items={b.config?.links?.length ? b.config.links : (b.url ? [{ url: b.url, label: '' }] : [])}
                       onChange={(links) => updateBtn(b.id, { config: { ...(b.config || {}), links } })}
+                    />
+                  )}
+                  {b.type === 'products' && (
+                    <LinksEditor
+                      items={b.config?.links?.length ? b.config.links : (b.url ? [{ url: b.url, label: '' }] : [])}
+                      onChange={(links) => updateBtn(b.id, { config: { ...(b.config || {}), links } })}
+                      labelKeys={{ title: 'edit.products.title', url: 'edit.products.url', label: 'edit.products.label', add: 'edit.products.add' }}
                     />
                   )}
                   {b.type === 'reserve' && (
@@ -410,6 +417,43 @@ export default function Editor() {
                         />
                       )}
                       <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.quote.hint')}</p>
+                    </div>
+                  )}
+                  {b.type === 'contact' && (
+                    <div className="mt-2">
+                      <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.contact.mode')}</p>
+                      <div className="flex gap-1.5">
+                        {['form', 'email', 'whatsapp'].map((m) => {
+                          const cur = b.config?.mode || 'form'
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
+                              className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${cur === m ? 'bg-ink text-white' : 'bg-white'}`}
+                            >
+                              {t('edit.contact.' + m)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {(b.config?.mode || 'form') === 'email' && (
+                        <input
+                          value={b.config?.email || ''}
+                          onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), email: e.target.value } })}
+                          placeholder="contact@exemple.com"
+                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                        />
+                      )}
+                      {(b.config?.mode || 'form') === 'whatsapp' && (
+                        <input
+                          value={b.config?.phone || ''}
+                          onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), phone: e.target.value } })}
+                          placeholder="+33 6 12 34 56 78"
+                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                        />
+                      )}
+                      <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.contact.hint')}</p>
                     </div>
                   )}
                   {b.type === 'tip' && (

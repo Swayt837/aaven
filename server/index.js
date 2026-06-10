@@ -28,7 +28,7 @@ if (isProd && SECRET === 'dev-secret-change-me') {
   process.exit(1)
 }
 
-// Commission BioBoost selon le plan (points de base : 500 = 5%).
+// Commission Aaven selon le plan (points de base : 500 = 5%).
 const FEE_BPS = { free: 500, creator: 100, pro: 0 }
 const feeBps = (plan) => FEE_BPS[plan] ?? 500
 
@@ -106,7 +106,7 @@ async function notifyOwner(page, msg) {
   if (!owner?.email) return
   try {
     await mailer.sendMail({
-      from: process.env.SMTP_FROM || 'BioBoost <no-reply@bioboost.app>',
+      from: process.env.SMTP_FROM || 'Aaven <no-reply@aaven.app>',
       to: owner.email,
       replyTo: msg.email || undefined,
       subject: `📩 Nouveau message via ta page « ${page.title} »`,
@@ -123,10 +123,10 @@ async function deliverProduct(purchase, product) {
   const url = `${APP_URL}/api/download/${purchase.token}`
   try {
     await mailer.sendMail({
-      from: process.env.SMTP_FROM || 'BioBoost <no-reply@bioboost.app>',
+      from: process.env.SMTP_FROM || 'Aaven <no-reply@aaven.app>',
       to: purchase.email,
       subject: `Ton téléchargement : ${product.title}`,
-      text: `Merci pour ton achat ! 🎉\n\nTélécharge « ${product.title} » ici :\n${url}\n\n— BioBoost`,
+      text: `Merci pour ton achat ! 🎉\n\nTélécharge « ${product.title} » ici :\n${url}\n\n— Aaven`,
     })
   } catch (e) {
     console.warn('  E-mail de livraison non envoyé:', e.message)
@@ -189,7 +189,7 @@ app.post('/api/auth/dev-login', authLimiter, async (req, res) => {
   if (googleConfigured || isProd) return res.status(404).json({ error: 'Not found' })
   const u = await Users.upsertFromGoogle({
     googleId: 'dev-user',
-    email: 'demo@bioboost.app',
+    email: 'demo@aaven.app',
     name: 'Utilisateur démo',
     avatarUrl: '',
   })
@@ -609,7 +609,7 @@ app.get('/api/public/:slug', async (req, res) => {
   res.json({
     page: { title: page.title, slug: page.slug, bio: page.bio, headline: page.headline, avatarUrl: page.avatarUrl, emoji: page.emoji, mode: page.mode, theme: page.theme },
     buttons,
-    branding: (owner?.plan || 'free') === 'free', // "Made with BioBoost" visible en Free uniquement
+    branding: (owner?.plan || 'free') === 'free', // "Made with Aaven" visible en Free uniquement
   })
 })
 
@@ -706,7 +706,7 @@ app.post('/api/public/:slug/tip', tipLimiter, async (req, res) => {
     cancel_url: `${APP_URL}/${page.slug}`,
     metadata: { type: 'tip', pageId: page.id, message },
   }
-  // Si le créateur a connecté ses paiements → l'argent va chez lui, commission à BioBoost.
+  // Si le créateur a connecté ses paiements → l'argent va chez lui, commission à Aaven.
   if (owner?.stripeAccountId && owner.payoutsEnabled) {
     const fee = Math.round(amount * 100 * feeBps(owner.plan) / 10000)
     params.payment_intent_data = {
@@ -787,8 +787,8 @@ const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'sta
 
 // Injecte des balises meta (OG/Twitter/title) spécifiques au profil → aperçus de partage corrects.
 function renderPublicMeta(template, page) {
-  const title = `${page.title || page.slug} · BioBoost`
-  const desc = page.headline || page.bio || `La page de ${page.title || page.slug} sur BioBoost.`
+  const title = `${page.title || page.slug} · Aaven`
+  const desc = page.headline || page.bio || `La page de ${page.title || page.slug} sur Aaven.`
   let image = page.avatarUrl || page.theme?.bgImage || '/og-image.svg'
   if (image.startsWith('/')) image = `${APP_URL}${image}`
   const url = `${APP_URL}/${page.slug}`
@@ -842,7 +842,7 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`\n  BioBoost API → http://localhost:${PORT}`)
+  console.log(`\n  Aaven API → http://localhost:${PORT}`)
   console.log(`  Base données : ${process.env.DATABASE_URL ? 'PostgreSQL (Supabase) ✓' : 'SQLite (dev local)'}`)
   console.log(`  Stockage     : ${storageMode === 'supabase' ? 'Supabase Storage ✓' : 'disque local (dev)'}`)
   console.log(`  Google OAuth : ${googleConfigured ? 'configuré ✓' : 'mode démo (dev-login)'}`)

@@ -1,5 +1,5 @@
 // Système Template / Style / Skin pour les PAGES PUBLIQUES uniquement.
-// (Le site BioBoost — landing, dashboard, éditeur — reste néo-brutaliste.)
+// (Le site Aaven — landing, dashboard, éditeur — reste néo-brutaliste.)
 //
 // - STYLE  : look du conteneur public (bordure, ombre, radius) + police + bouton par défaut.
 // - FONT   : famille typographique (encadrée).
