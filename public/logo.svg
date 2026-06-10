@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 52" width="200" height="52" fill="none">
+  <!-- Logo Aaven — lockup (mark "A" + wordmark). Encre #0A0A0A sur fond transparent. -->
+  <g stroke="#0A0A0A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 40 L19 12 L30 40"/>
+    <path d="M12.6 29 H25.4"/>
+  </g>
+  <text x="44" y="37" font-family="Manrope, 'Plus Jakarta Sans', Arial, sans-serif" font-weight="700" font-size="30" letter-spacing="-1.4" fill="#0A0A0A">Aaven</text>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="120" height="120" fill="none">
+  <!-- Aaven — mark seul (le "A"). Encre #0A0A0A, fond transparent. -->
+  <g stroke="#0A0A0A" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 20 L12 4 L19.5 20"/>
+    <path d="M8.2 13.6 H15.8"/>
+  </g>
+</svg>
