@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Eye, MousePointerClick, Percent, MessageSquare, Heart } from 'lucide-react'
+import { Eye, MousePointerClick, Percent, MessageSquare, Heart, ShoppingBag } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Button, Card } from '../components/ui'
 import { Icon } from '../components/Icon'
@@ -39,6 +39,7 @@ export default function Stats() {
   const { views, totalClicks, buttons } = data
   const ctr = views > 0 ? Math.round((totalClicks / views) * 100) : 0
   const max = Math.max(1, ...buttons.map((b) => b.clicks))
+  const eur = (n) => (Number.isInteger(n) ? n : Number(n).toFixed(2))
 
   return (
     <div className="min-h-screen bg-cream">
@@ -58,6 +59,12 @@ export default function Stats() {
           <Kpi icon={<MousePointerClick size={22} className="text-pink" />} label={t('stats.clicks')} value={totalClicks} />
           <Kpi icon={<Percent size={22} className="text-coral" />} label={t('stats.ctr')} value={`${ctr}%`} />
           <Kpi icon={<MessageSquare size={22} className="text-green-600" />} label={t('stats.messages')} value={data.messages ?? msgs.length} />
+        </div>
+
+        {/* Recettes : tips + ventes de produits digitaux */}
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <Kpi icon={<Heart size={22} className="text-coral" fill="#EF5A4C" />} label={t('stats.tipsRevenue')} value={`${eur(data.tipsRevenue ?? 0)}€`} sub={`${data.tipsCount ?? 0} ${t('stats.tipsUnit')}`} />
+          <Kpi icon={<ShoppingBag size={22} className="text-ink" />} label={t('stats.productsRevenue')} value={`${eur(data.productsRevenue ?? 0)}€`} sub={`${data.productsCount ?? 0} ${t('stats.salesUnit')}`} />
         </div>
 
         <Card className="mt-6 p-6">
@@ -150,7 +157,7 @@ export default function Stats() {
   )
 }
 
-function Kpi({ icon, label, value }) {
+function Kpi({ icon, label, value, sub }) {
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2">
@@ -158,6 +165,7 @@ function Kpi({ icon, label, value }) {
         <span className="font-display text-xs font-extrabold uppercase tracking-wide text-ink/60">{label}</span>
       </div>
       <p className="font-display mt-3 text-4xl font-extrabold">{value}</p>
+      {sub ? <p className="mt-1 text-xs font-semibold text-ink/50">{sub}</p> : null}
     </Card>
   )
 }

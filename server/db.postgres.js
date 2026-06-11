@@ -368,6 +368,10 @@ export const Tips = {
     const r = await one('SELECT COUNT(*)::int AS n FROM tips WHERE "pageId" = $1 AND status = \'paid\'', [pageId])
     return r ? r.n : 0
   },
+  async sumPaid(pageId) {
+    const r = await one('SELECT COALESCE(SUM(amount),0)::int AS total, COUNT(*)::int AS n FROM tips WHERE "pageId" = $1 AND status = \'paid\'', [pageId])
+    return r || { total: 0, n: 0 }
+  },
   byPage: (pageId) =>
     all('SELECT id, amount, message, "supporterName" AS name, reply, "createdAt" FROM tips WHERE "pageId" = $1 AND status = \'paid\' ORDER BY "createdAt" DESC', [pageId]),
   byId: (id) => one('SELECT * FROM tips WHERE id = $1', [id]),
@@ -460,6 +464,10 @@ export const Purchases = {
       [email || '', stripeSessionId]
     )
     return Purchases.byStripeSession(stripeSessionId)
+  },
+  async revenueByPage(pageId) {
+    const r = await one('SELECT COALESCE(SUM(p."priceCents"),0)::int AS cents, COUNT(*)::int AS n FROM purchases pu JOIN products p ON p.id = pu."productId" WHERE pu."pageId" = $1 AND pu.status = \'paid\'', [pageId])
+    return r || { cents: 0, n: 0 }
   },
 }
 

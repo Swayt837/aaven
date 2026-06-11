@@ -463,10 +463,16 @@ app.delete('/api/pages/:slug', requireAuth, ownPage, async (req, res) => {
 app.get('/api/pages/:slug/stats', requireAuth, ownPage, async (req, res) => {
   const buttons = await Buttons.byPage(req.page.id)
   const totalClicks = buttons.reduce((s, b) => s + b.clicks, 0)
+  const tipAgg = await Tips.sumPaid(req.page.id)
+  const prodAgg = await Purchases.revenueByPage(req.page.id)
   res.json({
     views: req.page.views,
     totalClicks,
     messages: await Messages.countByPage(req.page.id),
+    tipsRevenue: tipAgg?.total || 0,
+    tipsCount: tipAgg?.n || 0,
+    productsRevenue: (prodAgg?.cents || 0) / 100,
+    productsCount: prodAgg?.n || 0,
     buttons: buttons.map((b) => ({ id: b.id, label: b.label, icon: b.icon, clicks: b.clicks })),
   })
 })

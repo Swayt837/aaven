@@ -401,6 +401,9 @@ export const Tips = {
     db.prepare("SELECT id, supporterName AS name, message, reply, createdAt FROM tips WHERE pageId = ? AND status = 'paid' ORDER BY createdAt DESC LIMIT ?").all(pageId, limit),
   countPaid: (pageId) =>
     db.prepare("SELECT COUNT(*) AS n FROM tips WHERE pageId = ? AND status = 'paid'").get(pageId).n,
+  // Somme des tips payés (en €) + nombre.
+  sumPaid: (pageId) =>
+    db.prepare("SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS n FROM tips WHERE pageId = ? AND status = 'paid'").get(pageId),
   // Liste owner (pour répondre).
   byPage: (pageId) =>
     db.prepare("SELECT id, amount, message, supporterName AS name, reply, createdAt FROM tips WHERE pageId = ? AND status = 'paid' ORDER BY createdAt DESC").all(pageId),
@@ -483,6 +486,9 @@ export const Purchases = {
     db.prepare("UPDATE purchases SET status = 'paid', email = COALESCE(NULLIF(?, ''), email) WHERE stripeSessionId = ?").run(email || '', stripeSessionId)
     return Purchases.byStripeSession(stripeSessionId)
   },
+  // Recette des ventes de produits payées (en centimes) + nombre.
+  revenueByPage: (pageId) =>
+    db.prepare("SELECT COALESCE(SUM(p.priceCents),0) AS cents, COUNT(*) AS n FROM purchases pu JOIN products p ON p.id = pu.productId WHERE pu.pageId = ? AND pu.status = 'paid'").get(pageId),
 }
 
 export { db }
