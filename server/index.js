@@ -789,7 +789,7 @@ const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'sta
 function renderPublicMeta(template, page) {
   const title = `${page.title || page.slug} · Aaven`
   const desc = page.headline || page.bio || `La page de ${page.title || page.slug} sur Aaven.`
-  let image = page.avatarUrl || page.theme?.bgImage || '/og-image.svg'
+  let image = page.avatarUrl || page.theme?.bgImage || '/og-image.png'
   if (image.startsWith('/')) image = `${APP_URL}${image}`
   const url = `${APP_URL}/${page.slug}`
 
@@ -807,8 +807,22 @@ function renderPublicMeta(template, page) {
   set('name', 'twitter:title', title)
   set('name', 'twitter:description', desc)
   set('name', 'twitter:image', image)
-  // og:url absent du template → on l'ajoute avant </head>
-  html = html.replace('</head>', `    <meta property="og:url" content="${escapeHtml(url)}" />\n  </head>`)
+  set('property', 'og:url', url)
+  // canonical → URL du profil (remplace la home par défaut)
+  html = html.replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${escapeHtml(url)}$2`)
+  // Données structurées (rich results) : page de profil
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name: page.title || page.slug,
+      url,
+      ...(page.avatarUrl ? { image: page.avatarUrl } : {}),
+      ...((page.headline || page.bio) ? { description: page.headline || page.bio } : {}),
+    },
+  }
+  html = html.replace('</head>', `    <script type="application/ld+json">${JSON.stringify(jsonld)}</script>\n  </head>`)
   return html
 }
 

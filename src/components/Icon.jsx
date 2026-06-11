@@ -1,13 +1,13 @@
 import {
   Heart, Instagram, Youtube, ShoppingBag, GraduationCap, BookOpen, Phone,
   MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail,
-  Link as LinkIcon, ExternalLink,
+  LayoutGrid, Link as LinkIcon, ExternalLink,
 } from 'lucide-react'
 
 const MAP = {
   Heart, Instagram, Youtube, ShoppingBag, GraduationCap, BookOpen, Phone,
   MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail,
-  Link: LinkIcon, ExternalLink,
+  LayoutGrid, Link: LinkIcon, ExternalLink,
 }
 
 // Rend une icône lucide à partir de son nom (string), avec fallback.

@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Espaces privés (pas d'indexation)
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /edit/
+Disallow: /stats/
+Disallow: /login
+Disallow: /api/
+Disallow: /tip-success
+Disallow: /buy-success
+
+Sitemap: https://www.aaven.fr/sitemap.xml

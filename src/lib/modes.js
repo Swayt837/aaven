@@ -32,7 +32,7 @@ export const BUTTON_TYPES = {
   tip: { icon: 'Heart', label: { fr: 'Me soutenir', en: 'Support me' }, action: 'tip', urlPh: '' },
   instagram: { icon: 'Instagram', label: { fr: 'Instagram', en: 'Instagram' }, urlPh: 'https://instagram.com/...' },
   youtube: { icon: 'Youtube', label: { fr: 'YouTube', en: 'YouTube' }, urlPh: 'https://youtube.com/@...' },
-  products: { icon: 'ShoppingBag', label: { fr: 'Mes produits', en: 'My products' }, urlPh: 'https://...' },
+  products: { icon: 'LayoutGrid', label: { fr: 'Mon portfolio', en: 'My portfolio' }, urlPh: 'https://...' },
   course: { icon: 'GraduationCap', label: { fr: 'Ma formation', en: 'My course' }, urlPh: 'https://...' },
   menu: { icon: 'BookOpen', label: { fr: 'Menu en 1 clic', en: 'Menu in 1 tap' }, urlPh: 'https://...' },
   call: { icon: 'Phone', label: { fr: 'Appeler', en: 'Call' }, urlPh: 'tel:+33...' },
