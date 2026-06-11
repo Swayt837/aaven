@@ -185,8 +185,8 @@ const dict = {
     'cta.btn': 'Créer ma page gratuite →',
 
     // Login
-    'login.eyebrow': 'LOG IN TO',
-    'login.title': 'Boost Your Link',
+    'login.eyebrow': 'AAVEN',
+    'login.title': 'A premium way to connect',
     'login.google': 'Continue with Google',
     'login.legal': 'En continuant, tu acceptes nos Conditions et notre Politique de confidentialité.',
     'login.secured': '🛡️ LOG IN SECURED BY',
@@ -621,8 +621,8 @@ const dict = {
     'cta.sub': 'Create your free page in 30 seconds. No credit card, no commitment.',
     'cta.btn': 'Create my free page →',
 
-    'login.eyebrow': 'LOG IN TO',
-    'login.title': 'Boost Your Link',
+    'login.eyebrow': 'AAVEN',
+    'login.title': 'A premium way to connect',
     'login.google': 'Continue with Google',
     'login.legal': 'By continuing, you agree to our Terms and Privacy Policy.',
     'login.secured': '🛡️ LOG IN SECURED BY',

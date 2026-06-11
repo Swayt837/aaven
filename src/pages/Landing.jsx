@@ -248,16 +248,16 @@ const PROFILE_META = [
 ]
 const PROFILE_COPY = {
   fr: {
-    'lea-creator': { role: 'Créatrice mode', bio: 'Outfits quotidiens & bons plans shopping.', links: ['Me soutenir (tip)', 'Instagram', 'Mes pièces favorites'], supporters: [{ name: 'Manon', msg: 'Tes lookbooks sont incroyables 😍', reply: 'Merci Manon, ça me touche ! 💕' }, { name: 'Inès', msg: 'Hâte de la prochaine collab !' }] },
-    'marco-resto': { role: 'Restaurant', bio: 'Cuisine italienne de saison à Lyon.', links: ['Réserver une table', 'Le menu', 'Itinéraire'] },
-    'sofia-coach': { role: 'Coach fitness', bio: 'Programmes & coaching en ligne.', links: ['Me soutenir (tip)', 'Réserver une séance', 'Mes programmes'], supporters: [{ name: 'Karim', msg: 'Programme au top, merci coach 💪', reply: 'On lâche rien Karim ! 🔥' }, { name: 'Julie', msg: '+3 kg de muscle en 2 mois !' }] },
-    'noah-designer': { role: 'Designer freelance', bio: 'Identités de marque & sites premium.', links: ['Voir mes projets', 'Demander un devis', 'Réserver un call'] },
+    'lea-creator': { notif: '+530€ ce mois', role: 'Créatrice mode', bio: 'Outfits quotidiens & bons plans shopping.', links: ['Me soutenir (tip)', 'Instagram', 'Mes pièces favorites'], supporters: [{ name: 'Manon', msg: 'Tes lookbooks sont incroyables 😍', reply: 'Merci Manon, ça me touche ! 💕' }, { name: 'Inès', msg: 'Hâte de la prochaine collab !' }] },
+    'marco-resto': { notif: '+86 réservations', role: 'Restaurant', bio: 'Cuisine italienne de saison à Lyon.', links: ['Réserver une table', 'Le menu', 'Itinéraire'] },
+    'sofia-coach': { notif: '+1,2k soutiens', role: 'Coach fitness', bio: 'Programmes & coaching en ligne.', links: ['Me soutenir (tip)', 'Réserver une séance', 'Mes programmes'], supporters: [{ name: 'Karim', msg: 'Programme au top, merci coach 💪', reply: 'On lâche rien Karim ! 🔥' }, { name: 'Julie', msg: '+3 kg de muscle en 2 mois !' }] },
+    'noah-designer': { notif: '+12 devis', role: 'Designer freelance', bio: 'Identités de marque & sites premium.', links: ['Voir mes projets', 'Demander un devis', 'Réserver un call'] },
   },
   en: {
-    'lea-creator': { role: 'Fashion creator', bio: 'Daily outfits & shopping tips.', links: ['Support me (tip)', 'Instagram', 'My favorite picks'], supporters: [{ name: 'Manon', msg: 'Your lookbooks are incredible 😍', reply: 'Thank you Manon, means a lot! 💕' }, { name: 'Inès', msg: 'Can’t wait for the next collab!' }] },
-    'marco-resto': { role: 'Restaurant', bio: 'Seasonal Italian cuisine in Lyon.', links: ['Book a table', 'Menu', 'Directions'] },
-    'sofia-coach': { role: 'Fitness coach', bio: 'Online programs & coaching.', links: ['Support me (tip)', 'Book a session', 'My programs'], supporters: [{ name: 'Karim', msg: 'Best program ever, thanks coach 💪', reply: 'Keep pushing Karim! 🔥' }, { name: 'Julie', msg: '+3 kg of muscle in 2 months!' }] },
-    'noah-designer': { role: 'Freelance designer', bio: 'Brand identities & premium sites.', links: ['See my work', 'Request a quote', 'Book a call'] },
+    'lea-creator': { notif: '+€530 this month', role: 'Fashion creator', bio: 'Daily outfits & shopping tips.', links: ['Support me (tip)', 'Instagram', 'My favorite picks'], supporters: [{ name: 'Manon', msg: 'Your lookbooks are incredible 😍', reply: 'Thank you Manon, means a lot! 💕' }, { name: 'Inès', msg: 'Can’t wait for the next collab!' }] },
+    'marco-resto': { notif: '+86 bookings', role: 'Restaurant', bio: 'Seasonal Italian cuisine in Lyon.', links: ['Book a table', 'Menu', 'Directions'] },
+    'sofia-coach': { notif: '+1.2k supporters', role: 'Fitness coach', bio: 'Online programs & coaching.', links: ['Support me (tip)', 'Book a session', 'My programs'], supporters: [{ name: 'Karim', msg: 'Best program ever, thanks coach 💪', reply: 'Keep pushing Karim! 🔥' }, { name: 'Julie', msg: '+3 kg of muscle in 2 months!' }] },
+    'noah-designer': { notif: '+12 quotes', role: 'Freelance designer', bio: 'Brand identities & premium sites.', links: ['See my work', 'Request a quote', 'Book a call'] },
   },
 }
 
@@ -354,7 +354,7 @@ function ProfileShowcase({ onStart }) {
           <div className="space-y-36 lg:col-span-7">
             {PROFILE_META.map((p) => (
               <motion.div key={p.id} initial={{ opacity: 0, y: 80 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.7, ease: EASE }}>
-                <PhoneCard p={p} copy={pc[p.id]} notif={c.notif} wallLabel={c.wallLabel} />
+                <PhoneCard p={p} copy={pc[p.id]} notif={pc[p.id].notif} wallLabel={c.wallLabel} />
               </motion.div>
             ))}
           </div>

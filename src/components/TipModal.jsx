@@ -12,11 +12,12 @@ export function TipModal({ slug, amounts, onClose }) {
   const PRESETS = Array.isArray(amounts) && amounts.length ? amounts : DEFAULT_PRESETS
   const [amount, setAmount] = useState(PRESETS[1] || PRESETS[0] || 5)
   const [custom, setCustom] = useState('')
+  const [customMode, setCustomMode] = useState(false)
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const finalAmount = custom ? Math.max(1, Math.round(parseFloat(custom) || 0)) : amount
+  const finalAmount = customMode ? Math.round(parseFloat(custom) || 0) : amount
 
   async function pay() {
     setLoading(true)
@@ -46,35 +47,43 @@ export function TipModal({ slug, amounts, onClose }) {
         </div>
         <p className="mt-1 text-sm font-medium text-ink/70">{t('tip.sub')}</p>
 
-        <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {PRESETS.map((a) => {
-            const sel = !custom && amount === a
+            const sel = !customMode && amount === a
             return (
               <button
                 key={a}
-                onClick={() => { setAmount(a); setCustom('') }}
-                className="press rounded-brutal border-2 border-ink py-3 font-display text-lg font-extrabold shadow-hard-sm"
+                onClick={() => { setAmount(a); setCustomMode(false) }}
+                className="press min-w-[60px] flex-1 rounded-brutal border-2 border-ink py-3 font-display text-lg font-extrabold shadow-hard-sm"
                 style={sel ? { background: '#F0426B', color: '#fff' } : { background: '#fff' }}
               >
                 {a}€
               </button>
             )
           })}
+          <button
+            onClick={() => setCustomMode(true)}
+            className="press min-w-[60px] flex-1 rounded-brutal border-2 border-ink py-3 font-display text-sm font-extrabold shadow-hard-sm"
+            style={customMode ? { background: '#F0426B', color: '#fff' } : { background: '#fff' }}
+          >
+            {t('tip.custom')}
+          </button>
         </div>
 
-        <div className="mt-3">
-          <label className="mb-1 block text-xs font-extrabold uppercase tracking-wide text-ink/70">
-            {t('tip.custom')}
-          </label>
-          <input
-            type="number"
-            min="1"
-            value={custom}
-            onChange={(e) => setCustom(e.target.value)}
-            placeholder="—"
-            className="w-full rounded-brutal border-2 border-ink px-4 py-3"
-          />
-        </div>
+        {customMode && (
+          <div className="relative mt-3">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-display text-lg font-extrabold text-ink/50">€</span>
+            <input
+              type="number"
+              min="1"
+              autoFocus
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              placeholder={t('tip.custom')}
+              className="w-full rounded-brutal border-2 border-ink py-3 pl-9 pr-4 font-display text-lg font-extrabold"
+            />
+          </div>
+        )}
 
         <div className="mt-3">
           <label className="mb-1 block text-xs font-extrabold uppercase tracking-wide text-ink/70">

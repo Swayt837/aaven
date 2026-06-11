@@ -6,6 +6,7 @@ import { api } from '../lib/api'
 import { LAYOUTS } from '../lib/themes'
 import { STYLES, FONTS, BUTTON_STYLES, TEMPLATES, PERSONAS } from '../lib/templates'
 import { ImageFramer } from './ImageFramer'
+import { UpgradeModal } from './UpgradeModal'
 
 // Vignette vidéo : affiche la DERNIÈRE frame (cale la lecture à la fin, sans jouer).
 function VideoThumb({ src, poster }) {
@@ -32,6 +33,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
   const [uploading, setUploading] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
   const [err, setErr] = useState('')
+  const [upgrade, setUpgrade] = useState(false)
   const isFree = (plan || 'free') === 'free'
   const isPro = plan === 'pro'
 
@@ -50,7 +52,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
   async function onVideoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (isFree) { e.target.value = ''; return alert(t('edit.mediaLocked')) }
+    if (isFree) { e.target.value = ''; setUpgrade(true); return }
     setErr('')
     try {
       const isGif = file.type === 'image/gif'
@@ -80,7 +82,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
   // (sinon des champs d'un template précédent restent collés : vidéo qui ne change pas, etc.)
   const TPL_RESET = { introVideo: '', bgVideo: '', bgVideoOwn: false, ambientAudio: '', animation: 'none', bgImage: '', overlay: 0.35, bgPosX: 50, bgPosY: 50, bgZoom: 1 }
   const applyTemplate = (tpl) => {
-    if (tpl.premium && isFree) return alert(t('edit.premiumLocked'))
+    if (tpl.premium && isFree) return setUpgrade(true)
     set({ ...TPL_RESET, ...tpl.apply })
   }
 
@@ -168,7 +170,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
           </button>
           <button
             type="button"
-            onClick={() => (!isFree ? videoRef.current?.click() : alert(t('edit.mediaLocked')))}
+            onClick={() => (!isFree ? videoRef.current?.click() : setUpgrade(true))}
             disabled={uploadingVideo}
             className="press flex flex-1 items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 font-display text-sm font-extrabold shadow-hard-sm disabled:opacity-50"
           >
@@ -298,22 +300,6 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
         </div>
       </div>
 
-      {/* Ambiance animée (premium) */}
-      <div>
-        <Label>✨ {t('edit.ambiance')}</Label>
-        {isFree ? (
-          <p className="rounded-brutal border-2 border-dashed border-ink/30 px-3 py-2 text-xs font-semibold text-ink/50">{t('edit.premiumLocked')}</p>
-        ) : (
-          <div className="grid grid-cols-4 gap-1.5">
-            {[['none', 'edit.anim.none'], ['breathe', 'edit.anim.breathe'], ['pulse', 'edit.anim.pulse'], ['shimmer', 'edit.anim.shimmer']].map(([k, lab]) => (
-              <button key={k} type="button" onClick={() => set({ animation: k })} className={`rounded-lg border-2 border-ink px-1 py-2 text-[11px] font-extrabold transition ${(theme.animation || 'none') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
-                {t(lab)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Réglages communs : texte + accent */}
       <div className="flex flex-wrap items-end gap-4 border-t-2 border-ink/10 pt-3">
         <div>
@@ -343,6 +329,8 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
           <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${theme.showSupporters ? 'left-4' : 'left-0.5'}`} />
         </span>
       </button>
+
+      <UpgradeModal open={upgrade} onClose={() => setUpgrade(false)} />
     </div>
   )
 }
