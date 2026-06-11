@@ -20,6 +20,8 @@ const dict = {
     'common.madeWith': 'Made with Aaven',
     'card.supporters': 'soutiens',
     'card.anon': 'Quelqu’un',
+    'wallet.apple': 'Ajouter à Apple Wallet',
+    'wallet.google': 'Enregistrer dans Google Wallet',
     'card.shop': 'Produits',
     'card.buy': 'Acheter',
 
@@ -466,6 +468,8 @@ const dict = {
     'common.madeWith': 'Made with Aaven',
     'card.supporters': 'supporters',
     'card.anon': 'Someone',
+    'wallet.apple': 'Add to Apple Wallet',
+    'wallet.google': 'Save to Google Wallet',
     'card.shop': 'Products',
     'card.buy': 'Buy',
 

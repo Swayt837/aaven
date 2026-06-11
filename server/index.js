@@ -14,6 +14,7 @@ import { Users, Pages, Buttons, Clicks, Tips, Messages, Products, Purchases } fr
 import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
 import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
+import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -610,7 +611,36 @@ app.get('/api/public/:slug', async (req, res) => {
     page: { title: page.title, slug: page.slug, bio: page.bio, headline: page.headline, avatarUrl: page.avatarUrl, emoji: page.emoji, mode: page.mode, theme: page.theme },
     buttons,
     branding: (owner?.plan || 'free') === 'free', // "Made with Aaven" visible en Free uniquement
+    wallet: { apple: appleWalletConfigured, google: googleWalletConfigured },
   })
+})
+
+// ---------- Wallet (Apple .pkpass / Google "Save to Wallet") ----------
+app.get('/api/wallet/apple/:slug', async (req, res) => {
+  if (!appleWalletConfigured) return res.status(404).json({ error: 'Apple Wallet non configuré' })
+  const page = await Pages.bySlug(req.params.slug)
+  if (!page) return res.status(404).json({ error: 'Page introuvable' })
+  try {
+    const buf = await buildApplePass(page)
+    res.set('Content-Type', 'application/vnd.apple.pkpass')
+    res.set('Content-Disposition', `attachment; filename="aaven-${page.slug}.pkpass"`)
+    res.send(buf)
+  } catch (e) {
+    console.error('  Apple Wallet:', e.message)
+    res.status(500).json({ error: 'Génération du pass échouée' })
+  }
+})
+
+app.get('/api/wallet/google/:slug', async (req, res) => {
+  if (!googleWalletConfigured) return res.status(404).json({ error: 'Google Wallet non configuré' })
+  const page = await Pages.bySlug(req.params.slug)
+  if (!page) return res.status(404).json({ error: 'Page introuvable' })
+  try {
+    res.redirect(buildGoogleSaveUrl(page))
+  } catch (e) {
+    console.error('  Google Wallet:', e.message)
+    res.status(500).json({ error: 'Lien Google Wallet échoué' })
+  }
 })
 
 app.post('/api/public/:slug/click/:buttonId', clickLimiter, async (req, res) => {
