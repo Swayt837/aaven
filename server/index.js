@@ -465,13 +465,17 @@ app.get('/api/pages/:slug/stats', requireAuth, ownPage, async (req, res) => {
   const totalClicks = buttons.reduce((s, b) => s + b.clicks, 0)
   const tipAgg = await Tips.sumPaid(req.page.id)
   const prodAgg = await Purchases.revenueByPage(req.page.id)
+  // Net créateur = brut − commission Aaven (selon le plan). Les frais Stripe sont
+  // prélevés sur la commission Aaven, donc le créateur touche bien brut × (1 − commission).
+  const keep = 1 - feeBps(req.user.plan) / 10000
+  const round2 = (n) => Math.round(n * 100) / 100
   res.json({
     views: req.page.views,
     totalClicks,
     messages: await Messages.countByPage(req.page.id),
-    tipsRevenue: tipAgg?.total || 0,
+    tipsRevenue: round2((tipAgg?.total || 0) * keep),
     tipsCount: tipAgg?.n || 0,
-    productsRevenue: (prodAgg?.cents || 0) / 100,
+    productsRevenue: round2(((prodAgg?.cents || 0) / 100) * keep),
     productsCount: prodAgg?.n || 0,
     buttons: buttons.map((b) => ({ id: b.id, label: b.label, icon: b.icon, clicks: b.clicks })),
   })
