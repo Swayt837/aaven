@@ -900,5 +900,6 @@ app.listen(PORT, () => {
   console.log(`  Base données : ${process.env.DATABASE_URL ? 'PostgreSQL (Supabase) ✓' : 'SQLite (dev local)'}`)
   console.log(`  Stockage     : ${storageMode === 'supabase' ? 'Supabase Storage ✓' : 'disque local (dev)'}`)
   console.log(`  Google OAuth : ${googleConfigured ? 'configuré ✓' : 'mode démo (dev-login)'}`)
-  console.log(`  Stripe       : ${stripe ? 'configuré ✓' : 'mode démo (paiement simulé)'}\n`)
+  console.log(`  Stripe       : ${stripe ? 'configuré ✓' : 'mode démo (paiement simulé)'}`)
+  console.log(`  Email (SMTP) : ${mailer ? 'configuré ✓' : 'désactivé (messages seulement stockés)'}\n`)
 })
