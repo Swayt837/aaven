@@ -665,11 +665,11 @@ app.post('/api/story/:slug', writeLimiter, storyUpload.single('overlay'), async 
     const videoUrl = theme.introVideo || theme.bgVideo
     if (!videoUrl) return res.status(400).json({ error: 'Pas de vidéo de fond' })
     if (!req.file) return res.status(400).json({ error: 'Overlay manquant' })
-    const mp4 = await buildStoryVideo(videoUrl, req.file.buffer)
-    res.set('Content-Type', 'video/mp4')
+    const outPath = await buildStoryVideo(videoUrl, req.file.buffer)
     res.set('Content-Disposition', `inline; filename="aaven-${page.slug}.mp4"`)
-    res.send(mp4)
+    res.sendFile(outPath) // streaming → pas de gros buffer en mémoire
   } catch (e) {
+    if (e.code === 'BUSY') return res.status(503).json({ error: 'Génération en cours, réessaie dans un instant' })
     console.error('  Story vidéo:', e.message)
     res.status(500).json({ error: 'Génération vidéo échouée' })
   }
