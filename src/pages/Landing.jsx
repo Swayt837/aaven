@@ -474,14 +474,14 @@ const TIERS_BASE = [
 ]
 const TIER_FEATURES = {
   fr: {
-    free: ['1 page + tous les boutons', '3 produits digitaux', '3 templates vidéo offerts', 'Importe ta photo de fond', 'Tips & analytics inclus'],
-    creator: ['Sans branding Aaven', 'Templates vidéo premium', 'Importe GIF/vidéo (5 s)', 'Produits illimités', 'Ton lien pro perso'],
-    pro: ['Tout de Creator', 'Importe ta vidéo (15 s max)', 'Support prioritaire'],
+    free: ['1 page + tous les boutons', 'Tous les templates vidéo', 'Importe ta photo de fond', '3 produits digitaux', 'Tips & analytics inclus'],
+    creator: ['Sans branding Aaven', 'Importe ta vidéo / GIF perso (5 s)', 'Produits illimités', 'Ton lien pro perso', 'Son d’ambiance'],
+    pro: ['Tout de Creator', 'Importe ta vidéo (30 s max)', 'Support prioritaire'],
   },
   en: {
-    free: ['1 page + all buttons', '3 digital products', '3 free video templates', 'Upload your background photo', 'Tips & analytics included'],
-    creator: ['No Aaven branding', 'Premium video templates', 'Upload GIF/video (5s)', 'Unlimited products', 'Your pro custom link'],
-    pro: ['Everything in Creator', 'Upload your video (15s max)', 'Priority support'],
+    free: ['1 page + all buttons', 'All video templates', 'Upload your background photo', '3 digital products', 'Tips & analytics included'],
+    creator: ['No Aaven branding', 'Upload your own video / GIF (5s)', 'Unlimited products', 'Your pro custom link', 'Ambient sound'],
+    pro: ['Everything in Creator', 'Upload your video (30s max)', 'Priority support'],
   },
 }
 function Pricing({ onStart }) {

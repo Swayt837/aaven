@@ -48,7 +48,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
     })
   }
 
-  // Upload média perso : Creator = GIF/vidéo 5 s max · Pro = vidéo 15 s max · Free = verrouillé.
+  // Upload média perso : Creator = GIF/vidéo 5 s max · Pro = vidéo 30 s max · Free = verrouillé.
   async function onVideoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -58,7 +58,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       const isGif = file.type === 'image/gif'
       if (!isGif) {
         const dur = await readDuration(file).catch(() => 0)
-        const max = isPro ? 15.5 : 5.5
+        const max = isPro ? 30.5 : 5.5
         if (dur > max) { e.target.value = ''; return alert(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
       }
       setUploadingVideo(true)
@@ -82,7 +82,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
   // (sinon des champs d'un template précédent restent collés : vidéo qui ne change pas, etc.)
   const TPL_RESET = { introVideo: '', bgVideo: '', bgVideoOwn: false, ambientAudio: '', animation: 'none', bgImage: '', overlay: 0.35, bgPosX: 50, bgPosY: 50, bgZoom: 1 }
   const applyTemplate = (tpl) => {
-    if (tpl.premium && isFree) return setUpgrade(true)
+    // Tous les templates (y compris vidéo) sont accessibles en Free.
     set({ ...TPL_RESET, ...tpl.apply })
   }
 
@@ -136,11 +136,6 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
                       <span className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105" style={{ backgroundImage: `url("${tpl.preview}")` }} />
                     )}
                     <span className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.78) 12%, rgba(0,0,0,.05) 60%)' }} />
-                    {tpl.premium && (
-                      <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full border-2 border-ink bg-sun px-1.5 py-0.5 text-[8px] font-extrabold uppercase">
-                        {isFree ? <Lock size={9} strokeWidth={3} /> : '✨'} Pro
-                      </span>
-                    )}
                     {theme.template === tpl.key && (
                       <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full border-2 border-ink bg-white">
                         <Check size={12} strokeWidth={3} />

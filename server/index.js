@@ -395,15 +395,15 @@ app.put('/api/pages/:slug', requireAuth, ownPage, writeLimiter, async (req, res)
   }
   if (req.body.theme !== undefined) {
     const th = sanitizeTheme(req.body.theme)
-    // Ambiance premium réservée aux abonnés Creator/Pro.
-    // Exception : 1 template vidéo offert par catégorie reste accessible en Free.
-    // On épingle l'URL canonique pour empêcher l'usage d'une autre vidéo premium.
+    // Free : TOUS les templates vidéo sont autorisés, mais PAS l'upload de vidéo perso
+    // ni le son d'ambiance (réservés Creator/Pro). On distingue les vidéos de templates
+    // (base SUPA « Templates Premium ») des uploads perso (autre bucket) → on bloque ces derniers.
     if ((req.user.plan || 'free') === 'free') {
       th.animation = 'none'
-      th.introVideo = ''
       th.bgVideoOwn = false
       th.ambientAudio = ''
-      th.bgVideo = FREE_VIDEO_TEMPLATES[th.template] || ''
+      if (th.bgVideo && !th.bgVideo.startsWith(SUPA)) th.bgVideo = ''
+      if (th.introVideo && !th.introVideo.startsWith(SUPA)) th.introVideo = ''
     }
     patch.theme = th
   }
