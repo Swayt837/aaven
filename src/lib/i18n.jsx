@@ -891,7 +891,13 @@ const dict = {
 const I18nContext = createContext(null)
 
 export function I18nProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem('bb_lang') || 'fr')
+  const [lang, setLang] = useState(() => {
+    const saved = localStorage.getItem('bb_lang')
+    if (saved === 'fr' || saved === 'en') return saved
+    // Pas de préférence enregistrée → on suit la langue du navigateur (fr par défaut, sinon en).
+    const navLang = (navigator.language || navigator.userLanguage || 'fr').toLowerCase()
+    return navLang.startsWith('fr') ? 'fr' : 'en'
+  })
 
   const change = useCallback((l) => {
     setLang(l)

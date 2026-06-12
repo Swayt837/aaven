@@ -354,7 +354,7 @@ function ProductsSection({ products, txt, accent, headFont, light, t, onBuy }) {
 
 // Rendu d'une page bio (en-tête + supporters + boutons + produits). Themable + skinnable.
 export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, immersive = false }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const theme = getTheme(page)
   const mode = modeOf(page.mode)
   const accent = theme.accent || mode.accent
@@ -364,6 +364,14 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
   const headFont = fontCss(theme.font || STYLES[style].font)
   const radius = STYLES[style].radius
   const light = isLight(theme)
+
+  // Si le bouton porte encore son libellé par défaut (non personnalisé), on l'affiche
+  // dans la langue courante. Un libellé personnalisé par le créateur est conservé tel quel.
+  const labelOf = (b) => {
+    const def = BUTTON_TYPES[b.type]
+    if (def && (b.label === def.label.fr || b.label === def.label.en)) return def.label[lang] || b.label
+    return b.label
+  }
 
   const active = (buttons || []).filter((b) => b.isActive)
   // L'objectif principal = le bouton EN HAUT de la liste. Réordonner change le principal.
@@ -446,7 +454,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
                   <Icon name={b.icon} size={isPrimary ? 20 : 18} />
                 )}
               </span>
-              <span className="flex-1 leading-tight">{b.label}</span>
+              <span className="flex-1 leading-tight">{labelOf(b)}</span>
               {isPrimary && <ArrowRight size={18} strokeWidth={3} className="shrink-0" />}
             </button>
           )
