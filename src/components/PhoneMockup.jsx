@@ -643,8 +643,6 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
       )}
       {/* Assombrissement dynamique (lisibilité) */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.12) 32%, rgba(0,0,0,0.64) 100%)' }} aria-hidden />
-      {/* Glow chaud derrière le contenu */}
-      <div className="absolute inset-0" style={{ background: `radial-gradient(58% 48% at 50% 42%, ${accent}33, transparent 72%)` }} aria-hidden />
       {/* Vignette douce */}
       <div className="bb-vignette absolute inset-0" aria-hidden />
       {/* Ambiance discrète (premium) */}

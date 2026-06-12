@@ -31,7 +31,15 @@ export const MODES = {
 export const BUTTON_TYPES = {
   tip: { icon: 'Heart', label: { fr: 'Me soutenir', en: 'Support me' }, action: 'tip', urlPh: '' },
   instagram: { icon: 'Instagram', label: { fr: 'Instagram', en: 'Instagram' }, urlPh: 'https://instagram.com/...' },
+  tiktok: { icon: 'TikTok', label: { fr: 'TikTok', en: 'TikTok' }, urlPh: 'https://tiktok.com/@...' },
   youtube: { icon: 'Youtube', label: { fr: 'YouTube', en: 'YouTube' }, urlPh: 'https://youtube.com/@...' },
+  x: { icon: 'Twitter', label: { fr: 'X (Twitter)', en: 'X (Twitter)' }, urlPh: 'https://x.com/...' },
+  whatsapp: { icon: 'MessageCircle', label: { fr: 'WhatsApp', en: 'WhatsApp' }, urlPh: 'https://wa.me/33...' },
+  spotify: { icon: 'Music', label: { fr: 'Spotify', en: 'Spotify' }, urlPh: 'https://open.spotify.com/...' },
+  twitch: { icon: 'Twitch', label: { fr: 'Twitch', en: 'Twitch' }, urlPh: 'https://twitch.tv/...' },
+  facebook: { icon: 'Facebook', label: { fr: 'Facebook', en: 'Facebook' }, urlPh: 'https://facebook.com/...' },
+  snapchat: { icon: 'Ghost', label: { fr: 'Snapchat', en: 'Snapchat' }, urlPh: 'https://snapchat.com/add/...' },
+  linkedin: { icon: 'Linkedin', label: { fr: 'LinkedIn', en: 'LinkedIn' }, urlPh: 'https://linkedin.com/in/...' },
   products: { icon: 'LayoutGrid', label: { fr: 'Mon portfolio', en: 'My portfolio' }, urlPh: 'https://...' },
   course: { icon: 'GraduationCap', label: { fr: 'Ma formation', en: 'My course' }, urlPh: 'https://...' },
   menu: { icon: 'BookOpen', label: { fr: 'Menu en 1 clic', en: 'Menu in 1 tap' }, urlPh: 'https://...' },
@@ -79,9 +87,9 @@ export function modeOf(mode) {
 // Favicon (petit logo) d'un lien, via le service Google. Renvoie null si URL invalide.
 export function faviconUrl(u) {
   try {
-    const host = new URL(/^https?:\/\//.test(u) ? u : `https://${u}`).hostname
+    const host = new URL(/^https?:\/\//.test(u) ? u : `https://${u}`).hostname.replace(/^www\./, '')
     if (!host) return null
-    return `https://www.google.com/s/favicons?sz=64&domain=${host}`
+    return `https://icons.duckduckgo.com/ip3/${host}.ico`
   } catch {
     return null
   }
