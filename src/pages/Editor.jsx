@@ -290,14 +290,19 @@ export default function Editor() {
               {buttons.map((b, i) => (
                 <div
                   key={b.id}
-                  draggable
-                  onDragStart={() => (dragIndex.current = i)}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onDrop(i)}
                   className={`rounded-brutal border-2 border-ink bg-white p-2.5 ${b.isActive ? '' : 'opacity-50'}`}
                 >
                   <div className="flex items-center gap-2">
-                    <GripVertical size={16} className="shrink-0 cursor-grab text-ink/40" />
+                    <span
+                      draggable
+                      onDragStart={() => (dragIndex.current = i)}
+                      aria-hidden
+                      className="shrink-0 cursor-grab text-ink/40"
+                    >
+                      <GripVertical size={16} />
+                    </span>
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-ink" style={{ background: mode.cardBg }}>
                       <Icon name={b.icon} size={16} />
                     </span>
