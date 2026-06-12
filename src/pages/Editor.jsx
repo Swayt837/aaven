@@ -238,6 +238,7 @@ export default function Editor() {
                 {slugErr && <p className="mt-1 text-sm font-bold text-coral">{slugErr}</p>}
               </div>
               <div><Label>{t('edit.bio')}</Label><Textarea rows={2} value={page.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder={t('edit.bioPh')} /></div>
+              <div><Label>{t('edit.location')}</Label><Input value={theme.location || ''} onChange={(e) => setTheme({ location: e.target.value })} placeholder={t('edit.locationPh')} maxLength={80} /></div>
 
               <div>
                 <Label>{t('edit.avatar')}</Label>
@@ -271,6 +272,20 @@ export default function Editor() {
               </div>
 
               <p className="text-xs font-semibold text-ink/50">{t('edit.imageHint')}</p>
+
+              <button
+                type="button"
+                onClick={() => setTheme({ noindex: !theme.noindex })}
+                className="flex w-full items-center justify-between gap-3 rounded-brutal border-2 border-ink bg-white px-4 py-3 text-left"
+              >
+                <span>
+                  <span className="font-display text-sm font-extrabold">{t('edit.seoIndex')}</span>
+                  <span className="block text-[11px] font-semibold text-ink/50">{t('edit.seoIndexHint')}</span>
+                </span>
+                <span className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${!theme.noindex ? 'bg-coral' : 'bg-white'}`}>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${!theme.noindex ? 'left-4' : 'left-0.5'}`} />
+                </span>
+              </button>
             </div>
           </Card>
 

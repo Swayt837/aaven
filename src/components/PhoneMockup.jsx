@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Heart, Volume2, VolumeX } from 'lucide-react'
+import { ArrowRight, Heart, Volume2, VolumeX, MapPin } from 'lucide-react'
 import { Icon } from './Icon'
 import { modeOf, BUTTON_TYPES, faviconUrl } from '../lib/modes'
 import { useI18n } from '../lib/i18n'
@@ -85,6 +85,11 @@ function ImmersiveHeader({ page, theme, headFont, txt, accent, light }) {
         ))}
       <h1 className={`font-extrabold leading-tight tracking-tight ${showAvatar ? 'mt-4' : ''} ${bigName ? 'text-4xl' : 'text-3xl'}`} style={{ color: txt, fontFamily: headFont }}>{page.title}</h1>
       <HeadlinePremium text={page.headline} hlStyle={theme.headlineStyle || 'pill'} txt={txt} accent={accent} headFont={headFont} light={light} />
+      {theme.location ? (
+        <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold" style={{ color: txt, opacity: 0.78 }}>
+          <MapPin size={12} /> {theme.location}
+        </span>
+      ) : null}
       {page.bio ? <p className={`mt-3 text-sm font-medium leading-relaxed ${leftAlign ? '' : 'max-w-xs'}`} style={{ color: txt, opacity: 0.78 }}>{page.bio}</p> : null}
     </div>
   )

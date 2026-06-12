@@ -250,6 +250,13 @@ export const Pages = {
     db.prepare('SELECT * FROM pages WHERE userId = ? ORDER BY createdAt DESC').all(userId).map(mapPage),
   bySlug: (slug) => mapPage(db.prepare('SELECT * FROM pages WHERE slug = ?').get(slug)),
   byId: (id) => mapPage(db.prepare('SELECT * FROM pages WHERE id = ?').get(id)),
+  // Liste légère pour le sitemap (slug + date + flag noindex lu dans le thème JSON).
+  forSitemap: () =>
+    db.prepare('SELECT slug, updatedAt, theme FROM pages ORDER BY updatedAt DESC').all().map((r) => {
+      let noindex = false
+      try { noindex = !!JSON.parse(r.theme || '{}').noindex } catch { /* noop */ }
+      return { slug: r.slug, updatedAt: r.updatedAt, noindex }
+    }),
 
   create({ userId, title, bio, mode, headline }) {
     const page = {

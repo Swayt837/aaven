@@ -205,6 +205,15 @@ export const Pages = {
   },
   async bySlug(slug) { return mapPage(await one('SELECT * FROM pages WHERE slug = $1', [slug])) },
   async byId(id) { return mapPage(await one('SELECT * FROM pages WHERE id = $1', [id])) },
+  // Liste légère pour le sitemap (slug + date + flag noindex lu dans le thème JSON).
+  async forSitemap() {
+    const rows = await all('SELECT slug, "updatedAt", theme FROM pages ORDER BY "updatedAt" DESC')
+    return rows.map((r) => {
+      let noindex = false
+      try { noindex = !!JSON.parse(r.theme || '{}').noindex } catch { /* noop */ }
+      return { slug: r.slug, updatedAt: r.updatedAt, noindex }
+    })
+  },
 
   async create({ userId, title, bio, mode, headline }) {
     const page = {

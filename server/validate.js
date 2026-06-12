@@ -142,6 +142,8 @@ export function sanitizeTheme(input) {
     bgVideo: sanitizeAsset(th.bgVideo),
     bgVideoOwn: th.bgVideoOwn === true,
     ambientAudio: sanitizeAsset(th.ambientAudio),
+    location: clampStr(th.location, 80),       // métier/ville affiché + SEO local
+    noindex: th.noindex === true,              // opt-out d'indexation Google
   }
 }
 

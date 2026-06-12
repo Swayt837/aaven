@@ -815,6 +815,32 @@ async function handleWebhook(req, res) {
   res.json({ received: true })
 }
 
+// ================= SITEMAP (dynamique) =================
+// Liste l'accueil + pages légales + tous les profils publics (hors noindex) → indexation Google.
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const baseUrl = (APP_URL || '').replace(/\/$/, '')
+    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite']
+    const entries = staticPaths.map((p) => ({ loc: baseUrl + p }))
+    const pages = await Pages.forSitemap()
+    for (const p of pages) {
+      if (p.noindex) continue
+      const lastmod = p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : null
+      entries.push({ loc: `${baseUrl}/${p.slug}`, lastmod })
+    }
+    const xml =
+      '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+      entries
+        .map((e) => `  <url><loc>${e.loc}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ''}</url>`)
+        .join('\n') +
+      '\n</urlset>'
+    res.set('Content-Type', 'application/xml; charset=utf-8').send(xml)
+  } catch (e) {
+    console.error('  Sitemap:', e.message)
+    res.status(500).end()
+  }
+})
+
 // ================= STATIC (production) =================
 const dist = path.join(__dirname, '..', 'dist')
 
@@ -825,10 +851,14 @@ const escapeHtml = (s) =>
 // Routes de l'app (SPA) à NE PAS traiter comme des slugs de page publique.
 const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'stats', 'buy-success', 'tip-success', 'api', 'assets'])
 
-// Injecte des balises meta (OG/Twitter/title) spécifiques au profil → aperçus de partage corrects.
-function renderPublicMeta(template, page) {
-  const title = `${page.title || page.slug} · Aaven`
-  const desc = page.headline || page.bio || `La page de ${page.title || page.slug} sur Aaven.`
+// Injecte meta (OG/Twitter/title) + JSON-LD + un contenu HTML indexable (SSR) propres au
+// profil → aperçus de partage corrects ET référencement Google des pages profil.
+function renderPublicMeta(template, page, buttons = []) {
+  const name = page.title || page.slug
+  const title = `${name} · Aaven`
+  const location = (page.theme && page.theme.location) || ''
+  const base = page.headline || page.bio || `La page de ${name} sur Aaven.`
+  const desc = location ? `${base} · ${location}` : base
   let image = page.avatarUrl || page.theme?.bgImage || '/og-image.png'
   if (image.startsWith('/')) image = `${APP_URL}${image}`
   const url = `${APP_URL}/${page.slug}`
@@ -848,21 +878,45 @@ function renderPublicMeta(template, page) {
   set('name', 'twitter:description', desc)
   set('name', 'twitter:image', image)
   set('property', 'og:url', url)
-  // canonical → URL du profil (remplace la home par défaut)
   html = html.replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${escapeHtml(url)}$2`)
-  // Données structurées (rich results) : page de profil
+
+  // Opt-out d'indexation (toggle créateur)
+  if (page.theme && page.theme.noindex) {
+    html = html.replace('</head>', '    <meta name="robots" content="noindex,nofollow" />\n  </head>')
+  }
+
+  // Données structurées (rich results)
   const jsonld = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     mainEntity: {
       '@type': 'Person',
-      name: page.title || page.slug,
+      name,
       url,
       ...(page.avatarUrl ? { image: page.avatarUrl } : {}),
       ...((page.headline || page.bio) ? { description: page.headline || page.bio } : {}),
+      ...(location ? { homeLocation: { '@type': 'Place', name: location } } : {}),
     },
   }
   html = html.replace('</head>', `    <script type="application/ld+json">${JSON.stringify(jsonld)}</script>\n  </head>`)
+
+  // Contenu indexable (rendu serveur, remplacé par l'app React au montage).
+  const links = (buttons || [])
+    .map((b) => {
+      const lbl = escapeHtml(b.label || '')
+      const href = b.url && /^https?:\/\//.test(b.url) ? escapeHtml(b.url) : null
+      return href ? `<li><a href="${href}" rel="nofollow">${lbl}</a></li>` : (lbl ? `<li>${lbl}</li>` : '')
+    })
+    .join('')
+  const seo =
+    '<main style="max-width:560px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif">' +
+    `<h1>${escapeHtml(name)}</h1>` +
+    (page.headline ? `<p>${escapeHtml(page.headline)}</p>` : '') +
+    (location ? `<p>${escapeHtml(location)}</p>` : '') +
+    (page.bio ? `<p>${escapeHtml(page.bio)}</p>` : '') +
+    (links ? `<ul>${links}</ul>` : '') +
+    '</main>'
+  html = html.replace('<div id="root"></div>', `<div id="root">${seo}</div>`)
   return html
 }
 
@@ -878,7 +932,8 @@ if (fs.existsSync(dist)) {
       if (!indexTemplate || RESERVED_SLUGS.has(slug) || slug.includes('.')) return next()
       const page = await Pages.bySlug(slug)
       if (!page) return next()
-      res.set('Content-Type', 'text/html; charset=utf-8').send(renderPublicMeta(indexTemplate, page))
+      const buttons = (await Buttons.byPage(page.id)).filter((b) => b.isActive)
+      res.set('Content-Type', 'text/html; charset=utf-8').send(renderPublicMeta(indexTemplate, page, buttons))
     } catch (e) { next(e) }
   })
 
