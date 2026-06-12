@@ -379,8 +379,11 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
   }
 
   const active = (buttons || []).filter((b) => b.isActive)
-  // L'objectif principal = le bouton EN HAUT de la liste. Réordonner change le principal.
-  const primaryId = active[0]?.id
+  // Mise en avant du 1er bouton (objectif principal) — désactivable par le créateur.
+  const featureFirst = theme.featureFirst !== false
+  const primaryId = featureFirst ? active[0]?.id : null
+  const SIZE = { sm: 'px-4 py-3 text-sm', md: 'px-5 py-4 text-base', lg: 'px-6 py-5 text-lg' }
+  const sizeCls = SIZE[theme.btnSize] || SIZE.md
   const objective = t('objective.' + page.mode)
   const hoverClass = !immersive && style === 'brutalist' ? 'press' : 'bb-hover'
   const isBubble = !immersive && btn === 'bubble'
@@ -449,7 +452,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
           const btnEl = (
             <button
               onClick={handle}
-              className={`${hoverClass} flex w-full items-center gap-3 text-left font-extrabold ${isPrimary ? 'px-5 py-5 text-lg' : 'px-5 py-4'}`}
+              className={`${hoverClass} flex w-full items-center gap-3 text-left font-extrabold ${sizeCls}`}
               style={{ ...bt, fontFamily: headFont }}
             >
               <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg ${isPrimary ? 'h-9 w-9' : 'h-8 w-8'}`} style={ib}>

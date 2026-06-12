@@ -136,6 +136,8 @@ export function sanitizeTheme(input) {
     accent: hex(th.accent) || '#EF5A4C',
     headlineStyle: ['pill', 'line', 'accent', 'outline', 'serif'].includes(th.headlineStyle) ? th.headlineStyle : 'pill',
     showSupporters: th.showSupporters === true,
+    btnSize: ['sm', 'md', 'lg'].includes(th.btnSize) ? th.btnSize : 'md',
+    featureFirst: th.featureFirst !== false,
     tipAmounts: sanitizeAmounts(th.tipAmounts),
     animation: ANIMATIONS.includes(th.animation) ? th.animation : 'none',
     introVideo: sanitizeAsset(th.introVideo),

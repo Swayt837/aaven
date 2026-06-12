@@ -283,6 +283,33 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
         </div>
       </div>
 
+      {/* Taille des boutons */}
+      <div>
+        <Label>{t('edit.btnSize')}</Label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[['sm', 'edit.btnSize.sm'], ['md', 'edit.btnSize.md'], ['lg', 'edit.btnSize.lg']].map(([k, lab]) => (
+            <button key={k} type="button" onClick={() => set({ btnSize: k })} className={`rounded-lg border-2 border-ink px-1 py-2 text-[11px] font-extrabold transition ${(theme.btnSize || 'md') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
+              {t(lab)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mettre en avant le 1er bouton */}
+      <button
+        type="button"
+        onClick={() => set({ featureFirst: theme.featureFirst === false })}
+        className="flex w-full items-center justify-between gap-3 rounded-brutal border-2 border-ink bg-white px-4 py-3 text-left"
+      >
+        <span>
+          <span className="font-display text-sm font-extrabold">{t('edit.featureFirst')}</span>
+          <span className="block text-[11px] font-semibold text-ink/50">{t('edit.featureFirstHint')}</span>
+        </span>
+        <span className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${theme.featureFirst !== false ? 'bg-coral' : 'bg-white'}`}>
+          <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${theme.featureFirst !== false ? 'left-4' : 'left-0.5'}`} />
+        </span>
+      </button>
+
       {/* Style d'accroche */}
       <div>
         <Label>{t('edit.headlineStyle')}</Label>
