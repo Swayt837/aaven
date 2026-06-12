@@ -5,18 +5,34 @@ import { BioImmersive } from './PhoneMockup'
 import { getTheme } from '../lib/themes'
 
 // Bouton « Partager en story » (discret) sur la page publique.
-// PHASE 1 : capture la card entière en image 9:16 (avec watermark Aaven imposé),
-// puis ouvre la feuille de partage native (Insta/TikTok/…). La vidéo de fond est
-// remplacée par son poster/image pour la capture — la version vidéo arrive en phase 2.
+// - Page à VIDÉO de fond → on capture l'overlay (en-tête + boutons + watermark, fond
+//   transparent) et le serveur le superpose sur la vidéo (ffmpeg) → mp4 9:16.
+// - Sinon → on capture toute la card en image 9:16.
+// Puis feuille de partage native (Insta/TikTok/…). Watermark Aaven imposé, pas de QR.
 export function ShareStory({ page, buttons, supporters, products, slug }) {
   const ref = useRef(null)
   const [busy, setBusy] = useState(false)
 
-  // Page « story » : on neutralise la vidéo (html-to-image ne capture pas les <video>).
   const theme = getTheme(page)
+  const hasVideo = !!(theme.introVideo || theme.bgVideo)
+  // Page « story » pour la capture image : on neutralise la vidéo (poster/image utilisé).
   const storyPage = {
     ...page,
     theme: { ...theme, bgVideo: '', introVideo: '', bgVideoOwn: false, bgType: theme.bgImage ? 'image' : theme.bgType },
+  }
+  const url = `${window.location.origin}/${slug}`
+
+  async function shareFile(file) {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: page.title || slug, text: `${page.title || slug} · aaven.fr/${slug}`, url })
+      return true
+    }
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(file)
+    a.download = file.name
+    a.click()
+    URL.revokeObjectURL(a.href)
+    return true
   }
 
   async function share() {
@@ -24,21 +40,25 @@ export function ShareStory({ page, buttons, supporters, products, slug }) {
     setBusy(true)
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready
-      const blob = await toBlob(ref.current, { pixelRatio: 2, cacheBust: true, backgroundColor: '#0b0b10' })
+      // Capture : overlay transparent (vidéo) ou card complète (image)
+      const opts = hasVideo ? { pixelRatio: 2, cacheBust: true } : { pixelRatio: 2, cacheBust: true, backgroundColor: '#0b0b10' }
+      const blob = await toBlob(ref.current, opts)
       if (!blob) throw new Error('capture')
-      const file = new File([blob], `aaven-${slug}.png`, { type: 'image/png' })
-      const url = `${window.location.origin}/${slug}`
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: page.title || slug, text: `${page.title || slug} · aaven.fr/${slug}`, url })
+
+      if (hasVideo) {
+        // Le serveur superpose l'overlay sur la vidéo → mp4
+        const fd = new FormData()
+        fd.append('overlay', blob, 'overlay.png')
+        const res = await fetch(`/api/story/${slug}`, { method: 'POST', body: fd })
+        if (!res.ok) throw new Error('story')
+        const mp4 = await res.blob()
+        await shareFile(new File([mp4], `aaven-${slug}.mp4`, { type: 'video/mp4' }))
       } else {
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(blob)
-        a.download = file.name
-        a.click()
-        URL.revokeObjectURL(a.href)
+        await shareFile(new File([blob], `aaven-${slug}.png`, { type: 'image/png' }))
       }
     } catch {
-      /* partage annulé ou non supporté → on ignore */
+      // Échec/annulation → on tente au minimum de partager le lien
+      try { if (navigator.share) await navigator.share({ title: page.title || slug, text: `${page.title || slug}`, url }) } catch { /* noop */ }
     } finally {
       setBusy(false)
     }
@@ -58,8 +78,16 @@ export function ShareStory({ page, buttons, supporters, products, slug }) {
 
       {/* Rendu story 9:16 hors-écran, uniquement pour la capture */}
       <div aria-hidden style={{ position: 'fixed', left: -99999, top: 0, width: 540, height: 960, pointerEvents: 'none' }}>
-        <div ref={ref} style={{ position: 'relative', width: 540, height: 960, overflow: 'hidden', background: '#0b0b10' }}>
-          <BioImmersive page={storyPage} buttons={buttons} supporters={supporters} products={products} branding={false} kenBurns={false} />
+        <div ref={ref} style={{ position: 'relative', width: 540, height: 960, overflow: 'hidden', background: hasVideo ? 'transparent' : '#0b0b10' }}>
+          <BioImmersive
+            page={hasVideo ? page : storyPage}
+            buttons={buttons}
+            supporters={supporters}
+            products={products}
+            branding={false}
+            kenBurns={false}
+            overlayOnly={hasVideo}
+          />
           {/* Watermark Aaven imposé */}
           <div
             style={{

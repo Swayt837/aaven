@@ -608,7 +608,7 @@ function BgVideo({ src, loop = false, sound = false, className, style }) {
 
 // Scène immersive plein écran (cinématique, sans carte) : fond + overlays + contenu flottant.
 // Se place dans un parent `relative` qui a une hauteur (viewport ou écran du mockup).
-export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false }) {
+export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false, overlayOnly = false }) {
   const theme = getTheme(page)
   const accent = theme.accent || modeOf(page.mode).accent
   // Base affichée DERRIÈRE la vidéo pendant son chargement : dégradé si fond dégradé,
@@ -623,7 +623,7 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
           1) vidéo d'intro = joue 1 fois puis se fige sur sa dernière frame (no loop)
           2) vidéo de fond en boucle
           3) image (léger zoom cinématique) */}
-      {theme.introVideo ? (
+      {!overlayOnly && (theme.introVideo ? (
         <>
           <div className="absolute inset-0" style={videoBase} aria-hidden />
           <BgVideo
@@ -648,7 +648,7 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
         <FramedImage src={theme.bgImage} posX={theme.bgPosX ?? 50} posY={theme.bgPosY ?? 50} zoom={theme.bgZoom ?? 1} className="absolute inset-0" />
       ) : (
         <div className="absolute inset-0" style={backgroundStyle(theme)} />
-      )}
+      ))}
       {/* Assombrissement dynamique (lisibilité) */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.12) 32%, rgba(0,0,0,0.64) 100%)' }} aria-hidden />
       {/* Vignette douce */}

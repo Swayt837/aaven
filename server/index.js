@@ -15,6 +15,7 @@ import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
 import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
+import { buildStoryVideo } from './story.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -650,6 +651,27 @@ app.get('/api/wallet/google/:slug', async (req, res) => {
   } catch (e) {
     console.error('  Google Wallet:', e.message)
     res.status(500).json({ error: 'Lien Google Wallet échoué' })
+  }
+})
+
+// Story vidéo : reçoit l'overlay (PNG transparent rendu côté client) et le superpose
+// sur la vidéo de fond de la page → mp4 9:16 partageable en story.
+const storyUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 6 * 1024 * 1024 } })
+app.post('/api/story/:slug', writeLimiter, storyUpload.single('overlay'), async (req, res) => {
+  try {
+    const page = await Pages.bySlug(req.params.slug)
+    if (!page) return res.status(404).json({ error: 'Page introuvable' })
+    const theme = typeof page.theme === 'string' ? JSON.parse(page.theme || '{}') : (page.theme || {})
+    const videoUrl = theme.introVideo || theme.bgVideo
+    if (!videoUrl) return res.status(400).json({ error: 'Pas de vidéo de fond' })
+    if (!req.file) return res.status(400).json({ error: 'Overlay manquant' })
+    const mp4 = await buildStoryVideo(videoUrl, req.file.buffer)
+    res.set('Content-Type', 'video/mp4')
+    res.set('Content-Disposition', `inline; filename="aaven-${page.slug}.mp4"`)
+    res.send(mp4)
+  } catch (e) {
+    console.error('  Story vidéo:', e.message)
+    res.status(500).json({ error: 'Génération vidéo échouée' })
   }
 })
 
