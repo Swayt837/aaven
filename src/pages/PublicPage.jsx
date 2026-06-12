@@ -8,6 +8,7 @@ import { ServicesModal } from '../components/ServicesModal'
 import { ReservationModal } from '../components/ReservationModal'
 import { QuoteModal } from '../components/QuoteModal'
 import { LinksModal } from '../components/LinksModal'
+import { ShareStory } from '../components/ShareStory'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { getTheme } from '../lib/themes'
@@ -90,6 +91,7 @@ export default function PublicPage() {
         onQuote={(b) => { api.trackClick(slug, b.id).catch(() => {}); setQuote(b) }}
         onLinks={(b) => { api.trackClick(slug, b.id).catch(() => {}); setLinks(b) }}
       />
+      <ShareStory page={page} buttons={buttons} supporters={supporters} products={products} slug={slug} />
       {tip && <TipModal slug={slug} amounts={theme.tipAmounts} onClose={() => setTip(false)} />}
       {contact && <ContactModal slug={slug} subject={contact.label} onClose={() => setContact(null)} />}
       {services && <ServicesModal title={services.label} items={services.config?.items} accent={theme.accent} onClose={() => setServices(null)} />}
