@@ -15,6 +15,7 @@ import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
 import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
+import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -820,7 +821,7 @@ async function handleWebhook(req, res) {
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = (APP_URL || '').replace(/\/$/, '')
-    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite']
+    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite', ...SEO_SLUGS.map((s) => `/${s}`)]
     const entries = staticPaths.map((p) => ({ loc: baseUrl + p }))
     const pages = await Pages.forSitemap()
     for (const p of pages) {
@@ -850,6 +851,25 @@ const escapeHtml = (s) =>
 
 // Routes de l'app (SPA) à NE PAS traiter comme des slugs de page publique.
 const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'stats', 'buy-success', 'tip-success', 'api', 'assets'])
+SEO_SLUGS.forEach((s) => RESERVED_SLUGS.add(s))
+
+// Injecte les meta d'une page statique (SEO dédiée) dans le template index.html.
+function injectStaticMeta(template, { title, description, path }) {
+  const url = `${APP_URL}${path}`
+  let html = template.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
+  const set = (attr, key, val) => {
+    const re = new RegExp(`(<meta ${attr}="${key}" content=")[^"]*(")`)
+    html = re.test(html) ? html.replace(re, `$1${escapeHtml(val)}$2`) : html
+  }
+  set('name', 'description', description)
+  set('property', 'og:title', title)
+  set('property', 'og:description', description)
+  set('property', 'og:url', url)
+  set('name', 'twitter:title', title)
+  set('name', 'twitter:description', description)
+  html = html.replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${escapeHtml(url)}$2`)
+  return html
+}
 
 // Injecte meta (OG/Twitter/title) + JSON-LD + un contenu HTML indexable (SSR) propres au
 // profil → aperçus de partage corrects ET référencement Google des pages profil.
@@ -926,6 +946,15 @@ if (fs.existsSync(dist)) {
   // Pages publiques : on sert index.html enrichi des meta du profil (aperçus sociaux).
   let indexTemplate = ''
   try { indexTemplate = fs.readFileSync(path.join(dist, 'index.html'), 'utf8') } catch { /* build absent */ }
+  // Pages SEO dédiées : index.html avec meta spécifiques (avant la route profil).
+  app.get(SEO_SLUGS.map((s) => `/${s}`), (req, res, next) => {
+    if (!indexTemplate) return next()
+    const slug = req.path.replace(/^\//, '')
+    const m = SEO_META[slug] && SEO_META[slug].fr
+    if (!m) return next()
+    res.set('Content-Type', 'text/html; charset=utf-8').send(injectStaticMeta(indexTemplate, { title: m.title, description: m.desc, path: `/${slug}` }))
+  })
+
   app.get('/:slug', async (req, res, next) => {
     try {
       const { slug } = req.params
