@@ -91,9 +91,11 @@ const dict = {
     'legal.cgu': 'CGU',
     'legal.cgv': 'CGV',
     'legal.privacy': 'Confidentialité',
-    'cookie.text': 'On utilise uniquement un cookie de session nécessaire au fonctionnement et une mesure d’audience anonyme.',
+    'cookie.text': 'On utilise un cookie de session nécessaire au fonctionnement. Avec ton accord, on active aussi une mesure d’audience (PostHog) pour améliorer le service.',
     'cookie.link': 'En savoir plus',
     'cookie.ok': 'J’ai compris',
+    'cookie.accept': 'Accepter',
+    'cookie.refuse': 'Refuser',
 
     // Landing — pricing
     'pricing.eyebrow': 'TARIFS',
@@ -539,9 +541,11 @@ const dict = {
     'legal.cgu': 'Terms',
     'legal.cgv': 'Sales terms',
     'legal.privacy': 'Privacy',
-    'cookie.text': 'We only use a session cookie required for the service and anonymous audience measurement.',
+    'cookie.text': 'We use a session cookie required for the service. With your consent, we also enable audience measurement (PostHog) to improve the product.',
     'cookie.link': 'Learn more',
     'cookie.ok': 'Got it',
+    'cookie.accept': 'Accept',
+    'cookie.refuse': 'Decline',
 
     'pricing.eyebrow': 'PRICING',
     'pricing.title': 'Simple. Honest.',

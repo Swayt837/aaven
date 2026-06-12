@@ -78,10 +78,10 @@ const DOCS = {
         'Statistiques de performance de ta page (intérêt légitime).',
         'Notifications et e-mails liés au service (exécution du contrat).',
       ]],
-      ['Sous-traitants', ['Google (authentification), Supabase (base de données & stockage), Render (hébergement), Stripe (paiements). Des transferts hors UE peuvent intervenir, encadrés par des garanties appropriées.']],
+      ['Sous-traitants', ['Google (authentification), Supabase (base de données & stockage), Render (hébergement), Stripe (paiements), PostHog (mesure d’audience, hébergement UE — uniquement avec ton consentement). Des transferts hors UE peuvent intervenir, encadrés par des garanties appropriées.']],
       ['Durée de conservation', ['Les données sont conservées tant que ton compte est actif, puis supprimées après clôture (sauf obligations légales, ex. comptables pour les factures).']],
       ['Tes droits', ['Accès, rectification, effacement, portabilité, opposition. Tu peux supprimer ta page/ton compte à tout moment, ou nous écrire à [EMAIL DE CONTACT]. Réclamation possible auprès de la CNIL (cnil.fr).']],
-      ['Cookies', ['Aaven n’utilise qu’un cookie strictement nécessaire (session de connexion). Aucun cookie publicitaire ni traceur tiers. La mesure d’audience est anonyme et côté serveur.']],
+      ['Cookies', ['Aaven utilise un cookie strictement nécessaire (session de connexion), exempté de consentement. Aucun cookie publicitaire. Avec ton consentement uniquement, une mesure d’audience (PostHog, UE) dépose des cookies pour comprendre l’usage et améliorer le service ; tu peux refuser depuis le bandeau, sans impact sur le fonctionnement.']],
     ],
   },
 }

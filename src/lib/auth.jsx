@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api } from './api'
+import { identifyUser, resetAnalytics } from './analytics'
 
 const AuthContext = createContext(null)
 
@@ -11,6 +12,7 @@ export function AuthProvider({ children }) {
     try {
       const me = await api.me()
       setUser(me.user)
+      identifyUser(me.user)
     } catch {
       setUser(null)
     } finally {
@@ -42,6 +44,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     await api.logout()
     setUser(null)
+    resetAnalytics()
   }, [])
 
   return (

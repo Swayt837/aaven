@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './lib/auth'
 import { useI18n } from './lib/i18n'
+import { bootAnalytics, capturePageview } from './lib/analytics'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
@@ -23,6 +25,9 @@ function Protected({ children }) {
 }
 
 export default function App() {
+  const loc = useLocation()
+  useEffect(() => { bootAnalytics() }, [])
+  useEffect(() => { capturePageview() }, [loc.pathname])
   return (
     <>
       <Routes>

@@ -1,24 +1,22 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useI18n } from '../lib/i18n'
+import { analyticsAvailable, consentState, grantConsent, denyConsent } from '../lib/analytics'
 
-const KEY = 'bb_cookie_ack'
-
-// Bandeau d'information cookies. Aaven n'utilise qu'un cookie de session
-// strictement nécessaire (exempté de consentement) + une mesure d'audience
-// anonyme côté serveur → bandeau informatif avec acquittement.
+// Bandeau de consentement cookies. Cookie de session = strictement nécessaire (exempté).
+// Mesure d'audience PostHog = opt-in : ne se charge qu'après « Accepter ».
 export function CookieBanner() {
   const { t } = useI18n()
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    try { setShow(localStorage.getItem(KEY) !== '1') } catch { setShow(false) }
+    // Si l'analytics n'est pas configuré, rien à demander → on n'affiche pas.
+    if (!analyticsAvailable()) { setShow(false); return }
+    setShow(consentState() === null)
   }, [])
 
-  function ack() {
-    try { localStorage.setItem(KEY, '1') } catch { /* ignore */ }
-    setShow(false)
-  }
+  function accept() { grantConsent(); setShow(false) }
+  function refuse() { denyConsent(); setShow(false) }
 
   if (!show) return null
   return (
@@ -28,12 +26,20 @@ export function CookieBanner() {
           {t('cookie.text')}{' '}
           <Link to="/legal/confidentialite" className="font-extrabold underline">{t('cookie.link')}</Link>
         </p>
-        <button
-          onClick={ack}
-          className="press shrink-0 rounded-brutal border-2 border-ink bg-sun px-4 py-2 text-sm font-extrabold"
-        >
-          {t('cookie.ok')}
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={refuse}
+            className="press rounded-brutal border-2 border-ink bg-white px-4 py-2 text-sm font-extrabold"
+          >
+            {t('cookie.refuse')}
+          </button>
+          <button
+            onClick={accept}
+            className="press rounded-brutal border-2 border-ink bg-sun px-4 py-2 text-sm font-extrabold"
+          >
+            {t('cookie.accept')}
+          </button>
+        </div>
       </div>
     </div>
   )
