@@ -485,9 +485,15 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
       )}
 
       {branding && (
-        <p className="mt-8 text-center text-[11px] font-extrabold uppercase tracking-[0.18em]" style={{ color: txt, opacity: 0.45, fontFamily: headFont }}>
+        <a
+          href="https://www.aaven.fr/"
+          target="_blank"
+          rel="noopener"
+          className="mt-8 block text-center text-[11px] font-extrabold uppercase tracking-[0.18em] transition-opacity hover:opacity-100"
+          style={{ color: txt, opacity: 0.45, fontFamily: headFont }}
+        >
           {t('common.madeWith')}
-        </p>
+        </a>
       )}
     </div>
   )

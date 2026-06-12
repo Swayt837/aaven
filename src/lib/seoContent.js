@@ -90,6 +90,66 @@ export const SEO_PAGES = {
       ],
     },
   },
+  'aaven-vs-linktree': {
+    fr: {
+      h1: 'Aaven vs Linktree : lequel choisir en 2026 ?',
+      sub: 'Linktree pour une liste de liens, Aaven pour une vraie carte de visite digitale qui convertit. Voici la différence.',
+      bullets: [
+        { t: 'Conversion', d: 'Aaven ajoute vidéo, tips, ventes et réservations ; Linktree reste une liste de liens.' },
+        { t: 'Monétisation directe', d: 'Encaisse tips et produits sur ta page (Stripe), sans rediriger ailleurs.' },
+        { t: 'Référencement', d: 'Chaque profil Aaven est une page indexable par Google.' },
+      ],
+      faq: [
+        { q: 'Aaven est-il plus cher que Linktree ?', a: 'Aaven est gratuit pour démarrer, avec une petite commission sur les tips/ventes. Les abonnements débloquent l’upload vidéo et retirent le branding.' },
+        { q: 'Puis-je faire comme Linktree avec Aaven ?', a: 'Oui, et bien plus : la liste de liens de base + vidéo, monétisation, mur de supporters et analytics.' },
+        { q: 'La migration est-elle longue ?', a: 'Non, 30 secondes pour recréer ta page et remplacer ton lien en bio.' },
+      ],
+    },
+    en: {
+      h1: 'Aaven vs Linktree: which to choose in 2026?',
+      sub: 'Linktree for a list of links, Aaven for a real digital business card that converts. Here’s the difference.',
+      bullets: [
+        { t: 'Conversion', d: 'Aaven adds video, tips, sales and bookings; Linktree stays a list of links.' },
+        { t: 'Direct monetization', d: 'Collect tips and products on your page (Stripe), no redirects.' },
+        { t: 'SEO', d: 'Every Aaven profile is a page Google can index.' },
+      ],
+      faq: [
+        { q: 'Is Aaven more expensive than Linktree?', a: 'Aaven is free to start, with a small fee on tips/sales. Paid plans unlock video upload and remove branding.' },
+        { q: 'Can I do what Linktree does with Aaven?', a: 'Yes, and more: the basic link list + video, monetization, supporter wall and analytics.' },
+        { q: 'Is migration long?', a: 'No, 30 seconds to recreate your page and swap your bio link.' },
+      ],
+    },
+  },
+  'bio-link-for-djs': {
+    fr: {
+      h1: 'La page bio pour DJs & musiciens',
+      sub: 'Dates, sets, plateformes de streaming, tips et réservations — une page bio à la hauteur de ta musique.',
+      bullets: [
+        { t: 'Streaming intégré', d: 'Relie Spotify, YouTube, SoundCloud — et un fond vidéo qui pose l’ambiance.' },
+        { t: 'Tips & soutiens', d: 'Ton public te soutient en 1 clic, tu encaisses direct.' },
+        { t: 'Réservations', d: 'Reçois des demandes de booking via un bouton dédié.' },
+      ],
+      faq: [
+        { q: 'Puis-je mettre un fond vidéo de mes sets ?', a: 'Oui : templates vidéo gratuits, ou importe ta propre vidéo (Creator/Pro).' },
+        { q: 'Comment recevoir des bookings ?', a: 'Ajoute un bouton réservation (WhatsApp, e-mail ou mini-formulaire) — les demandes arrivent dans tes stats.' },
+        { q: 'Le son joue-t-il ?', a: 'Oui, le son de la vidéo crée l’ambiance sur ta page.' },
+      ],
+    },
+    en: {
+      h1: 'The bio link for DJs & musicians',
+      sub: 'Dates, sets, streaming platforms, tips and bookings — a bio page worthy of your music.',
+      bullets: [
+        { t: 'Streaming built-in', d: 'Link Spotify, YouTube, SoundCloud — with a background video that sets the mood.' },
+        { t: 'Tips & support', d: 'Your audience supports you in one tap, you cash in directly.' },
+        { t: 'Bookings', d: 'Receive booking requests via a dedicated button.' },
+      ],
+      faq: [
+        { q: 'Can I use a background video of my sets?', a: 'Yes: free video templates, or upload your own (Creator/Pro).' },
+        { q: 'How do I receive bookings?', a: 'Add a booking button (WhatsApp, email or mini-form) — requests land in your stats.' },
+        { q: 'Does the sound play?', a: 'Yes, the video’s sound creates ambiance on your page.' },
+      ],
+    },
+  },
 }
 
 // Meta (titre/description) — utilisé côté serveur ET client. FR par défaut.
@@ -105,6 +165,14 @@ export const SEO_META = {
   'bio-link-for-creators': {
     fr: { title: 'Page bio pour créateurs — Aaven', desc: 'La page bio qui monétise ton audience : tips, produits digitaux, réservations et analytics. Pour créateurs, coachs, DJs et freelances.' },
     en: { title: 'Bio link for creators — Aaven', desc: 'The bio page that monetizes your audience: tips, digital products, bookings and analytics. For creators, coaches, DJs and freelancers.' },
+  },
+  'aaven-vs-linktree': {
+    fr: { title: 'Aaven vs Linktree : comparatif 2026 — Aaven', desc: 'Aaven vs Linktree : liste de liens ou carte de visite digitale qui convertit (vidéo, tips, ventes, SEO) ? Le comparatif.' },
+    en: { title: 'Aaven vs Linktree: 2026 comparison — Aaven', desc: 'Aaven vs Linktree: a list of links or a digital business card that converts (video, tips, sales, SEO)? The comparison.' },
+  },
+  'bio-link-for-djs': {
+    fr: { title: 'Page bio pour DJs & musiciens — Aaven', desc: 'La page bio des DJs et musiciens : streaming, fond vidéo, tips, réservations et analytics. Gratuit pour démarrer.' },
+    en: { title: 'Bio link for DJs & musicians — Aaven', desc: 'The bio page for DJs and musicians: streaming, background video, tips, bookings and analytics. Free to start.' },
   },
 }
 
