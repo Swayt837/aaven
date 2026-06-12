@@ -566,7 +566,7 @@ function FinalCTA({ onStart }) {
 export default function Landing() {
   const { user } = useAuth()
   const nav = useNavigate()
-  const onStart = () => nav(user ? '/onboarding' : '/login')
+  const onStart = () => nav(user ? '/dashboard' : '/login')
   return (
     <div className="min-h-screen bg-brand-cream font-sans text-brand-ink antialiased">
       <Header onStart={onStart} />
