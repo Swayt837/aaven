@@ -26,6 +26,7 @@
     "express-rate-limit": "^8.5.2",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.460.0",
+    "marked": "^18.0.5",
     "multer": "^2.1.1",
     "nanoid": "^5.0.9",
     "nodemailer": "^8.0.10",

@@ -14,6 +14,7 @@ import TipSuccess from './pages/TipSuccess'
 import BuySuccess from './pages/BuySuccess'
 import Legal from './pages/Legal'
 import SeoLanding from './pages/SeoLanding'
+import Blog from './pages/Blog'
 import { SEO_SLUGS } from './lib/seoContent'
 import { CookieBanner } from './components/CookieBanner'
 
@@ -42,6 +43,8 @@ export default function App() {
         <Route path="/tip-success" element={<TipSuccess />} />
         <Route path="/buy-success" element={<BuySuccess />} />
         <Route path="/legal/:doc" element={<Legal />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<Blog />} />
         {SEO_SLUGS.map((s) => (
           <Route key={s} path={`/${s}`} element={<SeoLanding slug={s} />} />
         ))}

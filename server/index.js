@@ -821,7 +821,7 @@ async function handleWebhook(req, res) {
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = (APP_URL || '').replace(/\/$/, '')
-    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite', ...SEO_SLUGS.map((s) => `/${s}`)]
+    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite', '/blog', ...SEO_SLUGS.map((s) => `/${s}`), ...BLOG.map((b) => `/blog/${b.slug}`)]
     const entries = staticPaths.map((p) => ({ loc: baseUrl + p }))
     const pages = await Pages.forSitemap()
     for (const p of pages) {
@@ -852,6 +852,22 @@ const escapeHtml = (s) =>
 // Routes de l'app (SPA) à NE PAS traiter comme des slugs de page publique.
 const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'stats', 'buy-success', 'tip-success', 'api', 'assets'])
 SEO_SLUGS.forEach((s) => RESERVED_SLUGS.add(s))
+RESERVED_SLUGS.add('blog')
+
+// Articles de blog (lus depuis src/blog/*.md au démarrage) → meta serveur + sitemap.
+function loadBlogMeta() {
+  const dir = path.join(__dirname, '..', 'src', 'blog')
+  try {
+    return fs.readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => {
+      const raw = fs.readFileSync(path.join(dir, f), 'utf8')
+      const fm = raw.match(/^---\s*\n([\s\S]*?)\n---/)
+      const meta = {}
+      if (fm) for (const line of fm[1].split('\n')) { const i = line.indexOf(':'); if (i > 0) meta[line.slice(0, i).trim()] = line.slice(i + 1).trim() }
+      return { slug: f.replace(/\.md$/, ''), title: meta.title || f, description: meta.description || '', date: meta.date || '' }
+    })
+  } catch { return [] }
+}
+const BLOG = loadBlogMeta()
 
 // Injecte les meta d'une page statique (SEO dédiée) dans le template index.html.
 function injectStaticMeta(template, { title, description, path }) {
@@ -946,6 +962,18 @@ if (fs.existsSync(dist)) {
   // Pages publiques : on sert index.html enrichi des meta du profil (aperçus sociaux).
   let indexTemplate = ''
   try { indexTemplate = fs.readFileSync(path.join(dist, 'index.html'), 'utf8') } catch { /* build absent */ }
+  // Blog : index + articles (meta serveur).
+  app.get('/blog', (req, res, next) => {
+    if (!indexTemplate) return next()
+    res.set('Content-Type', 'text/html; charset=utf-8').send(injectStaticMeta(indexTemplate, { title: 'Blog — Aaven', description: 'Conseils pour faire grandir et monétiser ta page bio Aaven.', path: '/blog' }))
+  })
+  app.get('/blog/:slug', (req, res, next) => {
+    if (!indexTemplate) return next()
+    const b = BLOG.find((x) => x.slug === req.params.slug)
+    if (!b) return next()
+    res.set('Content-Type', 'text/html; charset=utf-8').send(injectStaticMeta(indexTemplate, { title: `${b.title} — Aaven`, description: b.description, path: `/blog/${b.slug}` }))
+  })
+
   // Pages SEO dédiées : index.html avec meta spécifiques (avant la route profil).
   app.get(SEO_SLUGS.map((s) => `/${s}`), (req, res, next) => {
     if (!indexTemplate) return next()
