@@ -452,7 +452,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
           const btnEl = (
             <button
               onClick={handle}
-              className={`${hoverClass} flex w-full items-center gap-3 text-left font-extrabold ${sizeCls}`}
+              className={`${hoverClass} flex w-full items-center gap-3 font-extrabold ${sizeCls}`}
               style={{ ...bt, fontFamily: headFont }}
             >
               <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg ${isPrimary ? 'h-9 w-9' : 'h-8 w-8'}`} style={ib}>
@@ -462,8 +462,9 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
                   <Icon name={b.icon} size={isPrimary ? 20 : 18} />
                 )}
               </span>
-              <span className="flex-1 leading-tight">{labelOf(b)}</span>
-              {isPrimary && <ArrowRight size={18} strokeWidth={3} className="shrink-0" />}
+              <span className="flex-1 text-center leading-tight">{labelOf(b)}</span>
+              {/* Élément de droite pour équilibrer l'icône → texte parfaitement centré */}
+              {isPrimary ? <ArrowRight size={18} strokeWidth={3} className="shrink-0" /> : <span aria-hidden className="h-8 w-8 shrink-0" />}
             </button>
           )
           const wrapCls = isBubble ? 'bb-bubble' : undefined
