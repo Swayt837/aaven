@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Check, Sparkles, ArrowRight } from 'lucide-react'
 import { api } from '../lib/api'
 import { useI18n } from '../lib/i18n'
+import { track } from '../lib/analytics'
 
 const CONTENT = {
   fr: {
@@ -53,9 +54,10 @@ export function UpgradeModal({ open, onClose }) {
 
   async function choose(plan) {
     setLoading(plan)
+    track('upgrade_clicked', { plan, source: 'editor_modal' })
     try {
       const r = await api.billingCheckout(plan)
-      if (r && r.url) window.location.href = r.url // Stripe Checkout
+      if (r && r.url) { track('checkout_started', { plan }); window.location.href = r.url } // Stripe Checkout
       else window.location.reload() // mode démo : plan appliqué directement
     } catch (e) {
       alert(e.message)

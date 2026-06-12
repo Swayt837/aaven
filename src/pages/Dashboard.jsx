@@ -9,6 +9,7 @@ import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { modeOf } from '../lib/modes'
+import { track } from '../lib/analytics'
 
 const FEE_LABEL = { free: '5%', creator: '1%', pro: '0%' }
 
@@ -32,9 +33,10 @@ export default function Dashboard() {
 
   const plan = user?.plan || 'free'
   async function upgrade(p) {
+    track('upgrade_clicked', { plan: p, source: 'dashboard' })
     try {
       const r = await api.billingCheckout(p)
-      if (r.url) window.location.href = r.url
+      if (r.url) { track('checkout_started', { plan: p }); window.location.href = r.url }
       else await refresh()
     } catch (e) {
       alert(e.message)

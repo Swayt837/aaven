@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
+import { track } from '../lib/analytics'
 
 const EASE = [0.22, 1, 0.36, 1]
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } }
@@ -566,7 +567,7 @@ function FinalCTA({ onStart }) {
 export default function Landing() {
   const { user } = useAuth()
   const nav = useNavigate()
-  const onStart = () => nav(user ? '/dashboard' : '/login')
+  const onStart = () => { track('cta_start', { loggedIn: !!user }); nav(user ? '/dashboard' : '/login') }
   return (
     <div className="min-h-screen bg-brand-cream font-sans text-brand-ink antialiased">
       <Header onStart={onStart} />

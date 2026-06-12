@@ -6,6 +6,7 @@ import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { MODES } from '../lib/modes'
+import { track } from '../lib/analytics'
 
 export default function Onboarding() {
   const { t, lang } = useI18n()
@@ -29,6 +30,7 @@ export default function Onboarding() {
     setBusy(true)
     try {
       const { page } = await api.createPage({ title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode })
+      track('page_created', { mode })
       setCreated(page)
       setStep(3)
     } catch (e) {

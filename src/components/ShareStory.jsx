@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Share2, Check } from 'lucide-react'
+import { track } from '../lib/analytics'
 
 // Bouton « Partager » discret sur la page publique : partage le lien de la page
 // via la feuille de partage native (fallback : copie du lien).
@@ -8,6 +9,7 @@ export function ShareStory({ page, slug }) {
   const url = `${window.location.origin}/${slug}`
 
   async function share() {
+    track('share_clicked', { slug })
     const title = page.title || slug
     if (navigator.share) {
       try { await navigator.share({ title, text: title, url }) } catch { /* annulé */ }
