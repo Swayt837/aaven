@@ -38,9 +38,9 @@ const feeBps = (plan) => FEE_BPS[plan] ?? 500
 // URL canonique épinglée côté serveur (anti-contournement du gating premium).
 const SUPA = 'https://cdn.aaven.fr/templates'
 const FREE_VIDEO_TEMPLATES = {
-  'neon-creator': `${SUPA}/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`,
-  'lounge-live': `${SUPA}/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`,
-  'office-live': `${SUPA}/Premium%20Freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`,
+  'neon-creator': `${SUPA}/createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`,
+  'lounge-live': `${SUPA}/etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`,
+  'office-live': `${SUPA}/freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`,
 }
 
 // Prix d'abonnement Stripe (Billing).

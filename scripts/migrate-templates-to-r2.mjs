@@ -46,7 +46,10 @@ for (const p of PATHS) {
     const res = await fetch(url)
     if (!res.ok) { console.error('⚠️  skip', p, '→ HTTP', res.status); continue }
     const buf = Buffer.from(await res.arrayBuffer())
-    const key = 'templates' + decodeURIComponent(p) // ex. templates/Premium Createur/xxx.mp4
+    // Clés propres SANS espace ni caractère spécial (évite les soucis d'encodage R2).
+    const CAT = { 'Premium Createur': 'createur', 'Premium Etablissement': 'etablissement', 'Premium Freelance': 'freelance' }
+    const parts = decodeURIComponent(p).split('/').filter(Boolean) // ['Premium Createur', '<fichier>.mp4']
+    const key = `templates/${CAT[parts[0]] || parts[0].toLowerCase().replace(/\s+/g, '-')}/${parts[1]}`
     await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buf, ContentType: 'video/mp4' }))
     console.log('✅', key, `(${(buf.length / 1e6).toFixed(1)} Mo)`)
     ok++

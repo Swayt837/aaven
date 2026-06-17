@@ -242,10 +242,10 @@ function Hero({ onStart }) {
 /* ============================ Profile Showcase ============================ */
 const SUPA = 'https://cdn.aaven.fr/templates'
 const PROFILE_META = [
-  { id: 'lea-creator', name: 'Léa', handle: '@lea.mode', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`, accent: '#FF4D42', icons: [Heart, Instagram, ShoppingBag], wall: '1,2k' },
-  { id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', img: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`, accent: '#F7C948', icons: [CalendarCheck, ShoppingBag, MapPin] },
-  { id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4`, accent: '#D6FF00', icons: [Heart, CalendarCheck, Dumbbell], wall: '480' },
-  { id: 'noah-designer', name: 'Noah', handle: '@noah.studio', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`, accent: '#38BDF8', icons: [Palette, Mail, CalendarCheck] },
+  { id: 'lea-creator', name: 'Léa', handle: '@lea.mode', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`, accent: '#FF4D42', icons: [Heart, Instagram, ShoppingBag], wall: '1,2k' },
+  { id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', img: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`, accent: '#F7C948', icons: [CalendarCheck, ShoppingBag, MapPin] },
+  { id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4`, accent: '#D6FF00', icons: [Heart, CalendarCheck, Dumbbell], wall: '480' },
+  { id: 'noah-designer', name: 'Noah', handle: '@noah.studio', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`, accent: '#38BDF8', icons: [Palette, Mail, CalendarCheck] },
 ]
 const PROFILE_COPY = {
   fr: {

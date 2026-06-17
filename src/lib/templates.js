@@ -198,49 +198,49 @@ export const TEMPLATES = [
   {
     key: 'fanhub-live', persona: 'creator', premium: true, name: 'Fan Hub Live', desc: { fr: 'Concert vivant · pulsations lumineuses', en: 'Live concert · light pulses' },
     preview: P('1514525253161-7a46d19cd819'),
-    apply: { template: 'fanhub-live', style: 'clean', layout: 'fullbleed', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1514525253161-7a46d19cd819'), overlay: 0.5, text: 'light', accent: '#F0426B', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Createur/fd226439-0e1f-4889-a6f7-cecba77e771a-1-1.1-invideo-kling_25.mp4' },
+    apply: { template: 'fanhub-live', style: 'clean', layout: 'fullbleed', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1514525253161-7a46d19cd819'), overlay: 0.5, text: 'light', accent: '#F0426B', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/createur/fd226439-0e1f-4889-a6f7-cecba77e771a-1-1.1-invideo-kling_25.mp4' },
   },
   {
     key: 'aura-live', persona: 'creator', premium: true, name: 'Aura Live', desc: { fr: 'Dégradé abstrait qui respire', en: 'Breathing abstract gradient' },
     preview: P('1550684376-efcbd6e3f031'),
-    apply: { template: 'aura-live', style: 'clean', layout: 'spotlight', font: 'modern', btnStyle: 'bubble', bgType: 'gradient', gradFrom: '#7C3AED', gradTo: '#22D3EE', gradAngle: 135, text: 'light', accent: '#F472B6', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4' },
+    apply: { template: 'aura-live', style: 'clean', layout: 'spotlight', font: 'modern', btnStyle: 'bubble', bgType: 'gradient', gradFrom: '#7C3AED', gradTo: '#22D3EE', gradAngle: 135, text: 'light', accent: '#F472B6', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4' },
   },
   {
     key: 'neon-creator', persona: 'creator', name: 'Neon Studio', desc: { fr: 'Néon · lumière qui balaie · vidéo offerte', en: 'Neon · sweeping light · free video' },
     preview: P('1492684223066-81342ee5ff30'),
-    apply: { template: 'neon-creator', style: 'premium', layout: 'magazine', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1492684223066-81342ee5ff30'), overlay: 0.5, text: 'light', accent: '#22D3EE', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4' },
+    apply: { template: 'neon-creator', style: 'premium', layout: 'magazine', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1492684223066-81342ee5ff30'), overlay: 0.5, text: 'light', accent: '#22D3EE', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4' },
   },
   // 🍽️ Établissement
   {
     key: 'cocktail-live', persona: 'bar', premium: true, name: 'Cocktail Live', desc: { fr: 'Bar premium · lumière qui bouge', en: 'Premium bar · moving light' },
     preview: P('1514362545857-3bc16c4c7d1b'),
-    apply: { template: 'cocktail-live', style: 'premium', layout: 'magazine', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1514362545857-3bc16c4c7d1b'), overlay: 0.55, text: 'light', accent: '#F7C948', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Etablissement/fd226439-0e1f-4889-a6f7-cecba77e771a-2-2.1-invideo-kling_v3_video.mp4' },
+    apply: { template: 'cocktail-live', style: 'premium', layout: 'magazine', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1514362545857-3bc16c4c7d1b'), overlay: 0.55, text: 'light', accent: '#F7C948', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/etablissement/fd226439-0e1f-4889-a6f7-cecba77e771a-2-2.1-invideo-kling_v3_video.mp4' },
   },
   {
     key: 'nightclub-live', persona: 'bar', premium: true, name: 'Nightclub', desc: { fr: 'Nightlife · pulsations', en: 'Nightlife · pulses' },
     preview: P('1514933651103-005eec06c04b'),
-    apply: { template: 'nightclub-live', style: 'clean', layout: 'fullbleed', font: 'grotesque', btnStyle: 'bubble', bgType: 'image', bgImage: U('1514933651103-005eec06c04b'), overlay: 0.5, text: 'light', accent: '#F0426B', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Etablissement/4fd81e08-facb-4b26-84a9-c82c8b532be2-2-1.2-invideo-seedance_2_0.mp4' },
+    apply: { template: 'nightclub-live', style: 'clean', layout: 'fullbleed', font: 'grotesque', btnStyle: 'bubble', bgType: 'image', bgImage: U('1514933651103-005eec06c04b'), overlay: 0.5, text: 'light', accent: '#F0426B', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/etablissement/4fd81e08-facb-4b26-84a9-c82c8b532be2-2-1.2-invideo-seedance_2_0.mp4' },
   },
   {
     key: 'lounge-live', persona: 'bar', name: 'Restaurant', desc: { fr: 'Ambiance restaurant · vidéo offerte', en: 'Restaurant ambiance · free video' },
     preview: P('1551024601-bec78aea704b'),
-    apply: { template: 'lounge-live', style: 'premium', layout: 'cover', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1551024601-bec78aea704b'), overlay: 0.5, text: 'light', accent: '#F59E0B', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4' },
+    apply: { template: 'lounge-live', style: 'premium', layout: 'cover', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1551024601-bec78aea704b'), overlay: 0.5, text: 'light', accent: '#F59E0B', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4' },
   },
   // 💼 Freelance
   {
     key: 'studio-live', persona: 'freelance', premium: true, name: 'Studio Live', desc: { fr: 'Créatif · respiration douce', en: 'Creative · soft breathing' },
     preview: P('1558655146-9f40138edfeb'),
-    apply: { template: 'studio-live', style: 'clean', layout: 'magazine', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1558655146-9f40138edfeb'), overlay: 0.45, text: 'light', accent: '#F472B6', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Freelance/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-1-1.1-invideo-seedance_2_0.mp4' },
+    apply: { template: 'studio-live', style: 'clean', layout: 'magazine', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1558655146-9f40138edfeb'), overlay: 0.45, text: 'light', accent: '#F472B6', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/freelance/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-1-1.1-invideo-seedance_2_0.mp4' },
   },
   {
     key: 'office-live', persona: 'freelance', name: 'Office Live', desc: { fr: 'Corporate · lumière qui balaie · vidéo offerte', en: 'Corporate · sweeping light · free video' },
     preview: P('1497215728101-856f4ea42174'),
-    apply: { template: 'office-live', style: 'premium', layout: 'cover', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1497215728101-856f4ea42174'), overlay: 0.5, text: 'light', accent: '#38BDF8', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4' },
+    apply: { template: 'office-live', style: 'premium', layout: 'cover', font: 'elegant', btnStyle: 'solid', bgType: 'image', bgImage: U('1497215728101-856f4ea42174'), overlay: 0.5, text: 'light', accent: '#38BDF8', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4' },
   },
   {
     key: 'focus-live', persona: 'freelance', premium: true, name: 'Artist', desc: { fr: 'Immersif, créatif', en: 'Immersive, creative' },
     preview: P('1497032628192-86f99bcd76bc'),
-    apply: { template: 'focus-live', style: 'clean', layout: 'fullbleed', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1497032628192-86f99bcd76bc'), overlay: 0.5, text: 'light', accent: '#2547D0', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/Premium%20Freelance/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-3-3.1-invideo-seedance_2_0.mp4' },
+    apply: { template: 'focus-live', style: 'clean', layout: 'fullbleed', font: 'modern', btnStyle: 'bubble', bgType: 'image', bgImage: U('1497032628192-86f99bcd76bc'), overlay: 0.5, text: 'light', accent: '#2547D0', animation: 'none', bgVideo: 'https://cdn.aaven.fr/templates/freelance/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-3-3.1-invideo-seedance_2_0.mp4' },
   },
 ]
 
