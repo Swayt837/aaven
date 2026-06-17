@@ -636,7 +636,7 @@ app.get('/api/public/:slug', async (req, res) => {
   res.json({
     page: { title: page.title, slug: page.slug, bio: page.bio, headline: page.headline, avatarUrl: page.avatarUrl, emoji: page.emoji, mode: page.mode, theme: page.theme },
     buttons,
-    branding: (owner?.plan || 'free') === 'free', // "Made with Aaven" visible en Free uniquement
+    branding: (owner?.plan || 'free') !== 'pro', // "Made with Aaven" retiré seulement en Pro (Free + Creator le gardent)
     wallet: { apple: appleWalletConfigured, google: googleWalletConfigured },
   })
 })

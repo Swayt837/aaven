@@ -544,7 +544,7 @@ export default function Editor() {
               buttons={buttons}
               supporters={theme.showSupporters ? SUPPORTERS_SAMPLE : null}
               products={products.filter((p) => p.active)}
-              branding={(user?.plan || 'free') === 'free'}
+              branding={(user?.plan || 'free') !== 'pro'}
               kenBurns={false}
             />
           </PhoneFrame>
