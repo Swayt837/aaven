@@ -1010,7 +1010,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`\n  Aaven API → http://localhost:${PORT}`)
   console.log(`  Base données : ${process.env.DATABASE_URL ? 'PostgreSQL (Supabase) ✓' : 'SQLite (dev local)'}`)
-  console.log(`  Stockage     : ${storageMode === 'supabase' ? 'Supabase Storage ✓' : 'disque local (dev)'}`)
+  console.log(`  Stockage     : ${storageMode === 'r2' ? 'Cloudflare R2 ✓' : storageMode === 'supabase' ? 'Supabase Storage ✓' : 'disque local (dev)'}`)
   console.log(`  Google OAuth : ${googleConfigured ? 'configuré ✓' : 'mode démo (dev-login)'}`)
   console.log(`  Stripe       : ${stripe ? 'configuré ✓' : 'mode démo (paiement simulé)'}`)
   console.log(`  Email (SMTP) : ${mailer ? 'configuré ✓' : 'désactivé (messages seulement stockés)'}\n`)
