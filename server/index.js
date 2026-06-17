@@ -931,6 +931,16 @@ function renderPublicMeta(template, page, buttons = []) {
   set('property', 'og:url', url)
   html = html.replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${escapeHtml(url)}$2`)
 
+  // Préchargement de l'image "hero" (LCP) : poster du template vidéo, sinon image de fond
+  // → le fond apparaît net instantanément pendant que la vidéo charge derrière.
+  let heroImg = ''
+  const bgv = (page.theme && page.theme.bgVideo) || ''
+  if (/\/templates\/.+\.mp4($|\?)/.test(bgv)) heroImg = bgv.replace(/\.mp4(\?.*)?$/, '.jpg')
+  else if (page.theme && page.theme.bgImage) heroImg = page.theme.bgImage
+  if (heroImg) {
+    html = html.replace('</head>', `    <link rel="preload" as="image" href="${escapeHtml(heroImg)}" fetchpriority="high" />\n  </head>`)
+  }
+
   // Opt-out d'indexation (toggle créateur)
   if (page.theme && page.theme.noindex) {
     html = html.replace('</head>', '    <meta name="robots" content="noindex,nofollow" />\n  </head>')
