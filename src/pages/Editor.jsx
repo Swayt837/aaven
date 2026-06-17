@@ -224,6 +224,12 @@ export default function Editor() {
           <Card className="p-5">
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('share.yourLink')}</h2>
             <ShareLink url={publicUrl} className="mt-3" />
+            {user?.plan === 'pro' && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(page.slug) && (
+              <div className="mt-4 border-t border-ink/10 pt-3">
+                <p className="text-xs font-extrabold uppercase tracking-wide text-ink/50">{t('share.proLink')}</p>
+                <ShareLink url={`https://${page.slug}.aaven.fr`} className="mt-2" />
+              </div>
+            )}
           </Card>
 
           {/* IDENTITÉ */}

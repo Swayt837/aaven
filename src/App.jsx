@@ -31,6 +31,21 @@ export default function App() {
   const loc = useLocation()
   useEffect(() => { bootAnalytics() }, [])
   useEffect(() => { capturePageview() }, [loc.pathname])
+
+  // Sous-domaine vanity Pro (marie.aaven.fr) : le serveur injecte window.__AAVEN_SUB__
+  // → toute l'app rend la page publique de ce slug, quel que soit le chemin.
+  const forcedSub = typeof window !== 'undefined' ? window.__AAVEN_SUB__ : null
+  if (forcedSub) {
+    return (
+      <>
+        <Routes>
+          <Route path="*" element={<PublicPage slug={forcedSub} />} />
+        </Routes>
+        <CookieBanner />
+      </>
+    )
+  }
+
   return (
     <>
       <Routes>

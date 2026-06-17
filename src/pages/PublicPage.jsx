@@ -13,8 +13,9 @@ import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { getTheme } from '../lib/themes'
 
-export default function PublicPage() {
-  const { slug } = useParams()
+export default function PublicPage({ slug: slugProp }) {
+  const params = useParams()
+  const slug = slugProp || params.slug
   const { t } = useI18n()
   const nav = useNavigate()
   const [data, setData] = useState(undefined) // undefined=loading, null=404

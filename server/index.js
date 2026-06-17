@@ -869,6 +869,18 @@ const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'sta
 SEO_SLUGS.forEach((s) => RESERVED_SLUGS.add(s))
 RESERVED_SLUGS.add('blog')
 
+// Hôtes réservés (jamais des sous-domaines de profil — protège mail, cdn, www…).
+const RESERVED_HOSTS = new Set(['www', 'cdn', 'mail', 'mail94', 'imap', 'pop', 'smtp', 'ftp', 'api', 'app', 'admin', 'blog', 'customers', 'autodiscover', 'autoconfig', 'ns1', 'ns2', 'webmail', 'm', 'dev', 'staging', 'assets', 'static'])
+const isHostLabel = (s) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(s)
+// "marie.aaven.fr" → "marie" (sinon null : www, hôte réservé, label invalide, autre domaine).
+function profileSubdomain(host) {
+  if (!host) return null
+  const m = host.split(':')[0].toLowerCase().match(/^([a-z0-9-]+)\.aaven\.fr$/)
+  if (!m) return null
+  const sub = m[1]
+  return RESERVED_HOSTS.has(sub) || !isHostLabel(sub) ? null : sub
+}
+
 // Articles de blog (lus depuis src/blog/*.md au démarrage) → meta serveur + sitemap.
 function loadBlogMeta() {
   const dir = path.join(__dirname, '..', 'src', 'blog')
@@ -904,7 +916,7 @@ function injectStaticMeta(template, { title, description, path }) {
 
 // Injecte meta (OG/Twitter/title) + JSON-LD + un contenu HTML indexable (SSR) propres au
 // profil → aperçus de partage corrects ET référencement Google des pages profil.
-function renderPublicMeta(template, page, buttons = []) {
+function renderPublicMeta(template, page, buttons = [], opts = {}) {
   const name = page.title || page.slug
   const title = `${name} · Aaven`
   const location = (page.theme && page.theme.location) || ''
@@ -912,7 +924,7 @@ function renderPublicMeta(template, page, buttons = []) {
   const desc = location ? `${base} · ${location}` : base
   let image = page.avatarUrl || page.theme?.bgImage || '/og-image.png'
   if (image.startsWith('/')) image = `${APP_URL}${image}`
-  const url = `${APP_URL}/${page.slug}`
+  const url = opts.canonical || `${APP_URL}/${page.slug}`
 
   let html = template
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
@@ -988,6 +1000,31 @@ function renderPublicMeta(template, page, buttons = []) {
 const HTML_CACHE = 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400'
 
 if (fs.existsSync(dist)) {
+  // Template index.html lu une fois (enrichi par profil/SEO selon la route).
+  let indexTemplate = ''
+  try { indexTemplate = fs.readFileSync(path.join(dist, 'index.html'), 'utf8') } catch { /* build absent */ }
+
+  // Sous-domaine vanity Pro : marie.aaven.fr → page de « marie ».
+  // Doit passer AVANT express.static (sinon « / » sert la landing). Les /assets, /uploads
+  // et fichiers passent au travers → servis normalement juste après.
+  app.use(async (req, res, next) => {
+    if (req.method !== 'GET') return next()
+    const sub = profileSubdomain(req.headers.host)
+    if (!sub || !indexTemplate) return next()
+    if (req.path.startsWith('/assets') || req.path.startsWith('/uploads') || req.path.includes('.')) return next()
+    try {
+      const page = await Pages.bySlug(sub)
+      if (!page) return res.redirect(301, `${APP_URL}/`)
+      const owner = await Users.findById(page.userId)
+      // Le sous-domaine est un avantage Pro : sinon on renvoie vers l'URL en chemin.
+      if ((owner?.plan || 'free') !== 'pro') return res.redirect(301, `${APP_URL}/${sub}`)
+      const buttons = (await Buttons.byPage(page.id)).filter((b) => b.isActive)
+      let html = renderPublicMeta(indexTemplate, page, buttons, { canonical: `https://${sub}.aaven.fr/` })
+      html = html.replace('<div id="root">', `<script>window.__AAVEN_SUB__=${JSON.stringify(sub)}</script><div id="root">`)
+      res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(html)
+    } catch (e) { next(e) }
+  })
+
   app.use(express.static(dist, {
     maxAge: '1d',
     setHeaders: (res, filePath) => {
@@ -997,10 +1034,6 @@ if (fs.existsSync(dist)) {
       else if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
     },
   }))
-
-  // Pages publiques : on sert index.html enrichi des meta du profil (aperçus sociaux).
-  let indexTemplate = ''
-  try { indexTemplate = fs.readFileSync(path.join(dist, 'index.html'), 'utf8') } catch { /* build absent */ }
   // Blog : index + articles (meta serveur).
   app.get('/blog', (req, res, next) => {
     if (!indexTemplate) return next()
@@ -1028,8 +1061,11 @@ if (fs.existsSync(dist)) {
       if (!indexTemplate || RESERVED_SLUGS.has(slug) || slug.includes('.')) return next()
       const page = await Pages.bySlug(slug)
       if (!page) return next()
+      const owner = await Users.findById(page.userId)
       const buttons = (await Buttons.byPage(page.id)).filter((b) => b.isActive)
-      res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(renderPublicMeta(indexTemplate, page, buttons))
+      // Pro avec slug valide → le sous-domaine est l'URL canonique (consolide le SEO).
+      const opts = ((owner?.plan || 'free') === 'pro' && isHostLabel(slug)) ? { canonical: `https://${slug}.aaven.fr/` } : {}
+      res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(renderPublicMeta(indexTemplate, page, buttons, opts))
     } catch (e) { next(e) }
   })
 
