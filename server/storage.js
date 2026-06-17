@@ -46,15 +46,20 @@ if (USE_R2) {
 const EXT = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif', 'image/avif': '.avif' }
 const extFromName = (name) => ((path.extname(name || '') || '').replace(/[^.a-z0-9]/gi, '').slice(0, 12))
 
+// Les assets publics ont une clé unique par upload (jamais réécrite) → immuables :
+// on les cache 30 jours côté navigateur ET edge. Si le créateur change son média,
+// l'URL change → aucune version périmée possible.
+const PUBLIC_CACHE = 'public, max-age=2592000, immutable'
+
 // Asset public (image de fond / avatar / média d'ambiance). Renvoie l'URL à stocker.
 export async function savePublic(buffer, { mimetype, originalname, pageId }) {
   const key = `${pageId}-${nanoid(8)}${EXT[mimetype] || extFromName(originalname) || ''}`
   if (USE_R2) {
-    await r2.client.send(new r2.PutObjectCommand({ Bucket: R2_PUBLIC_BUCKET, Key: key, Body: buffer, ContentType: mimetype }))
+    await r2.client.send(new r2.PutObjectCommand({ Bucket: R2_PUBLIC_BUCKET, Key: key, Body: buffer, ContentType: mimetype, CacheControl: PUBLIC_CACHE }))
     return `${R2_PUBLIC_BASE}/${key}`
   }
   if (USE_SUPABASE) {
-    const { error } = await supa.storage.from(PUBLIC_BUCKET).upload(key, buffer, { contentType: mimetype, upsert: false })
+    const { error } = await supa.storage.from(PUBLIC_BUCKET).upload(key, buffer, { contentType: mimetype, upsert: false, cacheControl: '2592000' })
     if (error) throw new Error(error.message)
     return supa.storage.from(PUBLIC_BUCKET).getPublicUrl(key).data.publicUrl
   }
