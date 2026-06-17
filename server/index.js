@@ -15,6 +15,7 @@ import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
 import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
 import { faststartIfVideo } from './faststart.js'
+import { purgePage, cachePurgeEnabled } from './cf-cache.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
 import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
 
@@ -140,6 +141,17 @@ async function deliverProduct(purchase, product) {
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), handleWebhook)
 
 app.use(express.json())
+
+// ---------- Cache ----------
+// L'API n'est jamais mise en cache (CDN ou navigateur).
+app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next() })
+// Purge auto du cache Cloudflare dès qu'une page publique est modifiée (si CF_* configurés).
+app.use('/api/pages/:slug', (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.on('finish', () => { if (res.statusCode < 400) purgePage(req.params.slug) })
+  }
+  next()
+})
 
 // ---------- Session (cookie signé HMAC) ----------
 function sign(userId) {
@@ -959,8 +971,22 @@ function renderPublicMeta(template, page, buttons = []) {
   return html
 }
 
+// En-tête de cache pour les pages HTML publiques :
+//  - navigateur : revalide à chaque fois (max-age=0) → le créateur voit ses modifs au reload
+//  - CDN Cloudflare (s-maxage) : sert depuis l'edge 5 min → décharge Node + Postgres
+//  - stale-while-revalidate : sert l'ancienne version pendant le rafraîchissement
+const HTML_CACHE = 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400'
+
 if (fs.existsSync(dist)) {
-  app.use(express.static(dist))
+  app.use(express.static(dist, {
+    maxAge: '1d',
+    setHeaders: (res, filePath) => {
+      // Assets fingerprintés par Vite (/assets/xxx-[hash].js) → cache long immuable.
+      if (/[\\/]assets[\\/]/.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+      // index.html ne doit jamais être figé côté navigateur.
+      else if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
+    },
+  }))
 
   // Pages publiques : on sert index.html enrichi des meta du profil (aperçus sociaux).
   let indexTemplate = ''
@@ -968,13 +994,13 @@ if (fs.existsSync(dist)) {
   // Blog : index + articles (meta serveur).
   app.get('/blog', (req, res, next) => {
     if (!indexTemplate) return next()
-    res.set('Content-Type', 'text/html; charset=utf-8').send(injectStaticMeta(indexTemplate, { title: 'Blog — Aaven', description: 'Conseils pour faire grandir et monétiser ta page bio Aaven.', path: '/blog' }))
+    res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(injectStaticMeta(indexTemplate, { title: 'Blog — Aaven', description: 'Conseils pour faire grandir et monétiser ta page bio Aaven.', path: '/blog' }))
   })
   app.get('/blog/:slug', (req, res, next) => {
     if (!indexTemplate) return next()
     const b = BLOG.find((x) => x.slug === req.params.slug)
     if (!b) return next()
-    res.set('Content-Type', 'text/html; charset=utf-8').send(injectStaticMeta(indexTemplate, { title: `${b.title} — Aaven`, description: b.description, path: `/blog/${b.slug}` }))
+    res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(injectStaticMeta(indexTemplate, { title: `${b.title} — Aaven`, description: b.description, path: `/blog/${b.slug}` }))
   })
 
   // Pages SEO dédiées : index.html avec meta spécifiques (avant la route profil).
@@ -983,7 +1009,7 @@ if (fs.existsSync(dist)) {
     const slug = req.path.replace(/^\//, '')
     const m = SEO_META[slug] && SEO_META[slug].fr
     if (!m) return next()
-    res.set('Content-Type', 'text/html; charset=utf-8').send(injectStaticMeta(indexTemplate, { title: m.title, description: m.desc, path: `/${slug}` }))
+    res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(injectStaticMeta(indexTemplate, { title: m.title, description: m.desc, path: `/${slug}` }))
   })
 
   app.get('/:slug', async (req, res, next) => {
@@ -993,13 +1019,13 @@ if (fs.existsSync(dist)) {
       const page = await Pages.bySlug(slug)
       if (!page) return next()
       const buttons = (await Buttons.byPage(page.id)).filter((b) => b.isActive)
-      res.set('Content-Type', 'text/html; charset=utf-8').send(renderPublicMeta(indexTemplate, page, buttons))
+      res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(renderPublicMeta(indexTemplate, page, buttons))
     } catch (e) { next(e) }
   })
 
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' })
-    res.sendFile(path.join(dist, 'index.html'))
+    res.set('Cache-Control', HTML_CACHE).sendFile(path.join(dist, 'index.html'))
   })
 }
 
@@ -1016,5 +1042,6 @@ app.listen(PORT, () => {
   console.log(`  Stockage     : ${storageMode === 'r2' ? 'Cloudflare R2 ✓' : storageMode === 'supabase' ? 'Supabase Storage ✓' : 'disque local (dev)'}`)
   console.log(`  Google OAuth : ${googleConfigured ? 'configuré ✓' : 'mode démo (dev-login)'}`)
   console.log(`  Stripe       : ${stripe ? 'configuré ✓' : 'mode démo (paiement simulé)'}`)
-  console.log(`  Email (SMTP) : ${mailer ? 'configuré ✓' : 'désactivé (messages seulement stockés)'}\n`)
+  console.log(`  Email (SMTP) : ${mailer ? 'configuré ✓' : 'désactivé (messages seulement stockés)'}`)
+  console.log(`  Cache pages  : edge ${HTML_CACHE.match(/s-maxage=(\d+)/)?.[1] || 0}s · purge auto ${cachePurgeEnabled ? 'configurée ✓' : 'off (modifs visibles au bout du TTL)'}\n`)
 })
