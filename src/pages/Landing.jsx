@@ -476,12 +476,12 @@ const TIERS_BASE = [
 const TIER_FEATURES = {
   fr: {
     free: ['1 page + tous les boutons', 'Tous les templates vidéo', 'Importe ta photo de fond', '3 produits digitaux', 'Tips & analytics inclus'],
-    creator: ['Sans branding Aaven', 'Importe ta vidéo / GIF perso (5 s)', 'Produits illimités', 'Ton lien pro perso', 'Son d’ambiance'],
+    creator: ['Sans branding Aaven', 'Importe ta vidéo / GIF perso (8 s)', 'Produits illimités', 'Ton lien pro perso', 'Son d’ambiance'],
     pro: ['Tout de Creator', 'Importe ta vidéo (30 s max)', 'Support prioritaire'],
   },
   en: {
     free: ['1 page + all buttons', 'All video templates', 'Upload your background photo', '3 digital products', 'Tips & analytics included'],
-    creator: ['No Aaven branding', 'Upload your own video / GIF (5s)', 'Unlimited products', 'Your pro custom link', 'Ambient sound'],
+    creator: ['No Aaven branding', 'Upload your own video / GIF (8s)', 'Unlimited products', 'Your pro custom link', 'Ambient sound'],
     pro: ['Everything in Creator', 'Upload your video (30s max)', 'Priority support'],
   },
 }

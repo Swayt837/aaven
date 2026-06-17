@@ -42,7 +42,7 @@ export const SEO_PAGES = {
       faq: [
         { q: 'Puis-je mettre une vidéo en fond gratuitement ?', a: 'Oui, tous les templates vidéo sont gratuits. L’upload de ta propre vidéo est réservé aux plans Creator/Pro.' },
         { q: 'La vidéo a-t-elle le son ?', a: 'Oui, le son se lance pour créer une ambiance (au premier geste du visiteur, règle des navigateurs).' },
-        { q: 'Quelle durée pour ma vidéo ?', a: 'Jusqu’à 5 s en Creator, 30 s en Pro.' },
+        { q: 'Quelle durée pour ma vidéo ?', a: 'Jusqu’à 8 s en Creator, 30 s en Pro.' },
       ],
     },
     en: {
@@ -56,7 +56,7 @@ export const SEO_PAGES = {
       faq: [
         { q: 'Can I add a background video for free?', a: 'Yes, all video templates are free. Uploading your own video is a Creator/Pro feature.' },
         { q: 'Does the video have sound?', a: 'Yes, sound starts to create ambiance (on the visitor’s first interaction, per browser rules).' },
-        { q: 'How long can my video be?', a: 'Up to 5s on Creator, 30s on Pro.' },
+        { q: 'How long can my video be?', a: 'Up to 8s on Creator, 30s on Pro.' },
       ],
     },
   },

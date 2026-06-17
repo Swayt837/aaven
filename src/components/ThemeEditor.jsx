@@ -48,7 +48,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
     })
   }
 
-  // Upload média perso : Creator = GIF/vidéo 5 s max · Pro = vidéo 30 s max · Free = verrouillé.
+  // Upload média perso : Creator = GIF/vidéo 8 s max · Pro = vidéo 30 s max · Free = verrouillé.
   async function onVideoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -58,7 +58,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       const isGif = file.type === 'image/gif'
       if (!isGif) {
         const dur = await readDuration(file).catch(() => 0)
-        const max = isPro ? 30.5 : 5.5
+        const max = isPro ? 30.5 : 8.5
         if (dur > max) { e.target.value = ''; return alert(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
       }
       setUploadingVideo(true)
