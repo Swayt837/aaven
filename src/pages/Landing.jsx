@@ -240,7 +240,7 @@ function Hero({ onStart }) {
 }
 
 /* ============================ Profile Showcase ============================ */
-const SUPA = 'https://pgizduxqqplakidyipdn.supabase.co/storage/v1/object/public/Templates%20Premium'
+const SUPA = 'https://cdn.aaven.fr/templates'
 const PROFILE_META = [
   { id: 'lea-creator', name: 'Léa', handle: '@lea.mode', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`, accent: '#FF4D42', icons: [Heart, Instagram, ShoppingBag], wall: '1,2k' },
   { id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', img: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/Premium%20Etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`, accent: '#F7C948', icons: [CalendarCheck, ShoppingBag, MapPin] },
