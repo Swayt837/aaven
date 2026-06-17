@@ -604,9 +604,12 @@ function BgVideo({ src, loop = false, sound = false, className, style }) {
     setMuted(v.muted)
   }
 
+  // Poster (1re frame) pour les vidéos de templates → affichage instantané pendant le buffering.
+  const poster = /\/templates\/.+\.mp4($|\?)/.test(src || '') ? src.replace(/\.mp4(\?.*)?$/, '.jpg') : undefined
+
   return (
     <>
-      <video ref={ref} className={className} style={style} src={src} autoPlay muted loop={loop} playsInline preload="auto" />
+      <video ref={ref} className={className} style={style} src={src} poster={poster} autoPlay muted loop={loop} playsInline preload="auto" />
       {sound && (
         <button
           type="button"

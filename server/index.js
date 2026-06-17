@@ -14,6 +14,7 @@ import { Users, Pages, Buttons, Clicks, Tips, Messages, Products, Purchases } fr
 import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
 import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
+import { faststartIfVideo } from './faststart.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
 import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
 
@@ -450,7 +451,9 @@ app.post('/api/pages/:slug/upload', requireAuth, ownPage, writeLimiter, uploadSi
 app.post('/api/pages/:slug/upload-media', requireAuth, ownPage, writeLimiter, mediaUploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Fichier invalide (image, vidéo ou audio)' })
   try {
-    const url = await savePublic(req.file.buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
+    // Vidéos MP4 : remux faststart (moov au début) → autoplay <video> garanti côté page publique.
+    const buffer = await faststartIfVideo(req.file.buffer, req.file.mimetype)
+    const url = await savePublic(buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
     res.json({ url })
   } catch (e) { res.status(500).json({ error: 'Upload échoué' }) }
 })

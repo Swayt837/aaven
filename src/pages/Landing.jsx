@@ -273,7 +273,8 @@ function VideoBg({ src }) {
     io.observe(v)
     return () => io.disconnect()
   }, [src])
-  return <video ref={ref} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" aria-hidden />
+  const poster = /\.mp4($|\?)/.test(src || '') ? src.replace(/\.mp4(\?.*)?$/, '.jpg') : undefined
+  return <video ref={ref} poster={poster} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" aria-hidden />
 }
 
 function PhoneCard({ p, copy, notif, wallLabel }) {
