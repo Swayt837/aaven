@@ -35,6 +35,9 @@ if (USE_R2) {
   const client = new S3Client({
     region: 'auto',
     endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    // Path-style obligatoire pour R2 : sinon le SDK vise bucket.<account>.r2.cloudflarestorage.com
+    // (2 niveaux) que le certif *.r2.cloudflarestorage.com ne couvre pas → TLS handshake failure.
+    forcePathStyle: true,
     credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY },
   })
   r2 = { client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, getSignedUrl }
