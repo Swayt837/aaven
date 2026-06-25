@@ -32,13 +32,24 @@ let r2 = null
 if (USE_R2) {
   const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } = await import('@aws-sdk/client-s3')
   const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
+  // Robustesse : on tolère un R2_ACCOUNT_ID avec espaces/retours-ligne, ou carrément l'URL
+  // complète collée par erreur → on en extrait l'ID. SNI invalide = TLS handshake failure (alert 40).
+  const acct = (process.env.R2_ACCOUNT_ID || '').trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\.r2\.cloudflarestorage\.com.*$/i, '')
+    .replace(/\/.*$/, '')
+  const endpoint = (process.env.R2_ENDPOINT || '').trim() || `https://${acct}.r2.cloudflarestorage.com`
+  console.log(`  R2 endpoint  : ${endpoint} (bucket public « ${R2_PUBLIC_BUCKET} »)`)
   const client = new S3Client({
     region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint,
     // Path-style obligatoire pour R2 : sinon le SDK vise bucket.<account>.r2.cloudflarestorage.com
     // (2 niveaux) que le certif *.r2.cloudflarestorage.com ne couvre pas → TLS handshake failure.
     forcePathStyle: true,
-    credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY },
+    credentials: {
+      accessKeyId: (process.env.R2_ACCESS_KEY_ID || '').trim(),
+      secretAccessKey: (process.env.R2_SECRET_ACCESS_KEY || '').trim(),
+    },
   })
   r2 = { client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, getSignedUrl }
 } else if (USE_SUPABASE) {
