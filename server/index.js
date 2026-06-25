@@ -456,7 +456,10 @@ app.post('/api/pages/:slug/upload', requireAuth, ownPage, writeLimiter, uploadSi
   try {
     const url = await savePublic(req.file.buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
     res.json({ url })
-  } catch (e) { res.status(500).json({ error: 'Upload échoué' }) }
+  } catch (e) {
+    console.error(`  Upload image échoué (storage=${storageMode}):`, e?.message || e)
+    res.status(500).json({ error: 'Upload échoué' })
+  }
 })
 
 // Upload média (vidéo/audio/image) pour l'ambiance.
@@ -467,7 +470,10 @@ app.post('/api/pages/:slug/upload-media', requireAuth, ownPage, writeLimiter, me
     const buffer = await faststartIfVideo(req.file.buffer, req.file.mimetype)
     const url = await savePublic(buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
     res.json({ url })
-  } catch (e) { res.status(500).json({ error: 'Upload échoué' }) }
+  } catch (e) {
+    console.error(`  Upload média échoué (storage=${storageMode}, type=${req.file?.mimetype}):`, e?.message || e)
+    res.status(500).json({ error: 'Upload échoué' })
+  }
 })
 
 app.delete('/api/pages/:slug', requireAuth, ownPage, async (req, res) => {
