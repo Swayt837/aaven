@@ -57,23 +57,35 @@ const iconVariants = {
   waves: {}, orbit: {},
 }
 
-// Anneau Instagram : dégradé conique qui tourne lentement (visible au survol).
-function InstaRing({ radius }) {
+// Anneau en dégradé dont SEUL le dégradé tourne : la forme (squircle/rond/carré)
+// reste statique et parfaitement alignée sur les bords de la pastille.
+function SpinningRing({ radius, gradient, thickness = 2.5, duration = 2.4 }) {
   return (
     <motion.span
       aria-hidden
-      className="pointer-events-none absolute -inset-[2.5px]"
+      className="pointer-events-none absolute overflow-hidden"
       style={{
+        inset: -thickness,
         borderRadius: radius,
-        background: 'conic-gradient(#FEDA75, #F58529, #DD2A7B, #8134AF, #515BD4, #FEDA75)',
+        padding: thickness,
         WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
         WebkitMaskComposite: 'xor',
         maskComposite: 'exclude',
-        padding: '2.5px',
       }}
-      variants={{ rest: { opacity: 0, rotate: 0 }, hover: { opacity: 1, rotate: 180, transition: { rotate: { duration: 2.4, ease: 'linear', repeat: Infinity }, opacity: { duration: 0.25 } } } }}
-    />
+      variants={{ rest: { opacity: 0 }, hover: { opacity: 1, transition: { duration: 0.25 } } }}
+    >
+      <motion.span
+        className="absolute"
+        style={{ inset: '-55%', background: gradient }}
+        variants={{ rest: { rotate: 0 }, hover: { rotate: 360, transition: { duration, ease: 'linear', repeat: Infinity } } }}
+      />
+    </motion.span>
   )
+}
+
+// Anneau Instagram : dégradé de marque qui tourne dans la forme statique.
+function InstaRing({ radius }) {
+  return <SpinningRing radius={radius} gradient="conic-gradient(#FEDA75, #F58529, #DD2A7B, #8134AF, #515BD4, #FEDA75)" />
 }
 
 // Ondes Spotify : cercles qui s'étendent en s'évanouissant.
@@ -92,19 +104,15 @@ function Waves({ radius }) {
   ))
 }
 
-// Site web : une petite lumière fait le tour du cercle.
-function Orbit({ size }) {
+// Site web : une lumière (comète) parcourt le bord en suivant exactement la forme.
+function Orbit({ radius }) {
   return (
-    <motion.span
-      aria-hidden
-      className="pointer-events-none absolute inset-0"
-      variants={{ rest: { opacity: 0, rotate: 0 }, hover: { opacity: 1, rotate: 360, transition: { rotate: { duration: 1.6, ease: 'linear', repeat: Infinity }, opacity: { duration: 0.2 } } } }}
-    >
-      <span
-        className="absolute left-1/2 h-[5px] w-[5px] -translate-x-1/2 rounded-full bg-white"
-        style={{ top: -2.5, boxShadow: '0 0 8px 2px rgba(255,255,255,0.8)' }}
-      />
-    </motion.span>
+    <SpinningRing
+      radius={radius}
+      thickness={2}
+      duration={1.6}
+      gradient="conic-gradient(from 0deg, transparent 0 68%, rgba(255,255,255,0.95) 86%, transparent 100%)"
+    />
   )
 }
 
@@ -174,7 +182,7 @@ function SocialIcon({ item, cfg, light, index, onOpen, onMulti }) {
           {/* Animations spéciales par réseau */}
           {anims && net.anim === 'ring' && <InstaRing radius={radius} />}
           {anims && net.anim === 'waves' && <Waves radius={radius} />}
-          {anims && net.anim === 'orbit' && <Orbit size={S.px} />}
+          {anims && net.anim === 'orbit' && <Orbit radius={radius} />}
           {/* Glyphe monochrome (suit la couleur du thème) — ou favicon pour un site web */}
           <motion.span
             className="relative z-10"

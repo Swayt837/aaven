@@ -20,6 +20,10 @@ import { modeOf, BUTTON_TYPES } from '../lib/modes'
 import { getTheme } from '../lib/themes'
 import { nanoid } from 'nanoid'
 
+// Réseaux couverts par le rang Smart Socials → retirés du picker de boutons classiques.
+// (Les boutons sociaux existants sur les anciennes pages restent affichés et éditables.)
+const SOCIALS_IN_RANG = new Set(['instagram', 'tiktok', 'youtube', 'spotify', 'x', 'linkedin', 'facebook'])
+
 // Suggestions de CTA émotionnels par métier (personnalisables).
 const EMO_CTAS = {
   creator: {
@@ -558,7 +562,7 @@ export default function Editor() {
                   </div>
                   <p className="mb-1.5 mt-3 px-1 font-display text-xs font-extrabold uppercase text-ink/60">{t('edit.smart.classic')}</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {Object.entries(BUTTON_TYPES).filter(([key]) => key !== 'smart').map(([key, def]) => (
+                    {Object.entries(BUTTON_TYPES).filter(([key]) => key !== 'smart' && !SOCIALS_IN_RANG.has(key)).map(([key, def]) => (
                       <button key={key} onClick={() => addBtn(key)} className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold">
                         <Icon name={def.icon} size={16} /> {def.label[lang] || def.label.fr}
                       </button>
