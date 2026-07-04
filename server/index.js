@@ -18,6 +18,9 @@ import { faststartIfVideo } from './faststart.js'
 import { purgePage, cachePurgeEnabled } from './cf-cache.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
 import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
+import { PROFESSIONS, PROFESSION_SLUGS, professionBySlug } from '../src/lib/professions.js'
+import { blockToButton, modeForCategory, themeForProfession } from '../src/lib/professionEngine.js'
+import { buildProfessionEmails } from './professionEmails.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -195,7 +198,7 @@ async function ownPage(req, res, next) {
 app.get('/api/me', async (req, res) => {
   const u = await currentUser(req)
   if (!u) return res.json({ user: null })
-  res.json({ user: { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl, plan: u.plan } })
+  res.json({ user: { id: u.id, email: u.email, name: u.name, avatarUrl: u.avatarUrl, plan: u.plan, profession: u.profession || '' } })
 })
 
 // Dev login : crée/retourne un compte de démo (utilisé quand Google non configuré)
@@ -362,25 +365,55 @@ app.post('/api/pages', requireAuth, createLimiter, async (req, res) => {
   const title = clampStr(req.body.title, 80).trim()
   const bio = clampStr(req.body.bio, 280)
   const headline = clampStr(req.body.headline, 80)
-  const { mode } = req.body
+  // Profession Engine : si un slug métier valide est fourni, il pilote le mode,
+  // les boutons (template_blocks) et le thème (couleurs du métier) — tout vient des données.
+  const prof = professionBySlug(clampStr(req.body.profession, 40))
+  const mode = prof ? modeForCategory(prof.category) : req.body.mode
   if (!title || !['creator', 'bar', 'freelance'].includes(mode)) {
     return res.status(400).json({ error: 'Titre et mode requis' })
   }
-  const page = await Pages.create({ userId: req.user.id, title, bio, headline, mode })
-  // Pré-remplissage des boutons selon le preset du mode
-  const preset = PRESETS_SERVER[mode] || []
-  for (let i = 0; i < preset.length; i++) {
-    const item = preset[i]
-    const def = BUTTON_TYPES_SERVER[item.type]
-    await Buttons.create(page.id, {
-      type: item.type,
-      label: def.label.fr,
-      icon: def.icon,
-      url: '',
-      isActive: true,
-      featured: !!item.featured,
-      position: i,
-    })
+  let page = await Pages.create({ userId: req.user.id, title, bio, headline, mode })
+  if (prof) {
+    // Boutons depuis les template_blocks du métier (1er bouton mis en avant).
+    const blocks = prof.template_blocks.map(blockToButton)
+    for (let i = 0; i < blocks.length; i++) {
+      const def = BUTTON_TYPES_SERVER[blocks[i].type] || BUTTON_TYPES_SERVER.link
+      await Buttons.create(page.id, {
+        type: BUTTON_TYPES_SERVER[blocks[i].type] ? blocks[i].type : 'link',
+        label: clampStr(blocks[i].label, 60) || def.label.fr,
+        icon: def.icon,
+        url: '',
+        isActive: true,
+        featured: i === 0,
+        position: i,
+      })
+    }
+    page = await Pages.update(page.id, { theme: sanitizeTheme(themeForProfession(prof)) })
+    await Users.setProfession(req.user.id, prof.slug)
+    // Email J0 (welcome métier) — J2/J5 nécessitent un scheduler (voir professionEmails.js).
+    if (mailer && req.user.email) {
+      const [welcome] = buildProfessionEmails(prof, { page: `${APP_URL}/${page.slug}`, edit: `${APP_URL}/edit/${page.slug}` })
+      if (welcome) {
+        mailer.sendMail({ from: process.env.SMTP_FROM || 'Aaven <no-reply@aaven.app>', to: req.user.email, subject: welcome.subject, text: welcome.text })
+          .catch((e) => console.warn('  Email welcome métier non envoyé:', e.message))
+      }
+    }
+  } else {
+    // Pré-remplissage classique selon le preset du mode.
+    const preset = PRESETS_SERVER[mode] || []
+    for (let i = 0; i < preset.length; i++) {
+      const item = preset[i]
+      const def = BUTTON_TYPES_SERVER[item.type]
+      await Buttons.create(page.id, {
+        type: item.type,
+        label: def.label.fr,
+        icon: def.icon,
+        url: '',
+        isActive: true,
+        featured: !!item.featured,
+        position: i,
+      })
+    }
   }
   res.json({ page, buttons: await Buttons.byPage(page.id) })
 })
@@ -842,7 +875,7 @@ async function handleWebhook(req, res) {
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = (APP_URL || '').replace(/\/$/, '')
-    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite', '/blog', ...SEO_SLUGS.map((s) => `/${s}`), ...BLOG.map((b) => `/blog/${b.slug}`)]
+    const staticPaths = ['/', '/legal/mentions-legales', '/legal/cgu', '/legal/cgv', '/legal/confidentialite', '/blog', ...SEO_SLUGS.map((s) => `/${s}`), ...PROFESSION_SLUGS.map((s) => `/${s}`), ...BLOG.map((b) => `/blog/${b.slug}`)]
     const entries = staticPaths.map((p) => ({ loc: baseUrl + p }))
     const pages = await Pages.forSitemap()
     for (const p of pages) {
@@ -874,6 +907,8 @@ const escapeHtml = (s) =>
 const RESERVED_SLUGS = new Set(['login', 'dashboard', 'onboarding', 'edit', 'stats', 'buy-success', 'tip-success', 'api', 'assets'])
 SEO_SLUGS.forEach((s) => RESERVED_SLUGS.add(s))
 RESERVED_SLUGS.add('blog')
+// Les 33 slugs métier (Profession Engine) sont réservés : landing pages dédiées.
+PROFESSION_SLUGS.forEach((s) => RESERVED_SLUGS.add(s))
 
 // Hôtes réservés (jamais des sous-domaines de profil — protège mail, cdn, www…).
 const RESERVED_HOSTS = new Set(['www', 'cdn', 'mail', 'mail94', 'imap', 'pop', 'smtp', 'ftp', 'api', 'app', 'admin', 'blog', 'customers', 'autodiscover', 'autoconfig', 'ns1', 'ns2', 'webmail', 'm', 'dev', 'staging', 'assets', 'static'])
@@ -1059,6 +1094,14 @@ if (fs.existsSync(dist)) {
     const m = SEO_META[slug] && SEO_META[slug].fr
     if (!m) return next()
     res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(injectStaticMeta(indexTemplate, { title: m.title, description: m.desc, path: `/${slug}` }))
+  })
+
+  // Landing pages métier (Profession Engine) : meta 100% data-driven depuis l'Excel.
+  app.get(PROFESSION_SLUGS.map((s) => `/${s}`), (req, res, next) => {
+    if (!indexTemplate) return next()
+    const p = professionBySlug(req.path.replace(/^\//, ''))
+    if (!p) return next()
+    res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', HTML_CACHE).send(injectStaticMeta(indexTemplate, { title: p.seo_title, description: p.seo_meta_description, path: `/${p.slug}` }))
   })
 
   app.get('/:slug', async (req, res, next) => {

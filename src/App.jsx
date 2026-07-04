@@ -14,8 +14,10 @@ import TipSuccess from './pages/TipSuccess'
 import BuySuccess from './pages/BuySuccess'
 import Legal from './pages/Legal'
 import SeoLanding from './pages/SeoLanding'
+import ProfessionLanding from './pages/ProfessionLanding'
 import Blog from './pages/Blog'
 import { SEO_SLUGS } from './lib/seoContent'
+import { PROFESSION_SLUGS } from './lib/professions'
 import { CookieBanner } from './components/CookieBanner'
 
 function Protected({ children }) {
@@ -62,6 +64,9 @@ export default function App() {
         <Route path="/blog/:slug" element={<Blog />} />
         {SEO_SLUGS.map((s) => (
           <Route key={s} path={`/${s}`} element={<SeoLanding slug={s} />} />
+        ))}
+        {PROFESSION_SLUGS.map((s) => (
+          <Route key={s} path={`/${s}`} element={<ProfessionLanding slug={s} />} />
         ))}
         <Route path="/:slug" element={<PublicPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

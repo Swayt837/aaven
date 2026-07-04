@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
 import { track } from '../lib/analytics'
+import { PROFESSIONS } from '../lib/professions'
 
 const EASE = [0.22, 1, 0.36, 1]
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } }
@@ -548,6 +549,15 @@ function FinalCTA({ onStart }) {
           {c.finalFeatures.map((f) => <div key={f} className="rounded-full border border-white/15 bg-white/5 px-4 py-2.5 font-sans text-sm font-semibold backdrop-blur">{f}</div>)}
         </div>
         <footer className="mt-24 border-t border-white/10 pt-10">
+          {/* Maillage interne SEO : les 33 landing pages métier (Profession Engine). */}
+          <div className="pb-8">
+            <p className="text-center font-display text-xs font-extrabold uppercase tracking-[0.16em] text-white/40">Aaven for</p>
+            <nav className="mx-auto mt-3 flex max-w-4xl flex-wrap justify-center gap-x-4 gap-y-2 font-sans text-[13px] font-semibold text-white/50">
+              {PROFESSIONS.map((p) => (
+                <a key={p.slug} href={`/${p.slug}`} className="hover:text-white">{p.profession_en}s</a>
+              ))}
+            </nav>
+          </div>
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2 text-white"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4.5 20 L12 4 L19.5 20" /><path d="M8.2 13.6 H15.8" /></svg><span className="font-sans text-lg font-bold tracking-[-0.04em]">Aaven</span></div>
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 font-sans text-sm font-semibold text-white/60">

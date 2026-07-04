@@ -197,6 +197,9 @@ const dict = {
     'onb.title': 'Que veux-tu faire avec ton lien bio ?',
     'onb.subtitle':
       'Un objectif clair = une page qui convertit. Choisis ton mode — tu peux changer plus tard.',
+    'onb.prof.subtitle': 'Choisis ton métier — ta page arrive pré-remplie avec les bons blocs.',
+    'onb.prof.generic': 'Autre / je préfère un style générique',
+    'onb.prof.ready': 'template prêt',
     'onb.creator.label': 'MONÉTISE TON AUDIENCE',
     'onb.creator.desc': 'Tips, produits, formations. Transforme tes followers en revenus.',
     'onb.bar.label': 'REMPLIS TON ÉTABLISSEMENT',
@@ -654,6 +657,9 @@ const dict = {
     'onb.title': 'What do you want from your bio link?',
     'onb.subtitle':
       'A clear goal = a page that converts. Pick your mode — you can change it later.',
+    'onb.prof.subtitle': 'Pick your profession — your page comes pre-filled with the right blocks.',
+    'onb.prof.generic': 'Other / I prefer a generic style',
+    'onb.prof.ready': 'template ready',
     'onb.creator.label': 'MONETIZE YOUR AUDIENCE',
     'onb.creator.desc': 'Tips, products, courses. Turn followers into revenue.',
     'onb.bar.label': 'FILL YOUR VENUE',

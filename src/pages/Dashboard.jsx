@@ -31,6 +31,14 @@ export default function Dashboard() {
     api.connectStatus().then(setConnect).catch(() => {})
   }, [refresh])
 
+  // Funnel métier : profession en attente (landing → login) + aucune page
+  // → on enchaîne directement sur l'onboarding pré-appliqué, sans écran vide.
+  useEffect(() => {
+    let pending = null
+    try { pending = localStorage.getItem('bb_profession') } catch { /* private mode */ }
+    if (pending && Array.isArray(pages) && pages.length === 0) nav('/onboarding', { replace: true })
+  }, [pages, nav])
+
   const plan = user?.plan || 'free'
   async function upgrade(p) {
     track('upgrade_clicked', { plan: p, source: 'dashboard' })

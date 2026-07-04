@@ -125,6 +125,9 @@ await pool.query(`
   CREATE INDEX IF NOT EXISTS idx_purchases_token ON purchases(token);
 `)
 
+// Migrations incrémentales (colonnes ajoutées après la création initiale du schéma).
+await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS profession TEXT DEFAULT ''`)
+
 // ---------- Mappers ----------
 const mapPage = (r) => {
   if (!r) return r
@@ -174,6 +177,7 @@ export const Users = {
   setPayouts: (accountId, enabled) => run('UPDATE users SET "payoutsEnabled" = $1 WHERE "stripeAccountId" = $2', [enabled ? 1 : 0, accountId]),
   setPlan: (userId, plan, customerId) =>
     run('UPDATE users SET plan = $1, "stripeCustomerId" = COALESCE($2, "stripeCustomerId") WHERE id = $3', [plan, customerId || null, userId]),
+  setProfession: (userId, profession) => run('UPDATE users SET profession = $1 WHERE id = $2', [profession, userId]),
   async upsertFromGoogle({ googleId, email, name, avatarUrl }) {
     let u =
       (googleId && (await one('SELECT * FROM users WHERE "googleId" = $1', [googleId]))) ||

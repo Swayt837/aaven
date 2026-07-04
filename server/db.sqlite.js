@@ -124,6 +124,7 @@ const userCols = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name)
 if (!userCols.includes('stripeAccountId')) db.exec("ALTER TABLE users ADD COLUMN stripeAccountId TEXT DEFAULT ''")
 if (!userCols.includes('payoutsEnabled')) db.exec('ALTER TABLE users ADD COLUMN payoutsEnabled INTEGER DEFAULT 0')
 if (!userCols.includes('stripeCustomerId')) db.exec("ALTER TABLE users ADD COLUMN stripeCustomerId TEXT DEFAULT ''")
+if (!userCols.includes('profession')) db.exec("ALTER TABLE users ADD COLUMN profession TEXT DEFAULT ''")
 
 const now = () => new Date().toISOString()
 
@@ -223,6 +224,7 @@ export const Users = {
   setStripeAccount: (userId, accountId) => db.prepare('UPDATE users SET stripeAccountId = ? WHERE id = ?').run(accountId, userId),
   setPayouts: (accountId, enabled) => db.prepare('UPDATE users SET payoutsEnabled = ? WHERE stripeAccountId = ?').run(enabled ? 1 : 0, accountId),
   setPlan: (userId, plan, customerId) => db.prepare('UPDATE users SET plan = ?, stripeCustomerId = COALESCE(?, stripeCustomerId) WHERE id = ?').run(plan, customerId || null, userId),
+  setProfession: (userId, profession) => db.prepare('UPDATE users SET profession = ? WHERE id = ?').run(profession, userId),
   upsertFromGoogle({ googleId, email, name, avatarUrl }) {
     let u =
       (googleId && db.prepare('SELECT * FROM users WHERE googleId = ?').get(googleId)) ||

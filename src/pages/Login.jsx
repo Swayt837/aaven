@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/ui'
 import { useAuth } from '../lib/auth'
@@ -11,6 +11,14 @@ export default function Login() {
   const { t } = useI18n()
   const { user, login } = useAuth()
   const nav = useNavigate()
+  const [params] = useSearchParams()
+
+  // Arrivée depuis une landing métier : on garde la profession à travers le
+  // détour OAuth (redirections externes) → réappliquée par l'onboarding.
+  useEffect(() => {
+    const prof = params.get('profession')
+    if (prof) { try { localStorage.setItem('bb_profession', prof) } catch { /* private mode */ } }
+  }, [params])
 
   useEffect(() => {
     if (user) nav('/dashboard', { replace: true })
