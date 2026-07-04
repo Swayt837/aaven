@@ -85,6 +85,24 @@ export function sanitizeButtonConfig(type, config) {
       .filter((l) => l.url)
     return links.length ? { links } : null
   }
+  if (type === 'smart') {
+    const KINDS = ['image', 'youtube', 'tiktok', 'spotify', 'instagram', 'beforeafter', 'carousel', 'product', 'booking', 'music', 'blog', 'generic']
+    const kind = KINDS.includes(config.kind) ? config.kind : 'generic'
+    const meta = config.meta && typeof config.meta === 'object' ? config.meta : {}
+    return {
+      kind,
+      url: sanitizeUrl(config.url),
+      peek: !!config.peek,
+      meta: {
+        title: clampStr(meta.title, 160),
+        author: clampStr(meta.author, 80),
+        thumbnail: sanitizeAsset(meta.thumbnail),
+        price: clampStr(meta.price, 24),
+      },
+      // Images uploadées (image / avant-après / carrousel / grille Insta) — max 10.
+      images: (Array.isArray(config.images) ? config.images : []).slice(0, 10).map(sanitizeAsset).filter(Boolean),
+    }
+  }
   return null // autres types : config ajoutée dans les prochaines features
 }
 

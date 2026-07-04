@@ -52,6 +52,7 @@ export const BUTTON_TYPES = {
   services: { icon: 'Briefcase', label: { fr: 'Services & tarifs', en: 'Services & pricing' }, action: 'services', urlPh: 'https://...' },
   contact: { icon: 'Mail', label: { fr: 'Me contacter', en: 'Contact me' }, action: 'contact', urlPh: '' },
   link: { icon: 'Link', label: { fr: 'Lien personnalisé', en: 'Custom link' }, urlPh: 'https://...' },
+  smart: { icon: 'Sparkles', label: { fr: 'Smart Content', en: 'Smart Content' }, urlPh: 'https://...' },
 }
 
 // Presets : liste de boutons créés à l'ouverture d'une page selon le mode.

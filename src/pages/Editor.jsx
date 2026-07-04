@@ -9,6 +9,7 @@ import { ImageFramer } from '../components/ImageFramer'
 import { ProductsEditor } from '../components/ProductsEditor'
 import { ServicesItemsEditor } from '../components/ServicesItemsEditor'
 import { LinksEditor } from '../components/LinksEditor'
+import { SmartLinkInput, SmartManualTiles, SmartConfigEditor } from '../components/SmartContentEditor'
 import { QRModal } from '../components/QRModal'
 import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
@@ -161,6 +162,26 @@ export default function Editor() {
         label: def.label[lang] || def.label.fr,
         icon: def.icon,
         url: '',
+        isActive: true,
+        featured: false,
+        clicks: 0,
+        _new: true,
+      },
+    ])
+    setShowPicker(false)
+  }
+
+  // Smart Content : ajoute une carte (config résolue depuis un lien, ou kind manuel).
+  function addSmartBtn(config, title) {
+    setButtons((bs) => [
+      ...bs,
+      {
+        id: nanoid(8),
+        type: 'smart',
+        label: (title || 'Smart Content').slice(0, 60),
+        icon: 'Sparkles',
+        url: config.url || '',
+        config,
         isActive: true,
         featured: false,
         clicks: 0,
@@ -345,7 +366,14 @@ export default function Editor() {
                     </button>
                     <button onClick={() => removeBtn(b.id)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
                   </div>
-                  {b.type !== 'tip' && b.type !== 'link' && b.type !== 'products' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
+                  {b.type === 'smart' && (
+                    <SmartConfigEditor
+                      slug={routeSlug}
+                      button={b}
+                      onChange={(config) => updateBtn(b.id, { config, url: config.url || '' })}
+                    />
+                  )}
+                  {b.type !== 'tip' && b.type !== 'smart' && b.type !== 'link' && b.type !== 'products' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
                     <div className="mt-2 flex gap-2">
                       <input
                         value={b.url || ''}
@@ -516,13 +544,19 @@ export default function Editor() {
                 <Plus size={16} /> {t('edit.addButton')}
               </Button>
               {showPicker && (
-                <Card className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto p-2">
-                  <div className="mb-1 flex items-center justify-between px-1">
+                <Card className="absolute left-0 right-0 z-20 mt-2 max-h-96 overflow-auto p-3">
+                  <div className="mb-2 flex items-center justify-between px-1">
                     <span className="font-display text-xs font-extrabold uppercase text-ink/60">{t('edit.pickType')}</span>
                     <button onClick={() => setShowPicker(false)}><X size={16} /></button>
                   </div>
+                  {/* Smart Content : colle un lien → carte auto, ou carte visuelle manuelle */}
+                  <div className="space-y-3 rounded-brutal border-2 border-ink bg-cream/70 p-3">
+                    <SmartLinkInput onAdd={addSmartBtn} />
+                    <SmartManualTiles onAdd={addSmartBtn} />
+                  </div>
+                  <p className="mb-1.5 mt-3 px-1 font-display text-xs font-extrabold uppercase text-ink/60">{t('edit.smart.classic')}</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {Object.entries(BUTTON_TYPES).map(([key, def]) => (
+                    {Object.entries(BUTTON_TYPES).filter(([key]) => key !== 'smart').map(([key, def]) => (
                       <button key={key} onClick={() => addBtn(key)} className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold">
                         <Icon name={def.icon} size={16} /> {def.label[lang] || def.label.fr}
                       </button>

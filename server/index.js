@@ -21,6 +21,7 @@ import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
 import { PROFESSIONS, PROFESSION_SLUGS, professionBySlug } from '../src/lib/professions.js'
 import { blockToButton, modeForCategory, themeForProfession } from '../src/lib/professionEngine.js'
 import { buildProfessionEmails } from './professionEmails.js'
+import { resolveSmartLink } from './smartResolve.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -420,6 +421,21 @@ app.post('/api/pages', requireAuth, createLimiter, async (req, res) => {
 
 app.get('/api/pages/:slug', requireAuth, ownPage, async (req, res) => {
   res.json({ page: req.page, buttons: await Buttons.byPage(req.page.id) })
+})
+
+// Smart Content : résout un lien collé → { kind, url, meta } (titre, miniature, auteur).
+app.post('/api/smart/resolve', requireAuth, writeLimiter, async (req, res) => {
+  const url = clampStr(req.body.url, 500).trim()
+  const clean = sanitizeUrl(url)
+  if (!clean || !/^https?:/.test(clean)) return res.status(400).json({ error: 'Lien invalide' })
+  try {
+    const resolved = await resolveSmartLink(clean)
+    if (!resolved) return res.status(400).json({ error: 'Lien invalide' })
+    res.json(resolved)
+  } catch (e) {
+    console.error('  Smart resolve échoué:', e?.message || e)
+    res.status(500).json({ error: 'Résolution impossible' })
+  }
 })
 
 app.put('/api/pages/:slug', requireAuth, ownPage, writeLimiter, async (req, res) => {

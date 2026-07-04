@@ -45,6 +45,7 @@ export const api = {
   // Pages
   myPages: () => req('GET', '/pages'),
   createPage: (b) => req('POST', '/pages', b),
+  smartResolve: (url) => req('POST', '/smart/resolve', { url }),
   getPage: (slug) => req('GET', `/pages/${slug}`),
   updatePage: (slug, b) => req('PUT', `/pages/${slug}`, b),
   deletePage: (slug) => req('DELETE', `/pages/${slug}`),

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Heart, Volume2, VolumeX, MapPin } from 'lucide-react'
 import { Icon } from './Icon'
+import { SmartCard } from './SmartCard'
 import { modeOf, BUTTON_TYPES, faviconUrl } from '../lib/modes'
 import { useI18n } from '../lib/i18n'
 import { getTheme, backgroundStyle, isLight, textColor } from '../lib/themes'
@@ -380,8 +381,9 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
 
   const active = (buttons || []).filter((b) => b.isActive)
   // Mise en avant du 1er bouton (objectif principal) — désactivable par le créateur.
+  // Les Smart Cards ne sont jamais le bouton « objectif » (elles ont leur propre design).
   const featureFirst = theme.featureFirst !== false
-  const primaryId = featureFirst ? active[0]?.id : null
+  const primaryId = featureFirst ? active.find((b) => b.type !== 'smart')?.id : null
   const SIZE = { sm: 'px-4 py-3 text-sm', md: 'px-5 py-4 text-base', lg: 'px-6 py-5 text-lg' }
   const sizeCls = SIZE[theme.btnSize] || SIZE.md
   const objective = t('objective.' + page.mode)
@@ -402,6 +404,19 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
 
       <div className={`mt-9 flex w-full flex-col ${isBubble ? 'gap-5' : 'gap-4'}`}>
         {active.map((b, i) => {
+          // Smart Content : carte riche flottant au-dessus du fond (jamais un bouton classique).
+          if (b.type === 'smart') {
+            return (
+              <SmartCard
+                key={b.id}
+                button={b}
+                light={light}
+                headFont={headFont}
+                index={i}
+                onOpen={(btn) => onButtonClick && onButtonClick({ ...btn, url: btn.config?.url || btn.url })}
+              />
+            )
+          }
           const isPrimary = b.id === primaryId
           const act = BUTTON_TYPES[b.type]?.action
           const handle = () => {

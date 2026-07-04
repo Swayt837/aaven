@@ -25,6 +25,7 @@ export const BUTTON_TYPES_SERVER = {
   services: { icon: 'Briefcase', label: { fr: 'Services & tarifs', en: 'Services & pricing' } },
   contact: { icon: 'Mail', label: { fr: 'Me contacter', en: 'Contact me' } },
   link: { icon: 'Link', label: { fr: 'Lien personnalisé', en: 'Custom link' } },
+  smart: { icon: 'Sparkles', label: { fr: 'Smart Content', en: 'Smart Content' } },
 }
 
 export const PRESETS_SERVER = {

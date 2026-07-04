@@ -2,7 +2,7 @@ import {
   Heart, Instagram, Youtube, ShoppingBag, GraduationCap, BookOpen, Phone,
   MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail,
   LayoutGrid, Twitter, Linkedin, Facebook, Twitch, MessageCircle, Music, Ghost,
-  Link as LinkIcon, ExternalLink,
+  Link as LinkIcon, ExternalLink, Sparkles,
 } from 'lucide-react'
 
 // Icône TikTok (absente de lucide) — glyphe maison, suit la couleur courante.
@@ -18,7 +18,7 @@ const MAP = {
   Heart, Instagram, Youtube, ShoppingBag, GraduationCap, BookOpen, Phone,
   MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail,
   LayoutGrid, Twitter, Linkedin, Facebook, Twitch, MessageCircle, Music, Ghost, TikTok,
-  Link: LinkIcon, ExternalLink,
+  Link: LinkIcon, ExternalLink, Sparkles,
 }
 
 // Rend une icône lucide (ou custom) à partir de son nom (string), avec fallback.
