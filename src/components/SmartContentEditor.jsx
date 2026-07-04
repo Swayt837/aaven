@@ -196,8 +196,8 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
         className="w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
       />
 
-      {/* Mode Peek — seulement pour les cartes média cliquables (pas les interactives ni les rangées) */}
-      {['youtube', 'tiktok', 'image', 'product', 'blog', 'generic'].includes(cfg.kind) && (
+      {/* Mode Peek — cartes média (pas l'avant/après dont le slider EST l'interaction) */}
+      {['youtube', 'tiktok', 'image', 'product', 'blog', 'generic', 'carousel'].includes(cfg.kind) && (
         <button
           type="button"
           onClick={() => set({ peek: !cfg.peek })}

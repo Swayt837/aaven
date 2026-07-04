@@ -169,8 +169,9 @@ function InfoRow({ title, author, cta, light, headFont }) {
 //  - row   : carte-rangée compacte (booking, insta sans photos)
 //  - music : lecteur premium (spotify / musique)
 const KIND_RENDERERS = {
-  youtube: ({ cfg }) => ({ media: <Thumb src={cfg.meta?.thumbnail} playBadge />, info: { cta: 'YouTube' } }),
-  tiktok: ({ cfg }) => ({ media: <Thumb src={cfg.meta?.thumbnail} playBadge />, info: { cta: 'TikTok' } }),
+  // Vidéos : pas de pastille CTA — toute la carte est cliquable, le play suffit.
+  youtube: ({ cfg }) => ({ media: <Thumb src={cfg.meta?.thumbnail} playBadge />, info: {} }),
+  tiktok: ({ cfg }) => ({ media: <Thumb src={cfg.meta?.thumbnail} playBadge />, info: {} }),
   blog: ({ cfg }) => ({ media: <Thumb src={cfg.meta?.thumbnail} />, info: { cta: 'Lire' } }),
   generic: ({ cfg }) => ({ media: cfg.meta?.thumbnail ? <Thumb src={cfg.meta.thumbnail} /> : null, info: { cta: 'Ouvrir' } }),
   image: ({ cfg }) => ({ media: cfg.images?.[0] ? <Thumb src={cfg.images[0]} /> : null, info: { cta: 'Voir' } }),
@@ -178,7 +179,7 @@ const KIND_RENDERERS = {
     media: <Thumb src={cfg.images?.[0] || cfg.meta?.thumbnail} />,
     info: { cta: cfg.meta?.price ? `${cfg.meta.price} · Acheter` : 'Acheter' },
   }),
-  carousel: ({ cfg }) => ({ media: cfg.images?.length ? <Carousel images={cfg.images} /> : null, info: {}, noPeek: true }),
+  carousel: ({ cfg }) => ({ media: cfg.images?.length ? <Carousel images={cfg.images} /> : null, info: {} }),
   beforeafter: ({ cfg }) => ({
     media: cfg.images?.length >= 2 ? <BeforeAfter before={cfg.images[0]} after={cfg.images[1]} /> : null,
     info: {},
@@ -207,6 +208,8 @@ export function SmartCard({ button, light, headFont, onOpen, index = 0 }) {
 
   // Peek : replié (bande compacte) → déployé au survol/tap.
   const peekable = !!cfg.peek && !!r.media && !r.noPeek
+  // Cartes à interaction interne (swipe, slider) : le clic sur le média ne navigue pas.
+  const interactive = cfg.kind === 'carousel' || cfg.kind === 'beforeafter'
   const [expanded, setExpanded] = useState(false)
 
   const G = glass(light)
@@ -299,7 +302,7 @@ export function SmartCard({ button, light, headFont, onOpen, index = 0 }) {
             ) : null}
             <span className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
             <span className="absolute inset-0 flex items-center gap-2.5 px-4">
-              {r.info?.cta === 'YouTube' || r.info?.cta === 'TikTok' ? (
+              {cfg.kind === 'youtube' || cfg.kind === 'tiktok' ? (
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/25 text-white" style={BLUR}><Play size={13} fill="currentColor" className="ml-0.5" /></span>
               ) : cfg.kind === 'product' ? (
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/25 text-white" style={BLUR}><ShoppingBag size={14} /></span>
@@ -315,8 +318,8 @@ export function SmartCard({ button, light, headFont, onOpen, index = 0 }) {
             initial={peekable ? { opacity: 0.4 } : false}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.35, ease: EASE }}
-            onClick={r.noPeek ? undefined : open}
-            className={r.noPeek ? undefined : 'cursor-pointer'}
+            onClick={interactive ? undefined : open}
+            className={interactive ? undefined : 'cursor-pointer'}
           >
             {body}
           </motion.div>

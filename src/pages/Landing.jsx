@@ -269,7 +269,7 @@ const PROFILE_META = [
       { network: 'facebook', url: '#' },
     ],
     socialsCfg: { size: 'sm', shape: 'squircle', stats: 'off', animations: true },
-    smart: { kind: 'carousel', peek: false, url: '#', meta: {}, images: [UN('1565299624946-b28f40a0ae38'), UN('1546069901-ba9599a7e63c'), UN('1567620905732-2d1ec7ab7445')] },
+    smart: { kind: 'carousel', peek: true, url: '#', meta: {}, images: [UN('1565299624946-b28f40a0ae38'), UN('1546069901-ba9599a7e63c'), UN('1567620905732-2d1ec7ab7445')] },
   },
   {
     id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: UN('1571019613454-1cb2f99b2d8b', 200),
@@ -281,7 +281,8 @@ const PROFILE_META = [
       { network: 'youtube', url: '#', stat: '31k' },
     ],
     socialsCfg: { size: 'sm', shape: 'squircle', stats: 'always', animations: true },
-    smart: { kind: 'beforeafter', peek: false, url: '', meta: {}, images: [UN('1518611012118-696072aa579a'), UN('1534438327276-14e5300c3a48')] },
+    // Avant : en plein effort avec sa coach · Après : physique transformé.
+    smart: { kind: 'beforeafter', peek: false, url: '', meta: {}, images: [UN('1571019614242-c5c5dee9f50b'), UN('1581009146145-b5ef050c2e1e')] },
   },
   {
     id: 'noah-designer', name: 'Noah', handle: '@noah.studio', img: UN('1507003211169-0a1dd7228f2d', 200),

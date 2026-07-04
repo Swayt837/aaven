@@ -64,8 +64,10 @@ function SpinningRing({ radius, gradient, thickness = 2.5, duration = 2.4 }) {
     <motion.span
       aria-hidden
       className="pointer-events-none absolute overflow-hidden"
+      // inset:0 + MÊME borderRadius que la pastille → l'anneau épouse exactement
+      // ses bords (un radius en % sur une boîte agrandie donnerait une autre courbe).
       style={{
-        inset: -thickness,
+        inset: 0,
         borderRadius: radius,
         padding: thickness,
         WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
