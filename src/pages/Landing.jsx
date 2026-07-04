@@ -12,6 +12,8 @@ import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
 import { track } from '../lib/analytics'
 import { PROFESSIONS } from '../lib/professions'
+import { SmartSocials } from '../components/SmartSocials'
+import { SmartCard } from '../components/SmartCard'
 
 const EASE = [0.22, 1, 0.36, 1]
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } }
@@ -241,25 +243,71 @@ function Hero({ onStart }) {
 }
 
 /* ============================ Profile Showcase ============================ */
+// Exemples = les vraies briques du produit : rang Smart Socials + Smart Cards
+// (YouTube, carrousel, avant/après, portfolio) au-dessus des vidéos de fond.
 const SUPA = 'https://cdn.aaven.fr/templates'
+const UN = (id, w = 700) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=70`
 const PROFILE_META = [
-  { id: 'lea-creator', name: 'Léa', handle: '@lea.mode', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`, accent: '#FF4D42', icons: [Heart, Instagram, ShoppingBag], wall: '1,2k' },
-  { id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', img: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`, accent: '#F7C948', icons: [CalendarCheck, ShoppingBag, MapPin] },
-  { id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4`, accent: '#D6FF00', icons: [Heart, CalendarCheck, Dumbbell], wall: '480' },
-  { id: 'noah-designer', name: 'Noah', handle: '@noah.studio', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=70', video: `${SUPA}/freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`, accent: '#38BDF8', icons: [Palette, Mail, CalendarCheck] },
+  {
+    id: 'lea-creator', name: 'Léa', handle: '@lea.creator', img: UN('1494790108377-be9c29b29330', 200),
+    video: `${SUPA}/createur/56d5bd7f-9154-414f-a051-5bb904c0f8a6-2-3.1-invideo-seedance_2_0.mp4`,
+    accent: '#FF4D42', icons: [Heart], wall: '1,2k',
+    socials: [
+      { network: 'instagram', url: '#', stat: '82k' },
+      { network: 'tiktok', url: '#', stat: '210k' },
+      { network: 'youtube', url: '#', stat: '54k' },
+    ],
+    socialsCfg: { size: 'sm', shape: 'squircle', stats: 'always', animations: true },
+    smart: { kind: 'youtube', peek: false, url: '#', meta: { author: 'Léa', thumbnail: UN('1492684223066-81342ee5ff30') }, images: [] },
+  },
+  {
+    id: 'marco-resto', name: 'Chef Marco', handle: '@trattoria.marco', img: UN('1577219491135-ce391730fb2c', 200),
+    video: `${SUPA}/etablissement/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-2-2.1-invideo-seedance_2_0.mp4`,
+    accent: '#F7C948', icons: [CalendarCheck, MapPin],
+    socials: [
+      { network: 'instagram', url: '#' },
+      { network: 'facebook', url: '#' },
+    ],
+    socialsCfg: { size: 'sm', shape: 'squircle', stats: 'off', animations: true },
+    smart: { kind: 'carousel', peek: false, url: '#', meta: {}, images: [UN('1565299624946-b28f40a0ae38'), UN('1546069901-ba9599a7e63c'), UN('1567620905732-2d1ec7ab7445')] },
+  },
+  {
+    id: 'sofia-coach', name: 'Sofia', handle: '@sofia.fit', img: UN('1571019613454-1cb2f99b2d8b', 200),
+    video: `${SUPA}/createur/ef55bbf3-68f2-4a2c-978d-4d39f7118ed6-4-4.1-invideo-seedance_2_0.mp4`,
+    accent: '#D6FF00', icons: [Heart, CalendarCheck], wall: '480',
+    socials: [
+      { network: 'instagram', url: '#', stat: '120k' },
+      { network: 'tiktok', url: '#', stat: '95k' },
+      { network: 'youtube', url: '#', stat: '31k' },
+    ],
+    socialsCfg: { size: 'sm', shape: 'squircle', stats: 'always', animations: true },
+    smart: { kind: 'beforeafter', peek: false, url: '', meta: {}, images: [UN('1518611012118-696072aa579a'), UN('1534438327276-14e5300c3a48')] },
+  },
+  {
+    id: 'noah-designer', name: 'Noah', handle: '@noah.studio', img: UN('1507003211169-0a1dd7228f2d', 200),
+    video: `${SUPA}/freelance/b9861429-b87f-4c9d-bc04-0edc89cd21f3-1-1.1-invideo-seedance_2_0.mp4`,
+    accent: '#38BDF8', icons: [Palette, CalendarCheck],
+    socials: [
+      { network: 'instagram', url: '#' },
+      { network: 'linkedin', url: '#' },
+      { network: 'website', url: '#' },
+    ],
+    socialsCfg: { size: 'sm', shape: 'squircle', stats: 'off', animations: true },
+    smart: { kind: 'image', peek: false, url: '#', meta: { thumbnail: '' }, images: [UN('1561070791-2526d30994b5')] },
+  },
 ]
 const PROFILE_COPY = {
   fr: {
-    'lea-creator': { notif: '+530€ ce mois', role: 'Créatrice mode', bio: 'Outfits quotidiens & bons plans shopping.', links: ['Me soutenir (tip)', 'Instagram', 'Mes pièces favorites'], supporters: [{ name: 'Manon', msg: 'Tes lookbooks sont incroyables 😍', reply: 'Merci Manon, ça me touche ! 💕' }, { name: 'Inès', msg: 'Hâte de la prochaine collab !' }] },
-    'marco-resto': { notif: '+86 réservations', role: 'Restaurant', bio: 'Cuisine italienne de saison à Lyon.', links: ['Réserver une table', 'Le menu', 'Itinéraire'] },
-    'sofia-coach': { notif: '+1,2k soutiens', role: 'Coach fitness', bio: 'Programmes & coaching en ligne.', links: ['Me soutenir (tip)', 'Réserver une séance', 'Mes programmes'], supporters: [{ name: 'Karim', msg: 'Programme au top, merci coach 💪', reply: 'On lâche rien Karim ! 🔥' }, { name: 'Julie', msg: '+3 kg de muscle en 2 mois !' }] },
-    'noah-designer': { notif: '+12 devis', role: 'Designer freelance', bio: 'Identités de marque & sites premium.', links: ['Voir mes projets', 'Demander un devis', 'Réserver un call'] },
+    'lea-creator': { notif: '+530€ ce mois', role: 'Créatrice de contenu', bio: 'Vlogs, coulisses & vie de créatrice.', links: ['Me soutenir (tip)'], smartTitle: 'Mon dernier vlog 🎬', supporters: [{ name: 'Manon', msg: 'Tes vidéos sont incroyables 😍', reply: 'Merci Manon, ça me touche ! 💕' }, { name: 'Inès', msg: 'Hâte de la prochaine collab !' }] },
+    'marco-resto': { notif: '+86 réservations', role: 'Restaurant', bio: 'Cuisine italienne de saison à Lyon.', links: ['Réserver une table', 'Itinéraire'], smartTitle: 'Les plats du moment' },
+    'sofia-coach': { notif: '+1,2k soutiens', role: 'Coach fitness', bio: 'Programmes & coaching en ligne.', links: ['Me soutenir (tip)', 'Réserver une séance'], smartTitle: '', supporters: [{ name: 'Karim', msg: 'Programme au top, merci coach 💪', reply: 'On lâche rien Karim ! 🔥' }, { name: 'Julie', msg: '+3 kg de muscle en 2 mois !' }] },
+    'noah-designer': { notif: '+12 devis', role: 'Designer freelance', bio: 'Identités de marque & sites premium.', links: ['Demander un devis', 'Réserver un call'], smartTitle: 'Portfolio 2026' },
   },
   en: {
-    'lea-creator': { notif: '+€530 this month', role: 'Fashion creator', bio: 'Daily outfits & shopping tips.', links: ['Support me (tip)', 'Instagram', 'My favorite picks'], supporters: [{ name: 'Manon', msg: 'Your lookbooks are incredible 😍', reply: 'Thank you Manon, means a lot! 💕' }, { name: 'Inès', msg: 'Can’t wait for the next collab!' }] },
-    'marco-resto': { notif: '+86 bookings', role: 'Restaurant', bio: 'Seasonal Italian cuisine in Lyon.', links: ['Book a table', 'Menu', 'Directions'] },
-    'sofia-coach': { notif: '+1.2k supporters', role: 'Fitness coach', bio: 'Online programs & coaching.', links: ['Support me (tip)', 'Book a session', 'My programs'], supporters: [{ name: 'Karim', msg: 'Best program ever, thanks coach 💪', reply: 'Keep pushing Karim! 🔥' }, { name: 'Julie', msg: '+3 kg of muscle in 2 months!' }] },
-    'noah-designer': { notif: '+12 quotes', role: 'Freelance designer', bio: 'Brand identities & premium sites.', links: ['See my work', 'Request a quote', 'Book a call'] },
+    'lea-creator': { notif: '+€530 this month', role: 'Content creator', bio: 'Vlogs, behind the scenes & creator life.', links: ['Support me (tip)'], smartTitle: 'My latest vlog 🎬', supporters: [{ name: 'Manon', msg: 'Your videos are incredible 😍', reply: 'Thank you Manon, means a lot! 💕' }, { name: 'Inès', msg: 'Can’t wait for the next collab!' }] },
+    'marco-resto': { notif: '+86 bookings', role: 'Restaurant', bio: 'Seasonal Italian cuisine in Lyon.', links: ['Book a table', 'Directions'], smartTitle: 'This week’s dishes' },
+    'sofia-coach': { notif: '+1.2k supporters', role: 'Fitness coach', bio: 'Online programs & coaching.', links: ['Support me (tip)', 'Book a session'], smartTitle: '', supporters: [{ name: 'Karim', msg: 'Best program ever, thanks coach 💪', reply: 'Keep pushing Karim! 🔥' }, { name: 'Julie', msg: '+3 kg of muscle in 2 months!' }] },
+    'noah-designer': { notif: '+12 quotes', role: 'Freelance designer', bio: 'Brand identities & premium sites.', links: ['Request a quote', 'Book a call'], smartTitle: 'Portfolio 2026' },
   },
 }
 
@@ -299,7 +347,26 @@ function PhoneCard({ p, copy, notif, wallLabel }) {
               <span className="mt-2 rounded-full border px-3 py-0.5 font-display text-[11px] font-extrabold uppercase tracking-[0.15em]" style={{ borderColor: p.accent, color: p.accent }}>{copy.role}</span>
               <p className="mt-3 font-sans text-sm text-white/80">{copy.bio}</p>
             </div>
-            <div className="mt-6 space-y-3">
+            {/* Rang Smart Socials (vraies briques du produit, navigation neutralisée) */}
+            {p.socials && (
+              <div onClickCapture={(e) => e.preventDefault()} className="-mt-1">
+                <SmartSocials socials={p.socials} cfg={p.socialsCfg} light onOpen={() => {}} onMulti={() => {}} />
+              </div>
+            )}
+
+            {/* Smart Card (YouTube / carrousel / avant-après / portfolio) */}
+            {p.smart && (
+              <div className="mt-1">
+                <SmartCard
+                  button={{ id: `demo-${p.id}`, label: '', config: { ...p.smart, meta: { ...p.smart.meta, title: copy.smartTitle } } }}
+                  light
+                  index={0}
+                  onOpen={() => {}}
+                />
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
               {p.icons.map((Icon, i) => (
                 <div key={i} className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 font-display text-sm font-extrabold ${i === 0 ? 'text-brand-ink' : rowCls}`} style={i === 0 ? { background: p.accent } : undefined}>
                   <Icon size={18} strokeWidth={2.5} /> {copy.links[i]}
