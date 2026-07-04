@@ -244,17 +244,6 @@ export function SmartSocials({ socials, cfg = {}, light = true, onOpen, onMulti 
           {items.map((item, i) => (
             <SocialIcon key={`${item.network}-${i}`} item={item} cfg={cfg} light={light} index={i} onOpen={onOpen} onMulti={onMulti} />
           ))}
-          {/* Reflet lumineux qui traverse le rang (C) */}
-          {cfg.animations !== false && (
-            <motion.span
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 w-14 -skew-x-12"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent)' }}
-              initial={{ left: '-15%' }}
-              animate={{ left: '115%' }}
-              transition={{ duration: 1.8, ease: 'easeInOut', repeat: Infinity, repeatDelay: 6.5 }}
-            />
-          )}
         </div>
       </div>
     </div>
