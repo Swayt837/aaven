@@ -557,7 +557,7 @@ export default function Editor() {
         </div>
       </main>
 
-      {showQR && <QRModal url={publicUrl} slug={page.slug} onClose={() => setShowQR(false)} />}
+      {showQR && <QRModal url={publicUrl} page={page} onClose={() => setShowQR(false)} />}
     </div>
   )
 }
