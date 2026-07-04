@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Instagram, Youtube, Linkedin, Facebook, Globe } from 'lucide-react'
+import { faviconUrl } from '../lib/modes'
 
 // ============================ Smart Socials ============================
 // Rang d'icônes réseaux signature Aaven — jamais un bloc, jamais opaque :
@@ -38,6 +40,13 @@ const NETWORKS = {
 
 const SIZES = { sm: { px: 44, icon: 18, gap: 10 }, md: { px: 52, icon: 21, gap: 14 }, lg: { px: 60, icon: 24, gap: 18 } }
 const SHAPES = { squircle: '32%', round: '9999px', square: '22%' }
+
+// Favicon d'un site web (fallback globe si introuvable).
+function WebIcon({ src, size }) {
+  const [err, setErr] = useState(false)
+  if (err) return <Globe size={size - 2} />
+  return <img src={src} alt="" width={size} height={size} className="rounded-md" onError={() => setErr(true)} />
+}
 
 /* ---------------- Micro-animations au survol (transform/opacity only) ---------------- */
 const iconVariants = {
@@ -100,7 +109,7 @@ function Orbit({ size }) {
 }
 
 /* ---------------- Une icône ---------------- */
-function SocialIcon({ item, cfg, light, index, onOpen }) {
+function SocialIcon({ item, cfg, light, index, onOpen, onMulti }) {
   const net = NETWORKS[item.network]
   if (!net) return null
   const S = SIZES[cfg.size] || SIZES.md
@@ -108,6 +117,9 @@ function SocialIcon({ item, cfg, light, index, onOpen }) {
   const IconCmp = net.icon
   const showStat = cfg.stats !== 'off' && item.stat
   const anims = cfg.animations !== false
+  // Site web : favicon du site à la place du globe ; plusieurs sites → modale de liens.
+  const multi = item.network === 'website' && (item.links?.length || 0) > 1
+  const favicon = item.network === 'website' ? faviconUrl(item.url) : null
 
   return (
     <motion.div
@@ -123,11 +135,14 @@ function SocialIcon({ item, cfg, light, index, onOpen }) {
         transition={anims ? { duration: 4.2 + index * 0.4, repeat: Infinity, ease: 'easeInOut', delay: index * 0.5 } : undefined}
       >
         <motion.a
-          href={item.url}
-          target="_blank"
+          href={multi ? '#' : item.url}
+          target={multi ? undefined : '_blank'}
           rel="noopener noreferrer"
           aria-label={net.label}
-          onClick={() => onOpen && onOpen(item)}
+          onClick={(e) => {
+            if (multi) { e.preventDefault(); onMulti && onMulti(item.links) }
+            if (onOpen) onOpen(item)
+          }}
           initial="rest"
           animate="rest"
           whileHover="hover"
@@ -160,13 +175,13 @@ function SocialIcon({ item, cfg, light, index, onOpen }) {
           {anims && net.anim === 'ring' && <InstaRing radius={radius} />}
           {anims && net.anim === 'waves' && <Waves radius={radius} />}
           {anims && net.anim === 'orbit' && <Orbit size={S.px} />}
-          {/* Glyphe monochrome (suit la couleur du thème) */}
+          {/* Glyphe monochrome (suit la couleur du thème) — ou favicon pour un site web */}
           <motion.span
             className="relative z-10"
             style={{ color: light ? '#fff' : '#0A0A0A' }}
             variants={{ rest: { y: 0, scale: 1 }, hover: { y: -3, scale: 1.08, transition: { duration: 0.25, ease: 'easeOut' }, ...(anims ? (iconVariants[net.anim]?.hover || {}) : {}) } }}
           >
-            <IconCmp size={S.icon} />
+            {favicon ? <WebIcon src={favicon} size={S.icon + 2} /> : <IconCmp size={S.icon} />}
           </motion.span>
 
           {/* Stat en mode Peek (D) : glisse sous l'icône au survol */}
@@ -194,8 +209,18 @@ function SocialIcon({ item, cfg, light, index, onOpen }) {
 }
 
 /* ---------------- Le rang ---------------- */
-export function SmartSocials({ socials, cfg = {}, light = true, onOpen }) {
-  const items = (socials || []).filter((s) => s.network && s.url && NETWORKS[s.network])
+export function SmartSocials({ socials, cfg = {}, light = true, onOpen, onMulti }) {
+  const valid = (socials || []).filter((s) => s.network && s.url && NETWORKS[s.network])
+  // Plusieurs sites web → une seule icône (favicon du 1er) qui ouvre la modale de liens.
+  const websites = valid.filter((s) => s.network === 'website')
+  const items = valid.filter((s) => s.network !== 'website')
+  if (websites.length) {
+    items.push({
+      ...websites[0],
+      stat: websites.length > 1 ? '' : websites[0].stat,
+      links: websites.map((w) => ({ url: w.url, label: '' })),
+    })
+  }
   if (!items.length) return null
   const S = SIZES[cfg.size] || SIZES.md
   const peekPad = cfg.stats === 'peek' ? 18 : 4 // place pour le badge qui glisse
@@ -203,13 +228,13 @@ export function SmartSocials({ socials, cfg = {}, light = true, onOpen }) {
   return (
     <div className="relative mt-6 w-full">
       {/* Scroll horizontal fluide si nécessaire (mobile), centré quand tout tient */}
-      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div className="no-scrollbar overflow-x-auto">
         <div
           className="relative mx-auto flex w-max items-start px-2"
-          style={{ gap: S.gap, paddingBottom: peekPad }}
+          style={{ gap: S.gap, paddingBottom: peekPad, paddingTop: 10 }}
         >
           {items.map((item, i) => (
-            <SocialIcon key={`${item.network}-${i}`} item={item} cfg={cfg} light={light} index={i} onOpen={onOpen} />
+            <SocialIcon key={`${item.network}-${i}`} item={item} cfg={cfg} light={light} index={i} onOpen={onOpen} onMulti={onMulti} />
           ))}
           {/* Reflet lumineux qui traverse le rang (C) */}
           {cfg.animations !== false && (

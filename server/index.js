@@ -19,9 +19,10 @@ import { purgePage, cachePurgeEnabled } from './cf-cache.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
 import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
 import { PROFESSIONS, PROFESSION_SLUGS, professionBySlug } from '../src/lib/professions.js'
-import { blockToButton, modeForCategory, themeForProfession } from '../src/lib/professionEngine.js'
+import { blockToButton, modeForCategory, themeForProfession, SOCIAL_BUTTON_TYPES } from '../src/lib/professionEngine.js'
 import { buildProfessionEmails } from './professionEmails.js'
 import { resolveSmartLink } from './smartResolve.js'
+import { fetchSocialStat } from './socialStats.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -376,7 +377,8 @@ app.post('/api/pages', requireAuth, createLimiter, async (req, res) => {
   let page = await Pages.create({ userId: req.user.id, title, bio, headline, mode })
   if (prof) {
     // Boutons depuis les template_blocks du métier (1er bouton mis en avant).
-    const blocks = prof.template_blocks.map(blockToButton)
+    // Les blocs « réseaux sociaux » sont exclus : ils vivent dans le rang Smart Socials.
+    const blocks = prof.template_blocks.map(blockToButton).filter((b) => !SOCIAL_BUTTON_TYPES.has(b.type))
     for (let i = 0; i < blocks.length; i++) {
       const def = BUTTON_TYPES_SERVER[blocks[i].type] || BUTTON_TYPES_SERVER.link
       await Buttons.create(page.id, {
@@ -421,6 +423,18 @@ app.post('/api/pages', requireAuth, createLimiter, async (req, res) => {
 
 app.get('/api/pages/:slug', requireAuth, ownPage, async (req, res) => {
   res.json({ page: req.page, buttons: await Buttons.byPage(req.page.id) })
+})
+
+// Smart Socials : récupère automatiquement le compteur d'abonnés (YouTube/Spotify).
+app.post('/api/socials/stat', requireAuth, writeLimiter, async (req, res) => {
+  const network = clampStr(req.body.network, 20)
+  const url = sanitizeUrl(clampStr(req.body.url, 500))
+  if (!url) return res.status(400).json({ error: 'Lien invalide' })
+  try {
+    res.json(await fetchSocialStat(network, url))
+  } catch {
+    res.json({ stat: null })
+  }
 })
 
 // Smart Content : résout un lien collé → { kind, url, meta } (titre, miniature, auteur).

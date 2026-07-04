@@ -57,11 +57,11 @@ export const BUTTON_TYPES = {
 
 // Presets : liste de boutons créés à l'ouverture d'une page selon le mode.
 // `featured` = bouton mis en avant (fond plein accent).
+// Les réseaux sociaux ne sont PLUS des boutons : ils vivent dans le rang
+// Smart Socials (theme.socials), rempli par le créateur dans l'éditeur.
 export const PRESETS = {
   creator: [
     { type: 'tip', featured: true },
-    { type: 'instagram' },
-    { type: 'youtube' },
     { type: 'products' },
     { type: 'course' },
     { type: 'contact' },

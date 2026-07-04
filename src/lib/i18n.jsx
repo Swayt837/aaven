@@ -306,6 +306,10 @@ const dict = {
     'edit.socials.sizeM': 'M',
     'edit.socials.sizeL': 'L',
     'edit.socials.animations': 'Animations vivantes',
+    'edit.socials.addSite': 'Ajouter un site',
+    'edit.socials.statAuto': 'Récupérer automatiquement',
+    'edit.socials.statAutoFail': 'Impossible de récupérer la stat (vérifie le lien, ou saisis-la à la main).',
+    'socials.mySites': 'Mes sites',
 
     // Editor — thème
     'edit.theme': 'THÈME & STYLE',
@@ -800,6 +804,10 @@ const dict = {
     'edit.socials.sizeM': 'M',
     'edit.socials.sizeL': 'L',
     'edit.socials.animations': 'Living animations',
+    'edit.socials.addSite': 'Add a site',
+    'edit.socials.statAuto': 'Fetch automatically',
+    'edit.socials.statAutoFail': 'Could not fetch the stat (check the link, or type it manually).',
+    'socials.mySites': 'My sites',
 
     'edit.theme': 'THEME & STYLE',
     'edit.layout': 'Header layout',

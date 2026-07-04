@@ -28,11 +28,11 @@ export const BUTTON_TYPES_SERVER = {
   smart: { icon: 'Sparkles', label: { fr: 'Smart Content', en: 'Smart Content' } },
 }
 
+// Les réseaux sociaux ne sont PLUS des boutons de preset : ils vivent dans le
+// rang Smart Socials (theme.socials), rempli par le créateur dans l'éditeur.
 export const PRESETS_SERVER = {
   creator: [
     { type: 'tip', featured: true },
-    { type: 'instagram' },
-    { type: 'youtube' },
     { type: 'products' },
     { type: 'course' },
     { type: 'contact' },

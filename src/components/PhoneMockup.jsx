@@ -407,6 +407,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
           cfg={theme.socialsCfg || {}}
           light={light}
           onOpen={(item) => track('social_click', { network: item.network })}
+          onMulti={(links) => onLinks && onLinks({ id: 'smart-socials-web', label: t('socials.mySites'), config: { links } })}
         />
       )}
 

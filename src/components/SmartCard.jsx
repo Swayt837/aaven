@@ -86,7 +86,7 @@ function Carousel({ images }) {
   const arrowCls = 'absolute top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white opacity-80 transition hover:opacity-100'
   return (
     <div className="group/car relative">
-      <div ref={ref} className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} onScroll={onScroll}>
+      <div ref={ref} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth" onScroll={onScroll}>
         {images.map((src, i) => <Slide key={i} src={src} />)}
       </div>
       {images.length > 1 && (

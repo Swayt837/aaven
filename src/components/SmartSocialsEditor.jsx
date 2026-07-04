@@ -1,5 +1,52 @@
-import { Instagram, Youtube, Linkedin, Facebook, Globe, Music2, MessageCircle, Twitter, Pin } from 'lucide-react'
+import { useState } from 'react'
+import { Instagram, Youtube, Linkedin, Facebook, Globe, Music2, MessageCircle, Twitter, Pin, Trash2, Plus, RefreshCw } from 'lucide-react'
+import { api } from '../lib/api'
 import { useI18n } from '../lib/i18n'
+
+// Réseaux dont la stat peut être récupérée automatiquement côté serveur
+// (YouTube Data API / Spotify — si les clés sont configurées).
+const AUTO_STAT = new Set(['youtube', 'spotify'])
+
+// Champ stat : saisie libre + bouton « auto » pour les réseaux supportés.
+function StatField({ network, url, value, onChange, t }) {
+  const [busy, setBusy] = useState(false)
+  const canAuto = AUTO_STAT.has(network) && !!url
+  async function fetchStat() {
+    setBusy(true)
+    try {
+      const r = await api.socialStat(network, url)
+      if (r.stat) onChange(r.stat)
+      else alert(t('edit.socials.statAutoFail'))
+    } catch {
+      alert(t('edit.socials.statAutoFail'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <span className="relative flex shrink-0 items-center">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={t('edit.socials.statPh')}
+        disabled={!url}
+        className="w-16 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-center text-sm disabled:opacity-40"
+        maxLength={12}
+      />
+      {canAuto && (
+        <button
+          type="button"
+          onClick={fetchStat}
+          disabled={busy}
+          title={t('edit.socials.statAuto')}
+          className="press absolute -right-1.5 -top-1.5 grid h-4 w-4 place-items-center rounded-full border border-ink bg-coral text-white"
+        >
+          <RefreshCw size={9} className={busy ? 'animate-spin' : ''} />
+        </button>
+      )}
+    </span>
+  )
+}
 
 // Éditeur du rang Smart Socials : un champ URL (+ stat optionnelle) par réseau,
 // et les réglages d'apparence (forme, stats, taille, animations).
@@ -15,8 +62,8 @@ const NETWORKS = [
   { key: 'pinterest', label: 'Pinterest', icon: Pin, ph: 'https://pinterest.com/...' },
   { key: 'discord', label: 'Discord', icon: MessageCircle, ph: 'https://discord.gg/...' },
   { key: 'facebook', label: 'Facebook', icon: Facebook, ph: 'https://facebook.com/...' },
-  { key: 'website', label: 'Site web', icon: Globe, ph: 'https://...' },
 ]
+// Le site web est géré à part : plusieurs sites possibles (une icône → modale de liens).
 
 function Seg({ options, value, onChange, t }) {
   return (
@@ -40,13 +87,30 @@ export function SmartSocialsEditor({ theme, onChange }) {
   const socials = theme.socials || []
   const cfg = theme.socialsCfg || { stats: 'peek', shape: 'squircle', size: 'md', animations: true }
 
-  const byNetwork = Object.fromEntries(socials.map((s) => [s.network, s]))
+  const byNetwork = Object.fromEntries(socials.filter((s) => s.network !== 'website').map((s) => [s.network, s]))
+  const websites = socials.filter((s) => s.network === 'website')
+  const order = (list) => list.sort((a, b) => {
+    const ia = NETWORKS.findIndex((n) => n.key === a.network)
+    const ib = NETWORKS.findIndex((n) => n.key === b.network)
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) // sites web à la fin
+  })
   function setNetwork(network, patch) {
     const cur = byNetwork[network] || { network, url: '', stat: '' }
     const next = { ...cur, ...patch }
     const rest = socials.filter((s) => s.network !== network)
     // Réseau vidé → retiré ; sinon on préserve l'ordre d'origine.
-    onChange({ socials: next.url ? [...rest, next].sort((a, b) => NETWORKS.findIndex((n) => n.key === a.network) - NETWORKS.findIndex((n) => n.key === b.network)) : rest })
+    onChange({ socials: next.url ? order([...rest, next]) : rest })
+  }
+  function setWebsite(i, patch) {
+    const next = websites.map((w, j) => (j === i ? { ...w, ...patch } : w))
+    onChange({ socials: order([...socials.filter((s) => s.network !== 'website'), ...next]) })
+  }
+  function addWebsite() {
+    onChange({ socials: order([...socials, { network: 'website', url: '', stat: '', _draft: true }]) })
+  }
+  function removeWebsite(i) {
+    const next = websites.filter((_, j) => j !== i)
+    onChange({ socials: order([...socials.filter((s) => s.network !== 'website'), ...next]) })
   }
   const setCfg = (patch) => onChange({ socialsCfg: { ...cfg, ...patch } })
 
@@ -69,17 +133,41 @@ export function SmartSocialsEditor({ theme, onChange }) {
                 placeholder={ph}
                 className="min-w-0 flex-1 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-sm"
               />
-              <input
+              <StatField
+                network={key}
+                url={cur?.url}
                 value={cur?.stat || ''}
-                onChange={(e) => setNetwork(key, { stat: e.target.value })}
-                placeholder={t('edit.socials.statPh')}
-                disabled={!cur?.url}
-                className="w-16 shrink-0 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-center text-sm disabled:opacity-40"
-                maxLength={12}
+                onChange={(stat) => setNetwork(key, { stat })}
+                t={t}
               />
             </div>
           )
         })}
+
+        {/* Sites web : plusieurs possibles → une icône (favicon) + modale de liens */}
+        {websites.map((w, i) => (
+          <div key={`web-${i}`} className="flex items-center gap-2">
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 ${w.url ? 'border-ink bg-ink text-white' : 'border-ink/20 text-ink/40'}`} title="Site web">
+              <Globe size={15} />
+            </span>
+            <input
+              value={w.url || ''}
+              onChange={(e) => setWebsite(i, { url: e.target.value })}
+              placeholder="https://..."
+              className="min-w-0 flex-1 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-sm"
+            />
+            <button type="button" onClick={() => removeWebsite(i)} aria-label={t('common.delete')} className="press shrink-0 text-coral">
+              <Trash2 size={15} />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addWebsite}
+          className="press flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-ink/30 px-2 py-1.5 text-xs font-bold text-ink/50 hover:border-ink hover:text-ink"
+        >
+          <Plus size={13} /> {t('edit.socials.addSite')}
+        </button>
       </div>
 
       {/* Réglages */}

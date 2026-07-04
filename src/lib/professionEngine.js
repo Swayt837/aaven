@@ -57,6 +57,10 @@ export function blockToButton(blockName) {
   return { type: 'link', label: name }
 }
 
+// Types gérés par le rang Smart Socials (theme.socials) → ne deviennent pas des
+// boutons à la création de page ; le créateur remplit ses réseaux dans l'éditeur.
+export const SOCIAL_BUTTON_TYPES = new Set(['instagram', 'tiktok', 'youtube', 'spotify', 'x', 'linkedin', 'facebook', 'snapchat'])
+
 // ---------- thème de page depuis les couleurs du métier ----------
 const luminance = (hex) => {
   const m = String(hex || '').match(/^#?([0-9a-f]{6})$/i)

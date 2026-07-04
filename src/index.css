@@ -287,3 +287,12 @@ body {
   background: #ff4d42;
   color: #fff;
 }
+
+/* Conteneurs à défilement sans scrollbar visible (Smart Socials, carrousels) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
