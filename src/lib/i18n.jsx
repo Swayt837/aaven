@@ -286,6 +286,8 @@ const dict = {
     'edit.smart.before': 'Avant',
     'edit.smart.after': 'Après',
     'edit.smart.destination': 'Lien ouvert au clic (https://...)',
+    'edit.smart.titleField': 'Titre affiché sur la carte (optionnel)',
+    'edit.smart.videoPro': 'Vidéos dans le carrousel : réservé Creator/Pro.',
     'edit.smart.peek': 'Mode Peek',
     'edit.smart.peekHint': 'Carte repliée en bande fine, se déploie au survol/tap.',
 
@@ -762,6 +764,8 @@ const dict = {
     'edit.smart.before': 'Before',
     'edit.smart.after': 'After',
     'edit.smart.destination': 'Link opened on click (https://...)',
+    'edit.smart.titleField': 'Title shown on the card (optional)',
+    'edit.smart.videoPro': 'Videos in the carousel: Creator/Pro only.',
     'edit.smart.peek': 'Peek mode',
     'edit.smart.peekHint': 'Card collapses to a thin strip, expands on hover/tap.',
 

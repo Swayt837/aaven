@@ -370,6 +370,7 @@ export default function Editor() {
                     <SmartConfigEditor
                       slug={routeSlug}
                       button={b}
+                      plan={user?.plan || 'free'}
                       onChange={(config) => updateBtn(b.id, { config, url: config.url || '' })}
                     />
                   )}

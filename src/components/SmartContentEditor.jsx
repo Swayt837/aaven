@@ -85,7 +85,8 @@ export function SmartManualTiles({ onAdd }) {
           <button
             key={kind}
             type="button"
-            onClick={() => onAdd({ kind, url: '', peek: kind !== 'beforeafter', meta: {}, images: [] }, t(labelKey))}
+            // Cartes visuelles : affichées en entier par défaut (le Peek cacherait le visuel).
+            onClick={() => onAdd({ kind, url: '', peek: false, meta: {}, images: [] }, t(labelKey))}
             className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold"
           >
             <Ic size={16} /> {t(labelKey)}
@@ -97,7 +98,7 @@ export function SmartManualTiles({ onAdd }) {
 }
 
 // Réglages d'une carte smart existante (dans la liste des boutons).
-export function SmartConfigEditor({ slug, button, onChange }) {
+export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
   const { t } = useI18n()
   const cfg = button.config || { kind: 'generic', meta: {}, images: [] }
   const fileRef = useRef(null)
@@ -106,6 +107,9 @@ export function SmartConfigEditor({ slug, button, onChange }) {
   const set = (patch) => onChange({ ...cfg, ...patch })
   const maxImages = cfg.kind === 'beforeafter' ? 2 : cfg.kind === 'instagram' ? 9 : cfg.kind === 'carousel' ? 10 : 1
   const needsImages = ['image', 'beforeafter', 'carousel', 'instagram'].includes(cfg.kind)
+  // Carrousel : les vidéos sont réservées Creator/Pro (cohérent avec l'upload vidéo de fond).
+  const allowVideo = cfg.kind === 'carousel' && plan !== 'free'
+  const accept = allowVideo ? 'image/*,video/mp4,video/webm' : 'image/*'
 
   async function onFiles(e) {
     const files = [...(e.target.files || [])].slice(0, maxImages - (cfg.images?.length || 0))
@@ -114,7 +118,7 @@ export function SmartConfigEditor({ slug, button, onChange }) {
     try {
       const urls = []
       for (const f of files) {
-        const { url } = await api.uploadImage(slug, f)
+        const { url } = f.type.startsWith('video/') ? await api.uploadMedia(slug, f) : await api.uploadImage(slug, f)
         urls.push(url)
       }
       set({ images: [...(cfg.images || []), ...urls].slice(0, maxImages) })
@@ -137,7 +141,11 @@ export function SmartConfigEditor({ slug, button, onChange }) {
           <div className="flex flex-wrap items-center gap-1.5">
             {(cfg.images || []).map((src, i) => (
               <span key={i} className="group relative">
-                <img src={src} alt="" className="h-12 w-12 rounded-lg border-2 border-ink object-cover" />
+                {/\.(mp4|webm|mov)(\?|$)/i.test(src) ? (
+                  <video src={src} muted playsInline className="h-12 w-12 rounded-lg border-2 border-ink object-cover" />
+                ) : (
+                  <img src={src} alt="" className="h-12 w-12 rounded-lg border-2 border-ink object-cover" />
+                )}
                 {cfg.kind === 'beforeafter' && (
                   <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded bg-ink px-1 text-[8px] font-extrabold uppercase text-white">
                     {i === 0 ? t('edit.smart.before') : t('edit.smart.after')}
@@ -165,9 +173,20 @@ export function SmartConfigEditor({ slug, button, onChange }) {
               </button>
             )}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple={maxImages > 1} onChange={onFiles} className="hidden" />
+          <input ref={fileRef} type="file" accept={accept} multiple={maxImages > 1} onChange={onFiles} className="hidden" />
+          {cfg.kind === 'carousel' && !allowVideo && (
+            <p className="mt-1 text-[10px] font-medium text-ink/45">{t('edit.smart.videoPro')}</p>
+          )}
         </div>
       )}
+
+      {/* Titre affiché sur la carte (optionnel — les cartes visuelles n'en montrent pas par défaut) */}
+      <input
+        value={cfg.meta?.title || ''}
+        onChange={(e) => set({ meta: { ...(cfg.meta || {}), title: e.target.value } })}
+        placeholder={t('edit.smart.titleField')}
+        className="w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+      />
 
       {/* Lien au clic */}
       <input
@@ -177,8 +196,8 @@ export function SmartConfigEditor({ slug, button, onChange }) {
         className="w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
       />
 
-      {/* Mode Peek */}
-      {cfg.kind !== 'beforeafter' && cfg.kind !== 'spotify' && cfg.kind !== 'music' && cfg.kind !== 'booking' && (
+      {/* Mode Peek — seulement pour les cartes média cliquables (pas les interactives ni les rangées) */}
+      {['youtube', 'tiktok', 'image', 'product', 'blog', 'generic'].includes(cfg.kind) && (
         <button
           type="button"
           onClick={() => set({ peek: !cfg.peek })}
