@@ -10,6 +10,7 @@ import { ProductsEditor } from '../components/ProductsEditor'
 import { ServicesItemsEditor } from '../components/ServicesItemsEditor'
 import { LinksEditor } from '../components/LinksEditor'
 import { SmartLinkInput, SmartManualTiles, SmartConfigEditor } from '../components/SmartContentEditor'
+import { SmartSocialsEditor } from '../components/SmartSocialsEditor'
 import { QRModal } from '../components/QRModal'
 import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
@@ -567,6 +568,12 @@ export default function Editor() {
               )}
             </div>
             <input ref={btnFileRef} type="file" accept="application/pdf,image/*" onChange={onBtnFile} className="hidden" />
+          </Card>
+
+          {/* SMART SOCIALS */}
+          <Card className="p-5">
+            <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.socials.title')}</h2>
+            <SmartSocialsEditor theme={theme} onChange={setTheme} />
           </Card>
 
           {/* PRODUITS DIGITAUX */}

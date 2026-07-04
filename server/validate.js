@@ -164,7 +164,27 @@ export function sanitizeTheme(input) {
     ambientAudio: sanitizeAsset(th.ambientAudio),
     location: clampStr(th.location, 80),       // métier/ville affiché + SEO local
     noindex: th.noindex === true,              // opt-out d'indexation Google
+    socials: sanitizeSocials(th.socials),      // Smart Socials (rang d'icônes réseaux)
+    socialsCfg: {
+      stats: ['peek', 'always', 'off'].includes(th.socialsCfg?.stats) ? th.socialsCfg.stats : 'peek',
+      shape: ['squircle', 'round', 'square'].includes(th.socialsCfg?.shape) ? th.socialsCfg.shape : 'squircle',
+      size: ['sm', 'md', 'lg'].includes(th.socialsCfg?.size) ? th.socialsCfg.size : 'md',
+      animations: th.socialsCfg?.animations !== false,
+    },
   }
+}
+
+// Smart Socials : réseaux affichés en rang d'icônes flottantes.
+const SOCIAL_NETWORKS = ['instagram', 'tiktok', 'youtube', 'spotify', 'x', 'linkedin', 'pinterest', 'discord', 'facebook', 'website']
+function sanitizeSocials(v) {
+  return (Array.isArray(v) ? v : [])
+    .slice(0, 12)
+    .map((s) => ({
+      network: SOCIAL_NETWORKS.includes(s?.network) ? s.network : '',
+      url: sanitizeUrl(s?.url),
+      stat: clampStr(s?.stat, 12), // ex. « 82k », « 1.2M » — texte libre court
+    }))
+    .filter((s) => s.network && s.url)
 }
 
 // Montants de tip suggérés : 1 à 4 entiers (1–100000).

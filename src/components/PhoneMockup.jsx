@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Heart, Volume2, VolumeX, MapPin } from 'lucide-react'
 import { Icon } from './Icon'
 import { SmartCard } from './SmartCard'
+import { SmartSocials } from './SmartSocials'
+import { track } from '../lib/analytics'
 import { modeOf, BUTTON_TYPES, faviconUrl } from '../lib/modes'
 import { useI18n } from '../lib/i18n'
 import { getTheme, backgroundStyle, isLight, textColor } from '../lib/themes'
@@ -396,6 +398,16 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
         <ImmersiveHeader page={page} theme={theme} headFont={headFont} txt={txt} accent={accent} light={light} />
       ) : (
         <ProfileHeader page={page} theme={theme} accent={accent} txt={txt} headFont={headFont} style={style} radius={radius} />
+      )}
+
+      {/* Smart Socials : rang d'icônes flottantes sous la bio, au-dessus des cartes */}
+      {theme.socials?.length > 0 && (
+        <SmartSocials
+          socials={theme.socials}
+          cfg={theme.socialsCfg || {}}
+          light={light}
+          onOpen={(item) => track('social_click', { network: item.network })}
+        />
       )}
 
       {theme.showSupporters && supporters && (
