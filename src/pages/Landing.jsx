@@ -265,7 +265,7 @@ function HeroPhone({ lang }) {
   }, [])
 
   return (
-    <div className="relative mx-auto w-[290px]">
+    <div className="relative mx-auto w-[290px] sm:mt-24">
       {/* Téléphone : la vraie page en live, DÉFILABLE (molette/doigt).
           Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet. */}
       <div
@@ -292,10 +292,10 @@ function HeroPhone({ lang }) {
         )}
       </div>
 
-      {/* Carte Wallet flottante — en haut à droite */}
+      {/* Carte Wallet flottante — au-dessus du téléphone, sans empiéter sur la page */}
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
-        className="absolute -right-24 top-8 hidden w-52 rotate-6 sm:block"
+        className="pointer-events-none absolute -right-4 -top-32 hidden w-52 rotate-6 sm:block"
       >
         <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
           <div className="flex items-center justify-between">
@@ -311,17 +311,6 @@ function HeroPhone({ lang }) {
             <span className="text-[9px] font-bold text-white/40">aaven.fr/flo-btt</span>
             <span className="rounded-md bg-white p-1"><QRCodeCanvas value={HERO_PROFILE_URL} size={34} level="M" /></span>
           </div>
-        </div>
-      </motion.div>
-
-      {/* QR code flottant — en bas à gauche */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75, duration: 0.7, ease: EASE }}
-        className="absolute -left-16 bottom-20 hidden -rotate-6 sm:block"
-      >
-        <div className="animate-float rounded-2xl border-2 border-brand-ink bg-white p-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.4s' }}>
-          <QRCodeCanvas value={HERO_PROFILE_URL} size={62} level="M" />
-          <p className="mt-1.5 text-center font-display text-[9px] font-extrabold uppercase tracking-wide text-brand-ink">{lang === 'en' ? 'Scan me' : 'Scanne-moi'}</p>
         </div>
       </motion.div>
 
