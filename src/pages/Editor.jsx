@@ -62,6 +62,11 @@ export default function Editor() {
   const [slugErr, setSlugErr] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  // Mode assistant mobile : l'aperçu est l'écran principal, l'édition vit dans un
+  // bottom sheet par catégorie. null = fermé · 'menu' = choix · sinon catégorie active.
+  // Desktop (lg+) : sans effet, l'éditeur complet reste en colonne.
+  const [sheet, setSheet] = useState(null)
+  const mCat = (k) => (sheet === k ? '' : 'max-lg:hidden') // visibilité mobile d'une carte
   const [avatarBusy, setAvatarBusy] = useState(false)
   const dragIndex = useRef(null)
   const avatarRef = useRef(null)
@@ -243,11 +248,55 @@ export default function Editor() {
         </div>
       </div>
 
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-2">
-        {/* Colonne formulaire */}
-        <div className="space-y-6">
+      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 lg:grid-cols-2">
+        {/* Voile derrière le bottom sheet (mobile) */}
+        {sheet && <div className="fixed inset-0 z-40 bg-ink/40 lg:hidden" onClick={() => setSheet(null)} />}
+
+        {/* Colonne formulaire — devient un bottom sheet sur mobile */}
+        <div
+          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:max-h-[82vh] max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border-2 max-lg:border-b-0 max-lg:border-ink max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:transition-transform max-lg:duration-300 ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
+        >
+          {/* En-tête du sheet (mobile) */}
+          <div className="sticky -top-2 z-10 -mx-4 border-b border-ink/10 bg-cream px-4 pb-2 pt-2 lg:hidden">
+            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-ink/20" />
+            <div className="flex items-center justify-between">
+              {sheet && sheet !== 'menu' ? (
+                <button type="button" onClick={() => setSheet('menu')} className="press font-display text-sm font-extrabold">← {t('common.back')}</button>
+              ) : (
+                <span className="font-display text-sm font-extrabold">{t('edit.m.what')}</span>
+              )}
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={save} disabled={saving}>{saving ? '…' : t('common.save')}</Button>
+                <button type="button" onClick={() => setSheet(null)} aria-label="Fermer" className="press rounded-full border-2 border-ink p-1.5"><X size={15} /></button>
+              </div>
+            </div>
+          </div>
+
+          {/* Choix de catégorie (mobile) */}
+          {sheet === 'menu' && (
+            <div className="grid grid-cols-2 gap-2.5 lg:hidden">
+              {[
+                ['profil', '👤', 'edit.m.profil'],
+                ['liens', '🔗', 'edit.m.liens'],
+                ['style', '🎨', 'edit.m.style'],
+                ['produits', '🛍️', 'edit.m.produits'],
+                ['carte', '📱', 'edit.m.carte'],
+              ].map(([key, emoji, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSheet(key)}
+                  className="press rounded-brutal border-2 border-ink bg-white p-4 text-left shadow-hard-sm"
+                >
+                  <span className="text-2xl" aria-hidden>{emoji}</span>
+                  <span className="font-display mt-1.5 block text-sm font-extrabold">{t(label)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* LIEN PUBLIC */}
-          <Card className="p-5">
+          <Card className={`p-5 ${mCat('carte')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('share.yourLink')}</h2>
             <ShareLink url={publicUrl} className="mt-3" />
             {user?.plan === 'pro' && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(page.slug) && (
@@ -259,7 +308,7 @@ export default function Editor() {
           </Card>
 
           {/* IDENTITÉ */}
-          <Card className="p-5">
+          <Card className={`p-5 ${mCat('profil')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('edit.identity')}</h2>
             <div className="mt-4 space-y-3">
               <div><Label>{t('edit.title')}</Label><Input value={page.title} onChange={(e) => setField('title', e.target.value)} /></div>
@@ -322,13 +371,13 @@ export default function Editor() {
           </Card>
 
           {/* THÈME & STYLE */}
-          <Card className="p-5">
+          <Card className={`p-5 ${mCat('style')}`}>
             <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.theme')}</h2>
             <ThemeEditor slug={routeSlug} theme={theme} plan={user?.plan || 'free'} onChange={setTheme} />
           </Card>
 
           {/* BOUTONS */}
-          <Card className="p-5">
+          <Card className={`p-5 ${mCat('liens')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">
               {t('edit.buttons')} · {activeCount} {t('edit.buttonsActive')}
             </h2>
@@ -575,13 +624,13 @@ export default function Editor() {
           </Card>
 
           {/* SMART SOCIALS */}
-          <Card className="p-5">
+          <Card className={`p-5 ${mCat('liens')}`}>
             <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.socials.title')}</h2>
             <SmartSocialsEditor theme={theme} onChange={setTheme} />
           </Card>
 
           {/* PRODUITS DIGITAUX */}
-          <Card className="p-5">
+          <Card className={`p-5 ${mCat('produits')}`}>
             <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.products')}</h2>
             <ProductsEditor slug={routeSlug} products={products} onReload={loadProducts} />
           </Card>
@@ -602,6 +651,19 @@ export default function Editor() {
           </PhoneFrame>
         </div>
       </main>
+
+      {/* Assistant mobile : l'aperçu est l'écran, ce bouton ouvre le sheet d'édition */}
+      {!sheet && (
+        <div className="fixed inset-x-4 bottom-4 z-30 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setSheet('menu')}
+            className="press w-full rounded-brutal border-2 border-ink bg-coral py-3.5 font-display text-base font-extrabold text-white shadow-hard"
+          >
+            ✨ {t('edit.m.modify')}
+          </button>
+        </div>
+      )}
 
       {showQR && <QRModal url={publicUrl} page={page} onClose={() => setShowQR(false)} />}
     </div>
