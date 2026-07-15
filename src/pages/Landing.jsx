@@ -274,22 +274,27 @@ function HeroPhone({ lang }) {
         aria-label="Voir un profil Aaven réel"
         onClick={() => { track('hero_profile_click'); window.open(HERO_PROFILE_URL, '_blank', 'noopener') }}
         onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
-        className="relative z-10 cursor-pointer overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1"
+        // L'animation vit ICI (wrapper) : si le conteneur qui clippe (overflow-hidden
+        // arrondi) est lui-même animé, Chrome perd le clip pendant la transition et les
+        // coins carrés de la vidéo dépassent du cadre.
+        className="relative z-10 cursor-pointer rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1"
       >
-        <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
-        {real?.page ? (
-          <div className="relative h-[560px]">
-            <BioImmersive
-              page={real.page}
-              buttons={real.buttons}
-              supporters={supporters}
-              branding={real.branding !== false}
-              kenBurns={false}
-            />
-          </div>
-        ) : (
-          <HeroPhoneStatic lang={lang} />
-        )}
+        <div className="isolate relative overflow-hidden rounded-[31px]" style={{ transform: 'translateZ(0)' }}>
+          <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
+          {real?.page ? (
+            <div className="relative h-[560px]">
+              <BioImmersive
+                page={real.page}
+                buttons={real.buttons}
+                supporters={supporters}
+                branding={real.branding !== false}
+                kenBurns={false}
+              />
+            </div>
+          ) : (
+            <HeroPhoneStatic lang={lang} />
+          )}
+        </div>
       </div>
 
       {/* Carte Wallet : glisse de sous le téléphone puis reste posée en dessous.
