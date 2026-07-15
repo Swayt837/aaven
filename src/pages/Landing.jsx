@@ -266,9 +266,17 @@ function HeroPhone({ lang }) {
 
   return (
     <div className="relative mx-auto w-[290px]">
-      {/* Téléphone : la vraie page en live → tout clic ouvre aaven.fr/flo-btt */}
-      <div className="relative overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1">
-        <div className="absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
+      {/* Téléphone : la vraie page en live, DÉFILABLE (molette/doigt).
+          Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet. */}
+      <div
+        role="link"
+        tabIndex={0}
+        aria-label="Voir un profil Aaven réel"
+        onClick={() => { track('hero_profile_click'); window.open(HERO_PROFILE_URL, '_blank', 'noopener') }}
+        onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
+        className="relative cursor-pointer overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1"
+      >
+        <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
         {real?.page ? (
           <div className="relative h-[560px]">
             <BioImmersive
@@ -282,14 +290,6 @@ function HeroPhone({ lang }) {
         ) : (
           <HeroPhoneStatic lang={lang} />
         )}
-        <a
-          href={HERO_PROFILE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Voir un profil Aaven réel"
-          className="absolute inset-0 z-30"
-          onClick={() => track('hero_profile_click')}
-        />
       </div>
 
       {/* Carte Wallet flottante */}

@@ -702,7 +702,7 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
       {/* Ambiance discrète (premium) */}
       <Ambiance animation={theme.animation} accent={accent} />
       {/* Contenu flottant, défilable — position selon la disposition */}
-      <div className="absolute inset-0 overflow-y-auto">
+      <div className="no-scrollbar absolute inset-0 overflow-y-auto">
         <div className={`mx-auto flex min-h-full max-w-md flex-col px-6 py-16 ${['cover', 'magazine', 'fullbleed'].includes(theme.layout) ? 'justify-end' : 'justify-center'}`}>
           <BioRender immersive page={page} buttons={buttons} onButtonClick={onButtonClick} onTip={onTip} onContact={onContact} onServices={onServices} onReserve={onReserve} onQuote={onQuote} onLinks={onLinks} supporters={supporters} products={products} onBuy={onBuy} branding={branding} />
         </div>
