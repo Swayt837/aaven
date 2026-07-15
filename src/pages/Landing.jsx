@@ -14,6 +14,8 @@ import { track } from '../lib/analytics'
 import { PROFESSIONS } from '../lib/professions'
 import { SmartSocials } from '../components/SmartSocials'
 import { SmartCard } from '../components/SmartCard'
+import { BioImmersive } from '../components/PhoneMockup'
+import { api } from '../lib/api'
 import { QRCodeCanvas } from 'qrcode.react'
 
 const EASE = [0.22, 1, 0.36, 1]
@@ -219,42 +221,76 @@ function Header({ onStart }) {
 }
 
 /* ============================ Hero ============================ */
-// Visuel du hero : téléphone (profil Aaven ouvert) + carte Wallet + QR code réel.
-// Tout pointe vers une VRAIE page (aaven.fr/flo-btt) : scanner le QR ou cliquer
-// le téléphone pendant une démo ouvre un profil réel.
-const HERO_PROFILE_URL = 'https://www.aaven.fr/flo-btt'
-function HeroPhone({ lang }) {
+// Visuel du hero : LA VRAIE page aaven.fr/flo-btt rendue en live dans le téléphone
+// (mêmes composants que la page publique : fond vidéo, Smart Socials, Smart Cards).
+// Repli sur un mockup statique si la page ne charge pas. Tout clic ouvre la vraie page.
+const HERO_PROFILE_SLUG = 'flo-btt'
+const HERO_PROFILE_URL = `https://www.aaven.fr/${HERO_PROFILE_SLUG}`
+
+function HeroPhoneStatic({ lang }) {
   const fr = lang !== 'en'
   const rows = fr
     ? [['🍸', 'Réserver une prestation'], ['🎥', 'Voir mes performances'], ['💬', 'Contact']]
     : [['🍸', 'Book a gig'], ['🎥', 'Watch my performances'], ['💬', 'Contact']]
   return (
+    <div className="relative min-h-[560px] px-5 pb-16 pt-12 text-white" style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}>
+      <div className="flex flex-col items-center text-center">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=70" alt="" className="h-20 w-20 rounded-full border-4 border-white/80 object-cover shadow-lg" />
+        <p className="mt-3 font-display text-xl font-extrabold tracking-[-0.02em]">Florian</p>
+        <p className="font-sans text-xs font-semibold text-white/60">Flair Bartender</p>
+      </div>
+      <div className="mt-4 flex justify-center gap-2.5">
+        {[Instagram, Globe, Mail].map((Ic, i) => (
+          <span key={i} className="grid h-9 w-9 place-items-center rounded-[32%] border border-white/25 bg-white/12 backdrop-blur-md"><Ic size={15} /></span>
+        ))}
+      </div>
+      <div className="mt-5 space-y-2.5">
+        {rows.map(([emo, label], i) => (
+          <div key={label} className={`flex items-center gap-2.5 rounded-2xl px-3.5 py-3 font-display text-[13px] font-extrabold backdrop-blur-md ${i === 0 ? 'bg-white text-brand-ink' : 'border border-white/20 bg-white/10 text-white'}`}>
+            <span>{emo}</span> {label}
+          </div>
+        ))}
+      </div>
+      <p className="mt-5 text-center text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/40">Made with Aaven</p>
+    </div>
+  )
+}
+
+function HeroPhone({ lang }) {
+  const [real, setReal] = useState(null) // { page, buttons } de flo-btt (vraie page)
+  const [supporters, setSupporters] = useState(null)
+  useEffect(() => {
+    api.publicPage(HERO_PROFILE_SLUG).then(setReal).catch(() => {})
+    api.supporters(HERO_PROFILE_SLUG).then(setSupporters).catch(() => {})
+  }, [])
+
+  return (
     <div className="relative mx-auto w-[290px]">
-      {/* Téléphone : profil ouvert → clic = la vraie page */}
-      <a href={HERO_PROFILE_URL} target="_blank" rel="noopener noreferrer" aria-label="Voir un profil Aaven réel" className="relative block overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1">
+      {/* Téléphone : la vraie page en live → tout clic ouvre aaven.fr/flo-btt */}
+      <div className="relative overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1">
         <div className="absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
-        <div className="relative min-h-[480px] px-5 pb-16 pt-12 text-white" style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}>
-          <div className="flex flex-col items-center text-center">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=70" alt="" className="h-20 w-20 rounded-full border-4 border-white/80 object-cover shadow-lg" />
-            <p className="mt-3 font-display text-xl font-extrabold tracking-[-0.02em]">Florian</p>
-            <p className="font-sans text-xs font-semibold text-white/60">Flair Bartender</p>
+        {real?.page ? (
+          <div className="relative h-[560px]">
+            <BioImmersive
+              page={real.page}
+              buttons={real.buttons}
+              supporters={supporters}
+              branding={real.branding !== false}
+              kenBurns={false}
+            />
           </div>
-          {/* mini rang social */}
-          <div className="mt-4 flex justify-center gap-2.5">
-            {[Instagram, Globe, Mail].map((Ic, i) => (
-              <span key={i} className="grid h-9 w-9 place-items-center rounded-[32%] border border-white/25 bg-white/12 backdrop-blur-md"><Ic size={15} /></span>
-            ))}
-          </div>
-          <div className="mt-5 space-y-2.5">
-            {rows.map(([emo, label], i) => (
-              <div key={label} className={`flex items-center gap-2.5 rounded-2xl px-3.5 py-3 font-display text-[13px] font-extrabold backdrop-blur-md ${i === 0 ? 'bg-white text-brand-ink' : 'border border-white/20 bg-white/10 text-white'}`}>
-                <span>{emo}</span> {label}
-              </div>
-            ))}
-          </div>
-          <p className="mt-5 text-center text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/40">Made with Aaven</p>
-        </div>
-      </a>
+        ) : (
+          <HeroPhoneStatic lang={lang} />
+        )}
+        <a
+          href={HERO_PROFILE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Voir un profil Aaven réel"
+          className="absolute inset-0 z-30"
+          onClick={() => track('hero_profile_click')}
+        />
+      </div>
 
       {/* Carte Wallet flottante */}
       <motion.div
