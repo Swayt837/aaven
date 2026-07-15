@@ -14,6 +14,7 @@ import { track } from '../lib/analytics'
 import { PROFESSIONS } from '../lib/professions'
 import { SmartSocials } from '../components/SmartSocials'
 import { SmartCard } from '../components/SmartCard'
+import { QRCodeCanvas } from 'qrcode.react'
 
 const EASE = [0.22, 1, 0.36, 1]
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } }
@@ -38,11 +39,30 @@ const T = {
   fr: {
     nav: { features: 'Fonctionnalités', examples: 'Exemples', pricing: 'Tarifs', testimonials: 'Témoignages' },
     start: 'Commencer',
-    heroBadge: 'Ta carte de visite digitale',
-    heroSub: 'Pas une simple page de liens. Une interface vivante qui montre qui tu es, ce que tu fais, et transforme tes visiteurs en clients, réservations ou revenus.',
-    heroCta: 'Créer ma page gratuite', heroSee: 'Voir les exemples',
+    heroBadge: 'Ton identité professionnelle',
+    heroSub: 'Crée ta vitrine professionnelle, ajoute-la à Apple Wallet ou Google Wallet et partage-la instantanément par QR code ou NFC.',
+    heroCta: 'Créer mon Aaven gratuitement', heroSee: 'Voir un exemple',
     heroMicro: '✦ Gratuit pour démarrer · Évolue quand tu veux',
-    heroChecks: ['30 secondes', 'Sans carte bancaire', 'Sans engagement'],
+    heroChecks: ['60 secondes', 'Sans carte bancaire', 'Sans engagement'],
+    compare: {
+      title: 'Le déclic',
+      before: ['Carte papier perdue', 'Instagram uniquement', 'Des liens dispersés partout', 'Aucun suivi'],
+      after: ['Une identité professionnelle', 'Toujours dans ton téléphone', 'Partage instantané (QR, NFC, Wallet)', 'Tes clients te contactent, réservent, achètent'],
+      beforeLabel: 'Avant Aaven', afterLabel: 'Avec Aaven',
+    },
+    metiers: {
+      badge: 'Pour ton métier',
+      title: 'Ton Aaven s’adapte à ton métier',
+      sub: 'Peu importe ton activité, ton identité professionnelle mérite une vitrine.',
+      more: 'autres métiers',
+      cards: [
+        { slug: 'bartender', emoji: '🍸', name: 'Bartender', desc: 'Montre tes prestations et reçois des demandes d’événements.' },
+        { slug: 'photographer', emoji: '📸', name: 'Photographe', desc: 'Présente ton portfolio et transforme tes visiteurs en clients.' },
+        { slug: 'freelancer', emoji: '💼', name: 'Freelance', desc: 'Une carte professionnelle qui travaille pour toi.' },
+        { slug: 'artist', emoji: '🎨', name: 'Artiste', desc: 'Partage ton univers partout.' },
+        { slug: 'barber', emoji: '💈', name: 'Barbier', desc: 'Ta vitrine digitale accessible par QR code en boutique.' },
+      ],
+    },
     marquee: ['10 000+ créateurs', 'Tips & dons', 'Réservations', 'Lead capture', 'Analytics'],
     floatClient: ['Nouveau client', 'Léa vient de réserver'], floatQuotes: ['+12 DEVIS', 'Cette semaine'], floatTips: 'de tips ce mois',
     showBadge: 'Profils en action', showSub: 'Une présence digitale unique, pensée pour toi.',
@@ -69,11 +89,30 @@ const T = {
   en: {
     nav: { features: 'Features', examples: 'Examples', pricing: 'Pricing', testimonials: 'Reviews' },
     start: 'Get started',
-    heroBadge: 'Your digital business card',
-    heroSub: 'Not just a list of links. A living interface that shows who you are, what you do, and turns visitors into clients, bookings or revenue.',
-    heroCta: 'Create my free page', heroSee: 'See examples',
+    heroBadge: 'Your professional identity',
+    heroSub: 'Create your professional showcase, add it to Apple Wallet or Google Wallet and share it instantly via QR code or NFC.',
+    heroCta: 'Create my Aaven for free', heroSee: 'See an example',
     heroMicro: '✦ Free to start · Upgrade anytime',
-    heroChecks: ['30 seconds', 'No credit card', 'No commitment'],
+    heroChecks: ['60 seconds', 'No credit card', 'No commitment'],
+    compare: {
+      title: 'The switch',
+      before: ['Lost paper business card', 'Instagram only', 'Links scattered everywhere', 'No tracking'],
+      after: ['One professional identity', 'Always in your phone', 'Instant sharing (QR, NFC, Wallet)', 'Clients contact you, book, buy'],
+      beforeLabel: 'Before Aaven', afterLabel: 'With Aaven',
+    },
+    metiers: {
+      badge: 'For your craft',
+      title: 'Your Aaven adapts to your craft',
+      sub: 'Whatever you do, your professional identity deserves a showcase.',
+      more: 'more professions',
+      cards: [
+        { slug: 'bartender', emoji: '🍸', name: 'Bartender', desc: 'Show your services and get event requests.' },
+        { slug: 'photographer', emoji: '📸', name: 'Photographer', desc: 'Showcase your portfolio and turn visitors into clients.' },
+        { slug: 'freelancer', emoji: '💼', name: 'Freelancer', desc: 'A business card that works for you.' },
+        { slug: 'artist', emoji: '🎨', name: 'Artist', desc: 'Share your universe everywhere.' },
+        { slug: 'barber', emoji: '💈', name: 'Barber', desc: 'Your digital storefront, one QR code away.' },
+      ],
+    },
     marquee: ['10,000+ creators', 'Tips & donations', 'Bookings', 'Lead capture', 'Analytics'],
     floatClient: ['New client', 'Léa just booked'], floatQuotes: ['+12 QUOTES', 'This week'], floatTips: 'in tips this month',
     showBadge: 'Profiles in action', showSub: 'A unique digital presence, built for you.',
@@ -180,57 +219,125 @@ function Header({ onStart }) {
 }
 
 /* ============================ Hero ============================ */
+// Visuel du hero : téléphone (profil Aaven ouvert) + carte Wallet + QR code réel.
+// L'objectif : comprendre le produit en 3 secondes — vitrine, Wallet, partage QR.
+function HeroPhone({ lang }) {
+  const fr = lang !== 'en'
+  const rows = fr
+    ? [['🍸', 'Réserver une prestation'], ['🎥', 'Voir mes performances'], ['💬', 'Contact']]
+    : [['🍸', 'Book a gig'], ['🎥', 'Watch my performances'], ['💬', 'Contact']]
+  return (
+    <div className="relative mx-auto w-[290px]" aria-hidden>
+      {/* Téléphone : profil ouvert */}
+      <div className="relative overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]">
+        <div className="absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
+        <div className="relative min-h-[480px] px-5 pb-16 pt-12 text-white" style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}>
+          <div className="flex flex-col items-center text-center">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=70" alt="" className="h-20 w-20 rounded-full border-4 border-white/80 object-cover shadow-lg" />
+            <p className="mt-3 font-display text-xl font-extrabold tracking-[-0.02em]">Florian</p>
+            <p className="font-sans text-xs font-semibold text-white/60">Flair Bartender</p>
+          </div>
+          {/* mini rang social */}
+          <div className="mt-4 flex justify-center gap-2.5">
+            {[Instagram, Globe, Mail].map((Ic, i) => (
+              <span key={i} className="grid h-9 w-9 place-items-center rounded-[32%] border border-white/25 bg-white/12 backdrop-blur-md"><Ic size={15} /></span>
+            ))}
+          </div>
+          <div className="mt-5 space-y-2.5">
+            {rows.map(([emo, label], i) => (
+              <div key={label} className={`flex items-center gap-2.5 rounded-2xl px-3.5 py-3 font-display text-[13px] font-extrabold backdrop-blur-md ${i === 0 ? 'bg-white text-brand-ink' : 'border border-white/20 bg-white/10 text-white'}`}>
+                <span>{emo}</span> {label}
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-center text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/40">Made with Aaven</p>
+        </div>
+      </div>
+
+      {/* Carte Wallet flottante */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
+        className="absolute -left-24 bottom-16 hidden w-52 -rotate-6 sm:block"
+      >
+        <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-sans text-sm font-bold tracking-[-0.03em]">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 20 L12 4 L19.5 20" /><path d="M8.2 13.6 H15.8" /></svg>
+              Aaven
+            </span>
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.14em]">Wallet</span>
+          </div>
+          <p className="mt-3 font-display text-base font-extrabold">Florian B.</p>
+          <p className="text-[10px] font-semibold text-white/55">{lang === 'en' ? 'Digital business card' : 'Carte de visite digitale'}</p>
+          <div className="mt-2.5 flex items-end justify-between">
+            <span className="text-[9px] font-bold text-white/40">aaven.fr/florian</span>
+            <span className="rounded-md bg-white p-1"><QRCodeCanvas value="https://www.aaven.fr/" size={34} level="M" /></span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* QR code flottant */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75, duration: 0.7, ease: EASE }}
+        className="absolute -right-16 top-10 hidden rotate-6 sm:block"
+      >
+        <div className="animate-float rounded-2xl border-2 border-brand-ink bg-white p-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.4s' }}>
+          <QRCodeCanvas value="https://www.aaven.fr/" size={62} level="M" />
+          <p className="mt-1.5 text-center font-display text-[9px] font-extrabold uppercase tracking-wide text-brand-ink">{lang === 'en' ? 'Scan me' : 'Scanne-moi'}</p>
+        </div>
+      </motion.div>
+
+      {/* Notification */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95, duration: 0.7, ease: EASE }}
+        className="absolute -right-10 bottom-24 hidden -rotate-3 sm:block"
+      >
+        <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-neon px-3.5 py-2 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-0.7s' }}>
+          <p className="font-display text-xs font-extrabold text-brand-ink">{lang === 'en' ? '+1 gig request' : '+1 demande de presta'}</p>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 function Hero({ onStart }) {
   const c = useCopy()
   const { lang } = useI18n()
   const marqueeSpeed = useMarqueeSpeed(42, 75)
   return (
-    <section className="relative overflow-hidden pb-16 pt-28 md:pt-36" data-testid="hero">
+    <section className="relative overflow-hidden pb-16 pt-24 md:pt-32" data-testid="hero">
       <div aria-hidden className="pointer-events-none absolute -left-24 -top-10 h-[26rem] w-[26rem] rounded-full bg-brand-neon/40 blur-[90px]" />
       <div aria-hidden className="pointer-events-none absolute -right-24 top-0 h-[24rem] w-[24rem] rounded-full bg-brand-coral/30 blur-[90px]" />
       <Container className="relative">
-        <motion.div variants={stagger} initial="hidden" animate="show" className="mx-auto max-w-4xl text-center">
-          <motion.div variants={fadeUp} className="flex justify-center">
-            <Badge testid="hero-badge"><Sparkles size={13} strokeWidth={3} /> {c.heroBadge}</Badge>
+        <div className="grid items-center gap-14 lg:grid-cols-12">
+          {/* Texte */}
+          <motion.div variants={stagger} initial="hidden" animate="show" className="lg:col-span-7">
+            <motion.div variants={fadeUp}>
+              <Badge testid="hero-badge"><Sparkles size={13} strokeWidth={3} /> {c.heroBadge}</Badge>
+            </motion.div>
+            <motion.h1 variants={fadeUp} className="mt-7 font-display text-[42px] font-extrabold leading-[0.98] tracking-[-0.04em] text-brand-ink sm:text-5xl md:text-6xl lg:text-[64px]">
+              {lang === 'en' ? (
+                <>Your professional{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">digital</span> business card,{' '}<span className="font-serif font-medium italic">always in your phone.</span></>
+              ) : (
+                <>Ta carte de visite professionnelle{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">digitale</span>,{' '}<span className="font-serif font-medium italic">toujours dans ton téléphone.</span></>
+              )}
+            </motion.h1>
+            <motion.p variants={fadeUp} className="mt-7 max-w-xl font-sans text-lg text-brand-muted md:text-xl">{c.heroSub}</motion.p>
+            <motion.div variants={fadeUp} className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <PrimaryButton testid="hero-primary-cta" onClick={onStart}>{c.heroCta} <ArrowRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" /></PrimaryButton>
+              <SecondaryButton testid="hero-secondary-cta" onClick={() => document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' })}>▶ {c.heroSee}</SecondaryButton>
+            </motion.div>
+            <motion.p variants={fadeUp} className="mt-5 font-sans text-sm font-semibold text-brand-muted">{c.heroMicro}</motion.p>
+            <motion.ul variants={fadeUp} className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+              {c.heroChecks.map((f) => <li key={f} className="flex items-center gap-1.5 font-sans text-sm font-bold text-brand-ink"><Check size={16} className="text-brand-coral" strokeWidth={3} /> {f}</li>)}
+            </motion.ul>
           </motion.div>
-          <motion.h1 variants={fadeUp} className="mt-7 font-display text-[44px] font-extrabold leading-[0.95] tracking-[-0.04em] text-brand-ink sm:text-6xl md:text-7xl lg:text-[88px]">
-            {lang === 'en' ? (
-              <>Your{' '}<span className="font-serif font-medium italic">personalized</span> digital business card, built to{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">convert</span>.</>
-            ) : (
-              <>Ta carte de visite digitale{' '}<span className="font-serif font-medium italic">personnalisée</span>, pensée pour{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">convertir</span>.</>
-            )}
-          </motion.h1>
-          <motion.p variants={fadeUp} className="mx-auto mt-7 max-w-2xl font-sans text-lg text-brand-muted md:text-xl">{c.heroSub}</motion.p>
-          <motion.div variants={fadeUp} className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <PrimaryButton testid="hero-primary-cta" onClick={onStart}>{c.heroCta} <ArrowRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" /></PrimaryButton>
-            <SecondaryButton testid="hero-secondary-cta" onClick={() => document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' })}>{c.heroSee}</SecondaryButton>
-          </motion.div>
-          <motion.p variants={fadeUp} className="mt-5 font-sans text-sm font-semibold text-brand-muted">{c.heroMicro}</motion.p>
-          <motion.ul variants={fadeUp} className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {c.heroChecks.map((f) => <li key={f} className="flex items-center gap-1.5 font-sans text-sm font-bold text-brand-ink"><Check size={16} className="text-brand-coral" strokeWidth={3} /> {f}</li>)}
-          </motion.ul>
-        </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.7, ease: EASE }} className="pointer-events-none absolute left-2 top-40 hidden -rotate-6 lg:block" data-testid="hero-float-left">
-          <div className="animate-float rounded-2xl border-2 border-brand-ink bg-white px-4 py-3 shadow-[5px_5px_0px_#0A0A0A]">
-            <div className="flex items-center gap-2.5">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=70" alt="" className="h-9 w-9 rounded-full object-cover" />
-              <div><p className="font-display text-sm font-extrabold">{c.floatClient[0]}</p><p className="font-sans text-xs text-brand-muted">{c.floatClient[1]}</p></div>
-            </div>
-          </div>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.7, ease: EASE }} className="pointer-events-none absolute right-2 top-52 hidden rotate-[5deg] lg:block" data-testid="hero-float-right">
-          <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-neon px-4 py-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.5s' }}>
-            <p className="font-display text-sm font-extrabold text-brand-ink">{c.floatQuotes[0]}</p>
-            <p className="font-sans text-xs font-semibold text-brand-ink/70">{c.floatQuotes[1]}</p>
-          </div>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="pointer-events-none absolute bottom-24 left-8 hidden -rotate-3 lg:block" data-testid="hero-float-tips">
-          <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-coral px-4 py-3 text-white shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-0.8s' }}>
-            <p className="flex items-center gap-1.5 font-display text-sm font-extrabold"><Heart size={13} fill="currentColor" /> +427€</p>
-            <p className="font-sans text-xs font-semibold text-white/80">{c.floatTips}</p>
-          </div>
-        </motion.div>
+          {/* Téléphone + Wallet + QR */}
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7, ease: EASE }} className="lg:col-span-5">
+            <HeroPhone lang={lang} />
+          </motion.div>
+        </div>
       </Container>
 
       <div className="mt-16 border-y-2 border-brand-ink bg-brand-ink py-4">
@@ -238,6 +345,83 @@ function Hero({ onStart }) {
           {c.marquee.map((w, i) => <span key={i} className="mx-6 inline-flex items-center gap-6 font-display text-lg font-extrabold uppercase tracking-wide text-brand-cream">{w} <Star size={16} className={i % 2 ? 'text-brand-neon' : 'text-brand-coral'} fill="currentColor" /></span>)}
         </Marquee>
       </div>
+    </section>
+  )
+}
+
+/* ============================ Avant / Avec Aaven ============================ */
+// L'usage avant les fonctionnalités : le visiteur se reconnaît dans le « avant ».
+function CompareSection() {
+  const c = useCopy()
+  return (
+    <section className="bg-brand-cream py-20 md:py-28" data-testid="compare-section">
+      <Container>
+        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.6, ease: EASE }} className="rounded-[26px] border-2 border-brand-ink/15 bg-white/60 p-7">
+            <p className="font-display text-xs font-extrabold uppercase tracking-[0.16em] text-brand-muted">{c.compare.beforeLabel}</p>
+            <ul className="mt-5 space-y-3.5">
+              {c.compare.before.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 font-sans text-base font-semibold text-brand-muted">
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-ink/8 text-xs">❌</span> {item}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.6, delay: 0.15, ease: EASE }} className="rounded-[26px] border-2 border-brand-ink bg-white p-7 shadow-[7px_7px_0px_#0A0A0A]">
+            <p className="font-display text-xs font-extrabold uppercase tracking-[0.16em] text-brand-coral">{c.compare.afterLabel}</p>
+            <ul className="mt-5 space-y-3.5">
+              {c.compare.after.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 font-sans text-base font-bold text-brand-ink">
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-coral text-white"><Check size={13} strokeWidth={3.5} /></span> {item}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+/* ============================ Métiers ============================ */
+// Chacun se reconnaît : 5 métiers mis en avant → landing pages dédiées (33 au total).
+function MetiersSection() {
+  const c = useCopy()
+  const count = PROFESSIONS.length - c.metiers.cards.length
+  return (
+    <section className="bg-white py-20 md:py-28" data-testid="metiers-section">
+      <Container>
+        <Badge tone="coral">{c.metiers.badge}</Badge>
+        <h2 className="mt-6 max-w-3xl font-display text-4xl font-extrabold leading-[0.98] tracking-[-0.04em] text-brand-ink md:text-6xl">{c.metiers.title}</h2>
+        <p className="mt-5 max-w-xl font-sans text-lg text-brand-muted">{c.metiers.sub}</p>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {c.metiers.cards.map((m, i) => (
+            <motion.a
+              key={m.slug}
+              href={`/${m.slug}`}
+              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.5, delay: i * 0.07, ease: EASE }}
+              className="group rounded-[22px] border-2 border-brand-ink bg-brand-cream p-6 shadow-[5px_5px_0px_#0A0A0A] transition-transform hover:-translate-y-1"
+            >
+              <span className="text-3xl" aria-hidden>{m.emoji}</span>
+              <h3 className="mt-3 font-display text-xl font-extrabold tracking-[-0.02em]">{m.name}</h3>
+              <p className="mt-1.5 font-sans text-sm text-brand-muted">{m.desc}</p>
+              <span className="mt-3 inline-flex items-center gap-1 font-display text-xs font-extrabold uppercase tracking-wide text-brand-coral">
+                Aaven for {m.name}s <ArrowRight size={13} strokeWidth={3} className="transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </motion.a>
+          ))}
+          <motion.a
+            href="#all-professions"
+            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={viewport} transition={{ duration: 0.5, delay: 0.35, ease: EASE }}
+            className="group grid place-items-center rounded-[22px] border-2 border-dashed border-brand-ink/30 p-6 text-center transition-colors hover:border-brand-ink"
+          >
+            <span>
+              <span className="font-display text-3xl font-extrabold text-brand-ink">+{count}</span>
+              <span className="mt-1 block font-sans text-sm font-bold text-brand-muted">{c.metiers.more}</span>
+            </span>
+          </motion.a>
+        </div>
+      </Container>
     </section>
   )
 }
@@ -618,7 +802,7 @@ function FinalCTA({ onStart }) {
         </div>
         <footer className="mt-24 border-t border-white/10 pt-10">
           {/* Maillage interne SEO : les 33 landing pages métier (Profession Engine). */}
-          <div className="pb-8">
+          <div id="all-professions" className="scroll-mt-24 pb-8">
             <p className="text-center font-display text-xs font-extrabold uppercase tracking-[0.16em] text-white/40">Aaven for</p>
             <nav className="mx-auto mt-3 flex max-w-4xl flex-wrap justify-center gap-x-4 gap-y-2 font-sans text-[13px] font-semibold text-white/50">
               {PROFESSIONS.map((p) => (
@@ -651,7 +835,9 @@ export default function Landing() {
     <div className="min-h-screen bg-brand-cream font-sans text-brand-ink antialiased">
       <Header onStart={onStart} />
       <Hero onStart={onStart} />
+      <CompareSection />
       <ProfileShowcase onStart={onStart} />
+      <MetiersSection />
       <BentoFeatures />
       <Testimonials />
       <Pricing onStart={onStart} />

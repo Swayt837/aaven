@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { QrCode, Wallet } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Button, Card, Input, Textarea, Label } from '../components/ui'
 import { ShareLink } from '../components/ShareLink'
+import { QRModal } from '../components/QRModal'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { MODES } from '../lib/modes'
@@ -10,12 +12,22 @@ import { track } from '../lib/analytics'
 import { PROFESSIONS_BY_CATEGORY, professionBySlug } from '../lib/professions'
 import { modeForCategory } from '../lib/professionEngine'
 
+// Étape 1 : l'objectif compte plus que le métier (un photographe et un bartender
+// peuvent vouloir la même chose). Sert l'analytics + le sentiment de progression.
+const GOALS = [
+  { key: 'clients', emoji: '🎯' },
+  { key: 'sell', emoji: '💰' },
+  { key: 'community', emoji: '📱' },
+  { key: 'present', emoji: '🤝' },
+]
+
 export default function Onboarding() {
   const { t } = useI18n()
   const nav = useNavigate()
   const [params] = useSearchParams()
-  // steps : 'profession' (picker) → 'mode' (fallback générique) → 'identity' → 'done'
-  const [step, setStep] = useState('profession')
+  // steps : 'goal' (objectif) → 'profession' (picker) → 'mode' (fallback) → 'identity' → 'done'
+  const [step, setStep] = useState('goal')
+  const [goal, setGoal] = useState(null)
   const [profession, setProfession] = useState(null) // objet profession ou null (générique)
   const [mode, setMode] = useState(null)
   const [title, setTitle] = useState('')
@@ -23,9 +35,11 @@ export default function Onboarding() {
   const [bio, setBio] = useState('')
   const [busy, setBusy] = useState(false)
   const [created, setCreated] = useState(null) // page créée → écran de succès
+  const [wallet, setWallet] = useState(null) // dispo Apple/Google Wallet (config serveur)
+  const [showQR, setShowQR] = useState(false)
 
   // Arrivée depuis une landing métier (?profession= ou localStorage à travers le login)
-  // → on saute le picker et on pré-applique le template.
+  // → on saute objectif + picker et on pré-applique le template.
   useEffect(() => {
     let slug = params.get('profession')
     if (!slug) { try { slug = localStorage.getItem('bb_profession') } catch { /* private mode */ } }
@@ -37,6 +51,12 @@ export default function Onboarding() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function pickGoal(g) {
+    setGoal(g)
+    track('onboarding_goal', { goal: g })
+    setStep('profession')
+  }
 
   const cards = [
     { m: MODES.creator, label: 'onb.creator.label', desc: 'onb.creator.desc', name: 'Créateur', color: '#F0426B' },
@@ -58,9 +78,11 @@ export default function Onboarding() {
       const body = { title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode }
       if (profession) body.profession = profession.slug
       const { page } = await api.createPage(body)
-      track('page_created', { mode, profession: profession?.slug || 'generic' })
+      track('page_created', { mode, profession: profession?.slug || 'generic', goal: goal || 'skipped' })
       if (profession) track('template_applied', { profession: profession.slug })
       try { localStorage.removeItem('bb_profession') } catch { /* noop */ }
+      // Dispo Wallet (dépend de la config serveur) pour le « moment magique ».
+      api.publicPage(page.slug).then((d) => setWallet(d.wallet || null)).catch(() => {})
       setCreated(page)
       setStep('done')
     } catch (e) {
@@ -75,8 +97,26 @@ export default function Onboarding() {
     <div className="min-h-screen bg-cream" style={{ background: 'radial-gradient(110% 60% at 85% -5%, #FFF1EC 0%, transparent 55%), radial-gradient(90% 50% at 0% 0%, #FBFCEB 0%, transparent 50%), #F7F7F5' }}>
       <Header variant="dashboard" />
       <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="font-display text-4xl">{t('onb.title')}</h1>
-        <p className="mt-3 text-lg font-medium text-ink/70">{step === 'profession' ? t('onb.prof.subtitle') : t('onb.subtitle')}</p>
+        <h1 className="font-display text-4xl">{step === 'goal' ? t('onb.goal.title') : t('onb.title')}</h1>
+        <p className="mt-3 text-lg font-medium text-ink/70">{step === 'goal' ? t('onb.goal.subtitle') : step === 'profession' ? t('onb.prof.subtitle') : t('onb.subtitle')}</p>
+
+        {/* Étape 0 — l'objectif (plus important que le métier) */}
+        {step === 'goal' && (
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {GOALS.map(({ key, emoji }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => pickGoal(key)}
+                className="press rounded-brutal border-2 border-ink bg-white p-5 text-left shadow-hard transition hover:-translate-y-0.5"
+              >
+                <span className="text-3xl" aria-hidden>{emoji}</span>
+                <h3 className="font-display mt-2 text-lg font-extrabold">{t(`onb.goal.${key}`)}</h3>
+                <p className="mt-1 text-sm font-medium text-ink/60">{t(`onb.goal.${key}Desc`)}</p>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Étape 1 — picker de profession, groupé par catégorie (100% data-driven) */}
         {step === 'profession' && (
@@ -168,12 +208,43 @@ export default function Onboarding() {
           </Card>
         )}
 
+        {/* Le moment magique : la carte est réelle → Wallet + QR immédiatement. */}
         {step === 'done' && created && (
           <Card className="mt-8 p-6 text-center" style={{ background: cardBg }}>
             <div className="rounded-brutal border-2 border-ink bg-white p-6">
               <h2 className="font-display text-2xl font-extrabold">{t('onb.done.title')}</h2>
               <p className="mx-auto mt-2 max-w-md text-sm font-medium text-ink/70">{t('onb.done.sub')}</p>
               <ShareLink url={`${window.location.origin}/${created.slug}`} className="mx-auto mt-5 max-w-md" />
+
+              {/* Wallet + QR : « j'ai créé quelque chose de réel » */}
+              <div className="mx-auto mt-5 flex max-w-md flex-col gap-2">
+                {wallet?.apple && (
+                  <a
+                    href={`/api/wallet/apple/${created.slug}`}
+                    onClick={() => track('wallet_added', { type: 'apple', source: 'onboarding' })}
+                    className="press inline-flex items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-black px-4 py-3 font-display text-sm font-extrabold text-white"
+                  >
+                    <Wallet size={16} />  {t('wallet.apple')}
+                  </a>
+                )}
+                {wallet?.google && (
+                  <a
+                    href={`/api/wallet/google/${created.slug}`}
+                    onClick={() => track('wallet_added', { type: 'google', source: 'onboarding' })}
+                    className="press inline-flex items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white px-4 py-3 font-display text-sm font-extrabold text-ink"
+                  >
+                    <Wallet size={16} /> {t('wallet.google')}
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { track('qr_opened', { source: 'onboarding' }); setShowQR(true) }}
+                  className="press inline-flex items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-cream px-4 py-3 font-display text-sm font-extrabold text-ink"
+                >
+                  <QrCode size={16} /> {t('onb.done.qr')}
+                </button>
+              </div>
+
               <div className="mx-auto mt-5 flex max-w-md flex-col gap-2 sm:flex-row">
                 <Button as="a" href={`/${created.slug}`} target="_blank" rel="noreferrer" variant="secondary" className="flex-1">
                   {t('onb.done.view')}
@@ -186,6 +257,7 @@ export default function Onboarding() {
           </Card>
         )}
       </main>
+      {showQR && created && <QRModal url={`${window.location.origin}/${created.slug}`} page={created} onClose={() => setShowQR(false)} />}
     </div>
   )
 }

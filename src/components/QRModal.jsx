@@ -3,6 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { X, Download } from 'lucide-react'
 import { Button } from './ui'
 import { useI18n } from '../lib/i18n'
+import { track } from '../lib/analytics'
 
 /* ---------------- Palette (couleurs pleines + dégradés premium) ---------------- */
 const SOLIDS = [
@@ -173,6 +174,7 @@ export function QRModal({ url, page, onClose }) {
     link.download = `aaven-qr-${slug}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
+    track('qr_downloaded', { slug }) // métrique d'activation
   }
 
   const swatchStyle = (o) => o.type === 'gradient'
