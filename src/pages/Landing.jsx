@@ -265,7 +265,7 @@ function HeroPhone({ lang }) {
   }, [])
 
   return (
-    <div className="relative mx-auto w-[290px] sm:mb-28">
+    <div className="relative mx-auto w-[290px] sm:mb-32">
       {/* Téléphone : la vraie page en live, DÉFILABLE (molette/doigt).
           Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet. */}
       <div
@@ -292,12 +292,14 @@ function HeroPhone({ lang }) {
         )}
       </div>
 
-      {/* Carte Wallet : glisse de sous le téléphone (derrière, rien n'est recouvert) */}
+      {/* Carte Wallet : glisse de sous le téléphone puis reste posée en dessous.
+          Départ caché derrière le téléphone (y:-90) → slide vers le bas. */}
       <motion.div
-        initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8, ease: EASE }}
-        className="pointer-events-none absolute -bottom-[6.6rem] right-3 z-0 hidden w-52 -rotate-3 sm:block"
+        initial={{ opacity: 0, y: -90 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.9, ease: EASE }}
+        className="pointer-events-none absolute -bottom-[7rem] left-1/2 z-0 -ml-[104px] hidden w-52 sm:block"
+        style={{ rotate: '-2deg' }}
       >
-        <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
+        <div className="rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 font-sans text-sm font-bold tracking-[-0.03em]">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 20 L12 4 L19.5 20" /><path d="M8.2 13.6 H15.8" /></svg>
@@ -314,15 +316,6 @@ function HeroPhone({ lang }) {
         </div>
       </motion.div>
 
-      {/* Notification */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95, duration: 0.7, ease: EASE }}
-        className="absolute -right-10 bottom-24 hidden -rotate-3 sm:block"
-      >
-        <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-neon px-3.5 py-2 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-0.7s' }}>
-          <p className="font-display text-xs font-extrabold text-brand-ink">{lang === 'en' ? '+1 gig request' : '+1 demande de presta'}</p>
-        </div>
-      </motion.div>
     </div>
   )
 }
