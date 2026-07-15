@@ -646,7 +646,7 @@ export default function Editor() {
             au-dessus du panneau (échelle calculée sur la hauteur d'écran) → on voit
             ses changements en direct pendant qu'on édite, comme une story. */}
         <div
-          className={`lg:sticky lg:top-24 lg:self-start ${sheet ? 'max-lg:fixed max-lg:left-1/2 max-lg:top-14 max-lg:z-30 max-lg:origin-top max-lg:-translate-x-1/2 max-lg:scale-[var(--pv-scale)]' : ''}`}
+          className={`lg:sticky lg:top-24 lg:self-start ${sheet ? 'max-lg:fixed max-lg:left-1/2 max-lg:top-14 max-lg:z-30 max-lg:w-[340px] max-lg:origin-top max-lg:-translate-x-1/2 max-lg:scale-[var(--pv-scale)]' : ''}`}
           style={{ '--pv-scale': pvScale }}
         >
           <p className={`font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50 ${sheet ? 'max-lg:hidden' : ''}`}>{t('edit.preview')}</p>
