@@ -265,7 +265,7 @@ function HeroPhone({ lang }) {
   }, [])
 
   return (
-    <div className="relative mx-auto w-[290px] sm:mt-24">
+    <div className="relative mx-auto w-[290px] sm:mb-28">
       {/* Téléphone : la vraie page en live, DÉFILABLE (molette/doigt).
           Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet. */}
       <div
@@ -274,7 +274,7 @@ function HeroPhone({ lang }) {
         aria-label="Voir un profil Aaven réel"
         onClick={() => { track('hero_profile_click'); window.open(HERO_PROFILE_URL, '_blank', 'noopener') }}
         onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
-        className="relative cursor-pointer overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1"
+        className="relative z-10 cursor-pointer overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1"
       >
         <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
         {real?.page ? (
@@ -292,10 +292,10 @@ function HeroPhone({ lang }) {
         )}
       </div>
 
-      {/* Carte Wallet flottante — au-dessus du téléphone, sans empiéter sur la page */}
+      {/* Carte Wallet : glisse de sous le téléphone (derrière, rien n'est recouvert) */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
-        className="pointer-events-none absolute -right-4 -top-32 hidden w-52 rotate-6 sm:block"
+        initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8, ease: EASE }}
+        className="pointer-events-none absolute -bottom-[6.6rem] right-3 z-0 hidden w-52 -rotate-3 sm:block"
       >
         <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
           <div className="flex items-center justify-between">
