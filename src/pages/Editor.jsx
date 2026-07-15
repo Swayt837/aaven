@@ -67,6 +67,14 @@ export default function Editor() {
   // Desktop (lg+) : sans effet, l'éditeur complet reste en colonne.
   const [sheet, setSheet] = useState(null)
   const mCat = (k) => (sheet === k ? '' : 'max-lg:hidden') // visibilité mobile d'une carte
+  // Échelle de l'aperçu réduit (sheet ouvert) : remplit l'espace au-dessus du panneau.
+  const [pvScale, setPvScale] = useState(0.5)
+  useEffect(() => {
+    const fit = () => setPvScale(Math.min(0.6, Math.max(0.3, (window.innerHeight * 0.46 - 70) / 660)))
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [])
   const [avatarBusy, setAvatarBusy] = useState(false)
   const dragIndex = useRef(null)
   const avatarRef = useRef(null)
@@ -249,12 +257,10 @@ export default function Editor() {
       </div>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 lg:grid-cols-2">
-        {/* Voile derrière le bottom sheet (mobile) */}
-        {sheet && <div className="fixed inset-0 z-40 bg-ink/40 lg:hidden" onClick={() => setSheet(null)} />}
-
-        {/* Colonne formulaire — devient un bottom sheet sur mobile */}
+        {/* Colonne formulaire — bottom sheet sur mobile (52vh max : l'aperçu réduit
+            reste visible au-dessus, pas de voile qui le cacherait) */}
         <div
-          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:max-h-[82vh] max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border-2 max-lg:border-b-0 max-lg:border-ink max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:transition-transform max-lg:duration-300 ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
+          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:max-h-[52vh] max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border-2 max-lg:border-b-0 max-lg:border-ink max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:shadow-[0_-8px_30px_rgba(10,10,10,0.15)] max-lg:transition-transform max-lg:duration-300 ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
         >
           {/* En-tête du sheet (mobile) */}
           <div className="sticky -top-2 z-10 -mx-4 border-b border-ink/10 bg-cream px-4 pb-2 pt-2 lg:hidden">
@@ -636,9 +642,14 @@ export default function Editor() {
           </Card>
         </div>
 
-        {/* Colonne aperçu live */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <p className="font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50">{t('edit.preview')}</p>
+        {/* Colonne aperçu live. Mobile + sheet ouvert : l'aperçu se réduit et se fixe
+            au-dessus du panneau (échelle calculée sur la hauteur d'écran) → on voit
+            ses changements en direct pendant qu'on édite, comme une story. */}
+        <div
+          className={`lg:sticky lg:top-24 lg:self-start ${sheet ? 'max-lg:fixed max-lg:left-1/2 max-lg:top-14 max-lg:z-30 max-lg:origin-top max-lg:-translate-x-1/2 max-lg:scale-[var(--pv-scale)]' : ''}`}
+          style={{ '--pv-scale': pvScale }}
+        >
+          <p className={`font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50 ${sheet ? 'max-lg:hidden' : ''}`}>{t('edit.preview')}</p>
           <PhoneFrame bg={mode.cardBg} bare>
             <BioImmersive
               page={page}
