@@ -265,7 +265,7 @@ function HeroPhone({ lang }) {
   }, [])
 
   return (
-    <div className="relative mx-auto w-[290px] sm:mb-32">
+    <div className="relative mx-auto w-[290px] sm:mb-44">
       {/* Téléphone : la vraie page en live, DÉFILABLE (molette/doigt).
           Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet. */}
       <div
@@ -295,8 +295,8 @@ function HeroPhone({ lang }) {
       {/* Carte Wallet : glisse de sous le téléphone puis reste posée en dessous.
           Départ caché derrière le téléphone (y:-90) → slide vers le bas. */}
       <motion.div
-        initial={{ opacity: 0, y: -90 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.9, ease: EASE }}
-        className="pointer-events-none absolute -bottom-[7rem] left-1/2 z-0 -ml-[104px] hidden w-52 sm:block"
+        initial={{ opacity: 0, y: -110 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.9, ease: EASE }}
+        className="pointer-events-none absolute -bottom-[8.75rem] left-1/2 z-0 -ml-[104px] hidden w-52 sm:block"
         style={{ rotate: '-2deg' }}
       >
         <div className="rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
