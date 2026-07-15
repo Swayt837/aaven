@@ -292,10 +292,10 @@ function HeroPhone({ lang }) {
         )}
       </div>
 
-      {/* Carte Wallet flottante */}
+      {/* Carte Wallet flottante — en haut à droite */}
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
-        className="absolute -left-24 bottom-16 hidden w-52 -rotate-6 sm:block"
+        className="absolute -right-24 top-8 hidden w-52 rotate-6 sm:block"
       >
         <div className="animate-float rounded-2xl border-2 border-brand-ink bg-brand-ink p-3.5 text-white shadow-[6px_6px_0px_rgba(10,10,10,0.25)]">
           <div className="flex items-center justify-between">
@@ -314,10 +314,10 @@ function HeroPhone({ lang }) {
         </div>
       </motion.div>
 
-      {/* QR code flottant */}
+      {/* QR code flottant — en bas à gauche */}
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75, duration: 0.7, ease: EASE }}
-        className="absolute -right-16 top-10 hidden rotate-6 sm:block"
+        className="absolute -left-16 bottom-20 hidden -rotate-6 sm:block"
       >
         <div className="animate-float rounded-2xl border-2 border-brand-ink bg-white p-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.4s' }}>
           <QRCodeCanvas value={HERO_PROFILE_URL} size={62} level="M" />
