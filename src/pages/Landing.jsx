@@ -220,16 +220,18 @@ function Header({ onStart }) {
 
 /* ============================ Hero ============================ */
 // Visuel du hero : téléphone (profil Aaven ouvert) + carte Wallet + QR code réel.
-// L'objectif : comprendre le produit en 3 secondes — vitrine, Wallet, partage QR.
+// Tout pointe vers une VRAIE page (aaven.fr/flo-btt) : scanner le QR ou cliquer
+// le téléphone pendant une démo ouvre un profil réel.
+const HERO_PROFILE_URL = 'https://www.aaven.fr/flo-btt'
 function HeroPhone({ lang }) {
   const fr = lang !== 'en'
   const rows = fr
     ? [['🍸', 'Réserver une prestation'], ['🎥', 'Voir mes performances'], ['💬', 'Contact']]
     : [['🍸', 'Book a gig'], ['🎥', 'Watch my performances'], ['💬', 'Contact']]
   return (
-    <div className="relative mx-auto w-[290px]" aria-hidden>
-      {/* Téléphone : profil ouvert */}
-      <div className="relative overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]">
+    <div className="relative mx-auto w-[290px]">
+      {/* Téléphone : profil ouvert → clic = la vraie page */}
+      <a href={HERO_PROFILE_URL} target="_blank" rel="noopener noreferrer" aria-label="Voir un profil Aaven réel" className="relative block overflow-hidden rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1">
         <div className="absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
         <div className="relative min-h-[480px] px-5 pb-16 pt-12 text-white" style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}>
           <div className="flex flex-col items-center text-center">
@@ -252,7 +254,7 @@ function HeroPhone({ lang }) {
           </div>
           <p className="mt-5 text-center text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/40">Made with Aaven</p>
         </div>
-      </div>
+      </a>
 
       {/* Carte Wallet flottante */}
       <motion.div
@@ -270,8 +272,8 @@ function HeroPhone({ lang }) {
           <p className="mt-3 font-display text-base font-extrabold">Florian B.</p>
           <p className="text-[10px] font-semibold text-white/55">{lang === 'en' ? 'Digital business card' : 'Carte de visite digitale'}</p>
           <div className="mt-2.5 flex items-end justify-between">
-            <span className="text-[9px] font-bold text-white/40">aaven.fr/florian</span>
-            <span className="rounded-md bg-white p-1"><QRCodeCanvas value="https://www.aaven.fr/" size={34} level="M" /></span>
+            <span className="text-[9px] font-bold text-white/40">aaven.fr/flo-btt</span>
+            <span className="rounded-md bg-white p-1"><QRCodeCanvas value={HERO_PROFILE_URL} size={34} level="M" /></span>
           </div>
         </div>
       </motion.div>
@@ -282,7 +284,7 @@ function HeroPhone({ lang }) {
         className="absolute -right-16 top-10 hidden rotate-6 sm:block"
       >
         <div className="animate-float rounded-2xl border-2 border-brand-ink bg-white p-3 shadow-[5px_5px_0px_#0A0A0A]" style={{ animationDelay: '-1.4s' }}>
-          <QRCodeCanvas value="https://www.aaven.fr/" size={62} level="M" />
+          <QRCodeCanvas value={HERO_PROFILE_URL} size={62} level="M" />
           <p className="mt-1.5 text-center font-display text-[9px] font-extrabold uppercase tracking-wide text-brand-ink">{lang === 'en' ? 'Scan me' : 'Scanne-moi'}</p>
         </div>
       </motion.div>
