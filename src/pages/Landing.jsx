@@ -327,7 +327,15 @@ function HeroPhone({ lang }) {
           <div className="isolate relative overflow-hidden rounded-[31px]" style={{ transform: 'translateZ(0)' }}>
             <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
             {real?.page ? (
-              <div className="relative h-[560px]">
+              /* Fond sombre d'attente + fondu : le temps que la vidéo de fond charge,
+                 le téléphone reste élégant (pas de moitié blanche qui « pop » après coup). */
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, ease: EASE }}
+                className="relative h-[560px]"
+                style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}
+              >
                 <BioImmersive
                   page={real.page}
                   buttons={real.buttons}
@@ -335,7 +343,7 @@ function HeroPhone({ lang }) {
                   branding={real.branding !== false}
                   kenBurns={false}
                 />
-              </div>
+              </motion.div>
             ) : (
               <HeroPhoneStatic lang={lang} />
             )}
