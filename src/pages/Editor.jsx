@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { GripVertical, ChevronUp, ChevronDown, Trash2, Eye, QrCode, Plus, X, Upload } from 'lucide-react'
+import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Trash2, Eye, QrCode, Plus, X, Upload, RotateCcw } from 'lucide-react'
 import { Button, Card, Input, Textarea, Label } from '../components/ui'
 import { Icon } from '../components/Icon'
 import { PhoneFrame, BioImmersive } from '../components/PhoneMockup'
@@ -58,7 +58,6 @@ export default function Editor() {
   const [buttons, setButtons] = useState([])
   const [products, setProducts] = useState([])
   const [saving, setSaving] = useState(false)
-  const [savedMsg, setSavedMsg] = useState('')
   const [slugErr, setSlugErr] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
@@ -81,16 +80,42 @@ export default function Editor() {
   const btnFileRef = useRef(null)
   const pendingBtn = useRef(null)
 
+  // ---------- Autosave + annulation ----------
+  const [dirty, setDirty] = useState(false) // modifs non encore persistées
+  const [canUndo, setCanUndo] = useState(false)
+  const [slugDraft, setSlugDraft] = useState(null) // le slug ne s'autosave qu'au blur
+  const history = useRef([]) // snapshots {page, buttons} pour l'annulation
+  const lastAction = useRef({ key: '', t: 0 }) // groupage des rafales (frappe clavier…)
+  const rev = useRef(0) // version locale : détecte les modifs pendant un save en vol
+  const saveTimer = useRef(null)
+  const savingRef = useRef(false)
+  const applyingRef = useRef(false) // évite de ré-autosaver la réponse serveur
+  const loadedRef = useRef(false) // évite d'autosaver l'état initial du fetch
+
   function loadProducts() {
     api.products(routeSlug).then((r) => setProducts(r.products || [])).catch(() => {})
   }
   useEffect(() => {
+    loadedRef.current = false
     api.getPage(routeSlug).then(({ page, buttons }) => {
       setPage(page)
       setButtons(buttons.sort((a, b) => a.position - b.position))
     }).catch(() => nav('/dashboard'))
     loadProducts()
   }, [routeSlug, nav])
+
+  // Chaque modification (page ou boutons) déclenche un save 1,2 s après la dernière frappe.
+  useEffect(() => {
+    if (!page) return
+    if (!loadedRef.current) { loadedRef.current = true; return } // état initial : rien à sauver
+    if (applyingRef.current) { applyingRef.current = false; return } // réponse serveur appliquée
+    rev.current++
+    setDirty(true)
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(autoSave, 1200)
+    return () => clearTimeout(saveTimer.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, buttons])
 
   if (!page) return <div className="grid min-h-screen place-items-center font-display text-xl">{t('common.loading')}</div>
 
@@ -99,8 +124,30 @@ export default function Editor() {
   const activeCount = buttons.filter((b) => b.isActive).length
   const publicUrl = `${window.location.origin}/${page.slug}`
 
-  function setField(k, v) { setPage((p) => ({ ...p, [k]: v })) }
-  function setTheme(patch) { setPage((p) => ({ ...p, theme: { ...getTheme(p), ...patch } })) }
+  // Capture l'état AVANT une modification (pour ↩ Annuler). Les rafales d'une même
+  // action (frappe dans un champ, glissement d'un slider) sont groupées en 1 snapshot.
+  function snapshot(key) {
+    const now = Date.now()
+    if (lastAction.current.key === key && now - lastAction.current.t < 1200) {
+      lastAction.current.t = now
+      return
+    }
+    lastAction.current = { key, t: now }
+    history.current.push({ page: structuredClone(page), buttons: structuredClone(buttons) })
+    if (history.current.length > 40) history.current.shift()
+    setCanUndo(true)
+  }
+  function undo() {
+    const snap = history.current.pop()
+    if (!snap) return
+    setCanUndo(history.current.length > 0)
+    lastAction.current = { key: '', t: 0 }
+    setPage(snap.page)
+    setButtons(snap.buttons) // l'autosave persiste l'état restauré
+  }
+
+  function setField(k, v) { snapshot('field:' + k); setPage((p) => ({ ...p, [k]: v })) }
+  function setTheme(patch) { snapshot('theme:' + Object.keys(patch).join(',')); setPage((p) => ({ ...p, theme: { ...getTheme(p), ...patch } })) }
   function setAvatarFrame(p) {
     const patch = {}
     if (p.posX != null) patch.avPosX = Math.round(p.posX)
@@ -151,6 +198,7 @@ export default function Editor() {
   function move(i, dir) {
     const j = i + dir
     if (j < 0 || j >= buttons.length) return
+    snapshot('move')
     const next = [...buttons]
     ;[next[i], next[j]] = [next[j], next[i]]
     setButtons(next)
@@ -158,6 +206,7 @@ export default function Editor() {
   function onDrop(i) {
     const from = dragIndex.current
     if (from === null || from === i) return
+    snapshot('move')
     const next = [...buttons]
     const [moved] = next.splice(from, 1)
     next.splice(i, 0, moved)
@@ -165,12 +214,15 @@ export default function Editor() {
     dragIndex.current = null
   }
   function updateBtn(id, patch) {
+    snapshot('btn:' + id + ':' + Object.keys(patch).join(','))
     setButtons((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } : b)))
   }
   function removeBtn(id) {
+    snapshot('rm:' + id)
     setButtons((bs) => bs.filter((b) => b.id !== id))
   }
   function addBtn(type) {
+    snapshot('add')
     const def = BUTTON_TYPES[type]
     setButtons((bs) => [
       ...bs,
@@ -191,6 +243,7 @@ export default function Editor() {
 
   // Smart Content : ajoute une carte (config résolue depuis un lien, ou kind manuel).
   function addSmartBtn(config, title) {
+    snapshot('add')
     setButtons((bs) => [
       ...bs,
       {
@@ -209,7 +262,16 @@ export default function Editor() {
     setShowPicker(false)
   }
 
-  async function save() {
+  // Autosave : sérialisé (un save à la fois). Si l'utilisateur modifie pendant le
+  // vol, la réponse serveur n'est PAS appliquée (elle écraserait ses frappes) —
+  // le timer déjà réarmé repartira avec l'état le plus récent.
+  async function autoSave() {
+    if (savingRef.current) {
+      saveTimer.current = setTimeout(autoSave, 600)
+      return
+    }
+    savingRef.current = true
+    const myRev = rev.current
     setSaving(true)
     setSlugErr('')
     try {
@@ -228,35 +290,54 @@ export default function Editor() {
         })),
       }
       const { page: updated, buttons: nb } = await api.updatePage(routeSlug, payload)
-      setPage(updated)
-      setButtons(nb.sort((a, b) => a.position - b.position))
-      setSavedMsg(t('edit.saved'))
-      setTimeout(() => setSavedMsg(''), 2000)
-      if (updated.slug !== routeSlug) nav(`/edit/${updated.slug}`, { replace: true })
+      if (rev.current === myRev) {
+        // Réconciliation : ids serveur des nouveaux boutons + valeurs assainies.
+        applyingRef.current = true
+        setPage(updated)
+        setButtons(nb.sort((a, b) => a.position - b.position))
+        setDirty(false)
+        if (updated.slug !== routeSlug) nav(`/edit/${updated.slug}`, { replace: true })
+      }
     } catch (e) {
       if (e.status === 409) setSlugErr(t('edit.slugTaken'))
-      else alert(e.message)
+      else console.warn('Autosave échoué:', e.message) // silencieux, retentera à la prochaine modif
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Barre sticky */}
-      <div className="sticky top-0 z-30 border-b-2 border-ink bg-cream/95 backdrop-blur">
+      {/* Barre sticky — desktop uniquement (mobile : boutons flottants, plus d'aperçu) */}
+      <div className="sticky top-0 z-30 border-b-2 border-ink bg-cream/95 backdrop-blur max-lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
           <Button as={Link} to="/dashboard" variant="secondary" size="sm">{t('edit.dashboard')}</Button>
           <div className="flex items-center gap-2">
-            {savedMsg && <span className="font-display text-sm font-extrabold text-green-700">{savedMsg}</span>}
+            {/* Statut autosave : plus de bouton Enregistrer */}
+            <span className={`font-display text-sm font-extrabold ${saving || dirty ? 'text-ink/45' : 'text-green-700'}`}>
+              {saving ? t('edit.autosaving') : dirty ? t('edit.autosaving') : t('edit.saved')}
+            </span>
+            <Button variant="secondary" size="sm" onClick={undo} disabled={!canUndo} title={t('edit.undo')}><RotateCcw size={16} /> {t('edit.undo')}</Button>
             <Button variant="secondary" size="sm" onClick={() => setShowQR(true)}><QrCode size={16} /> {t('edit.qr')}</Button>
             <Button as="a" href={`/${page.slug}`} target="_blank" rel="noreferrer" variant="secondary" size="sm"><Eye size={16} /> {t('common.view')}</Button>
-            <Button size="sm" onClick={save} disabled={saving}>{saving ? t('common.loading') : t('common.save')}</Button>
           </div>
         </div>
       </div>
 
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 lg:grid-cols-2">
+      {/* Mobile : boutons flottants minimaux (retour + voir) — la barre est masquée */}
+      <div className="fixed left-3 top-3 z-30 lg:hidden">
+        <Link to="/dashboard" aria-label={t('edit.dashboard')} className="press grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-white shadow-hard-sm">
+          <ChevronLeft size={18} strokeWidth={2.5} />
+        </Link>
+      </div>
+      <div className="fixed right-3 top-3 z-30 lg:hidden">
+        <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-white shadow-hard-sm">
+          <Eye size={17} />
+        </a>
+      </div>
+
+      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 max-lg:pt-16 lg:grid-cols-2">
         {/* Colonne formulaire — bottom sheet sur mobile (52vh max : l'aperçu réduit
             reste visible au-dessus, pas de voile qui le cacherait) */}
         <div
@@ -272,7 +353,10 @@ export default function Editor() {
                 <span className="font-display text-sm font-extrabold">{t('edit.m.what')}</span>
               )}
               <div className="flex items-center gap-2">
-                <Button size="sm" onClick={save} disabled={saving}>{saving ? '…' : t('common.save')}</Button>
+                <span className={`text-[11px] font-bold ${saving || dirty ? 'text-ink/40' : 'text-green-700'}`}>
+                  {saving || dirty ? t('edit.autosaving') : t('edit.saved')}
+                </span>
+                <button type="button" onClick={undo} disabled={!canUndo} aria-label={t('edit.undo')} className="press rounded-full border-2 border-ink p-1.5 disabled:opacity-30"><RotateCcw size={15} /></button>
                 <button type="button" onClick={() => setSheet(null)} aria-label="Fermer" className="press rounded-full border-2 border-ink p-1.5"><X size={15} /></button>
               </div>
             </div>
@@ -305,6 +389,10 @@ export default function Editor() {
           <Card className={`p-5 ${mCat('carte')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('share.yourLink')}</h2>
             <ShareLink url={publicUrl} className="mt-3" />
+            {/* QR accessible sur mobile (la barre du haut qui le portait y est masquée) */}
+            <Button variant="secondary" size="sm" className="mt-3 w-full lg:hidden" onClick={() => setShowQR(true)}>
+              <QrCode size={15} /> {t('edit.qr')}
+            </Button>
             {user?.plan === 'pro' && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(page.slug) && (
               <div className="mt-4 border-t border-ink/10 pt-3">
                 <p className="text-xs font-extrabold uppercase tracking-wide text-ink/50">{t('share.proLink')}</p>
@@ -321,7 +409,16 @@ export default function Editor() {
               <div><Label>{t('edit.headline')}</Label><Input value={page.headline || ''} onChange={(e) => setField('headline', e.target.value)} placeholder={t('edit.headlinePh')} maxLength={80} /></div>
               <div>
                 <Label>{t('edit.slug')}</Label>
-                <Input value={page.slug} onChange={(e) => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} />
+                {/* Brouillon local : le slug ne part à l'autosave qu'au blur (sinon on
+                    enregistrerait des slugs partiels à chaque pause de frappe). */}
+                <Input
+                  value={slugDraft ?? page.slug}
+                  onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                  onBlur={() => {
+                    if (slugDraft != null && slugDraft !== page.slug && slugDraft.replace(/^-+|-+$/g, '')) setField('slug', slugDraft)
+                    setSlugDraft(null)
+                  }}
+                />
                 {slugErr && <p className="mt-1 text-sm font-bold text-coral">{slugErr}</p>}
               </div>
               <div><Label>{t('edit.bio')}</Label><Textarea rows={2} value={page.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder={t('edit.bioPh')} /></div>
