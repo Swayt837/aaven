@@ -1,6 +1,7 @@
 // Profession Engine — logique partagée client/serveur (aucun React, aucun contenu
 // métier codé en dur : tout le contenu vient de src/lib/professions.js, généré
 // depuis l'Excel). Ici uniquement des règles GÉNÉRIQUES de mapping.
+import { TEMPLATES } from './templates.js'
 
 // ---------- category → mode de page (les 3 modes existants) ----------
 const CATEGORY_MODE = {
@@ -70,10 +71,27 @@ const luminance = (hex) => {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
 }
 
+// Chaque catégorie hérite d'un template vidéo curé (fond vivant dès la création,
+// jamais de page « vide moche »). Les accents/typos du template sont conservés
+// car accordés à sa vidéo. Repli : dégradé aux couleurs du métier.
+const CATEGORY_TEMPLATE = {
+  Food: 'lounge-live', // ambiance restaurant chaleureuse
+  Beauty: 'studio-live', // créatif doux
+  Art: 'focus-live', // immersif artiste
+  Creator: 'fanhub-live', // concert vivant
+  Sport: 'neon-creator', // énergie néon
+  Business: 'office-live', // corporate premium
+  Social: 'aura-live', // dégradé abstrait qui respire
+}
+
 export function themeForProfession(p) {
+  const key = CATEGORY_TEMPLATE[p.category]
+  const tpl = key && TEMPLATES.find((t) => t.key === key)
+  if (tpl?.apply) return { ...tpl.apply }
+
+  // Repli (catégorie inconnue) : dégradé aux couleurs du métier.
   const from = p.color_primary || '#0A0A0A'
   const to = p.color_accent || '#444444'
-  // Texte clair si le dégradé est sombre en moyenne, sinon sombre.
   const text = (luminance(from) + luminance(to)) / 2 < 0.55 ? 'light' : 'dark'
   return {
     bgType: 'gradient',
