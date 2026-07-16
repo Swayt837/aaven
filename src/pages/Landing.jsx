@@ -324,7 +324,9 @@ function HeroPhone({ lang }) {
           onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
           className="relative cursor-pointer rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]"
         >
-          <div className="isolate relative overflow-hidden rounded-[31px]" style={{ transform: 'translateZ(0)' }}>
+          {/* clip-path (et non overflow+radius) : seul clip arrondi fiable sous un
+              ancêtre en transform 3D (perspective du Tilt) avec un layer vidéo. */}
+          <div className="isolate relative overflow-hidden rounded-[31px]" style={{ clipPath: 'inset(0 round 31px)' }}>
             <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
             {real?.page ? (
               /* Fond sombre d'attente + fondu : le temps que la vidéo de fond charge,

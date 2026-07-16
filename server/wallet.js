@@ -35,7 +35,55 @@ export const googleWalletConfigured = !!(google.issuerId && google.saEmail && go
 const publicUrl = (slug) => `${APP_URL}/${slug}`
 const handle = (page) => `@${page.slug}`
 
-// Construit le .pkpass (Buffer) pour une page. Style "generic" : nom + handle + QR.
+// #RRGGBB → 'rgb(r,g,b)' (format exigé par pass.json). Repli si invalide.
+function hexToRgb(hex, fallback) {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex || '')
+  if (!m) return fallback
+  const n = parseInt(m[1], 16)
+  return `rgb(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255})`
+}
+
+// Avatar → thumbnails PNG carrés (90/180/270 px) affichés à droite de la carte.
+// Gracieux : null si pas d'avatar http(s), ffmpeg absent ou conversion impossible.
+async function avatarThumbnails(avatarUrl) {
+  if (!/^https?:\/\//.test(avatarUrl || '')) return null
+  let ffmpegPath = null
+  try { ffmpegPath = (await import('ffmpeg-static')).default } catch { return null }
+  if (!ffmpegPath) return null
+  const { execFile } = await import('child_process')
+  const { promisify } = await import('util')
+  const os = await import('os')
+  const run = promisify(execFile)
+
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 6000)
+  let src
+  try {
+    const res = await fetch(avatarUrl, { signal: ctrl.signal })
+    if (!res.ok) return null
+    src = Buffer.from(await res.arrayBuffer())
+  } catch { return null } finally { clearTimeout(timer) }
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'passthumb-'))
+  try {
+    const inPath = path.join(dir, 'in.img')
+    fs.writeFileSync(inPath, src)
+    const out = {}
+    for (const [name, size] of [['thumbnail.png', 90], ['thumbnail@2x.png', 180], ['thumbnail@3x.png', 270]]) {
+      const outPath = path.join(dir, name)
+      await run(ffmpegPath, ['-y', '-i', inPath, '-vf', `crop=min(iw\\,ih):min(iw\\,ih),scale=${size}:${size}`, outPath], { timeout: 15000 })
+      out[name] = fs.readFileSync(outPath)
+    }
+    return out
+  } catch {
+    return null
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* ignore */ }
+  }
+}
+
+// Construit le .pkpass (Buffer) pour une page. Style "generic" :
+// photo de profil (thumbnail) + nom + handle + métier + QR, labels à la couleur du thème.
 export async function buildApplePass(page) {
   if (!appleWalletConfigured) return null
   const { PKPass } = await import('passkit-generator')
@@ -45,7 +93,11 @@ export async function buildApplePass(page) {
     const p = path.join(ASSETS, f)
     if (fs.existsSync(p)) buffers[f] = fs.readFileSync(p)
   }
+  // Photo de profil sur la carte (comme une vraie carte de visite).
+  const thumbs = await avatarThumbnails(page.avatarUrl)
+  if (thumbs) Object.assign(buffers, thumbs)
 
+  const theme = page.theme || {}
   const pass = new PKPass(
     buffers,
     {
@@ -63,14 +115,19 @@ export async function buildApplePass(page) {
       serialNumber: `aaven-${page.slug}`,
       backgroundColor: 'rgb(21,22,26)',
       foregroundColor: 'rgb(255,255,255)',
-      labelColor: 'rgb(154,161,168)',
+      // Les labels prennent la couleur d'accent du thème du créateur.
+      labelColor: hexToRgb(theme.accent, 'rgb(154,161,168)'),
     }
   )
 
   pass.type = 'generic'
-  pass.primaryFields.push({ key: 'name', label: 'AAVEN', value: page.title || page.slug })
-  pass.secondaryFields.push({ key: 'handle', label: 'Profil', value: handle(page) })
-  if (page.headline) pass.auxiliaryFields.push({ key: 'tagline', label: '', value: page.headline })
+  pass.primaryFields.push({ key: 'name', value: page.title || page.slug })
+  pass.secondaryFields.push({ key: 'handle', label: 'PROFIL', value: handle(page) })
+  if (page.headline) pass.secondaryFields.push({ key: 'tagline', label: 'MÉTIER', value: page.headline })
+  // Dos de la carte : lien cliquable + bio + localisation.
+  pass.backFields.push({ key: 'url', label: 'Ma page', value: publicUrl(page.slug) })
+  if (page.bio) pass.backFields.push({ key: 'bio', label: 'À propos', value: page.bio })
+  if (theme.location) pass.backFields.push({ key: 'loc', label: 'Localisation', value: theme.location })
   pass.setBarcodes({ message: publicUrl(page.slug), format: 'PKBarcodeFormatQR', messageEncoding: 'iso-8859-1' })
 
   return pass.getAsBuffer()
