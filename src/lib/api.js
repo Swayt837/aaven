@@ -1,4 +1,5 @@
 // Petit client HTTP pour l'API REST. Les cookies de session sont inclus.
+import { compressImage } from './compressImage'
 
 async function req(method, path, body) {
   const opts = {
@@ -75,6 +76,8 @@ export const api = {
     return data
   },
   uploadMedia: async (slug, file) => {
+    // Les images (photos de téléphone 8-12 Mo) sont compressées avant envoi ; vidéos intactes.
+    if (file?.type?.startsWith('image/')) file = await compressImage(file)
     const fd = new FormData()
     fd.append('file', file)
     const res = await fetch(`/api/pages/${slug}/upload-media`, { method: 'POST', credentials: 'include', body: fd })
@@ -92,6 +95,7 @@ export const api = {
 
   // Upload d'image (fond de page) — multipart, renvoie { url }
   uploadImage: async (slug, file) => {
+    file = await compressImage(file) // photos de téléphone : 8-12 Mo → ~300-500 Ko
     const fd = new FormData()
     fd.append('image', file)
     const res = await fetch(`/api/pages/${slug}/upload`, { method: 'POST', credentials: 'include', body: fd })

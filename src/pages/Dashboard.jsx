@@ -158,7 +158,8 @@ export default function Dashboard() {
 
                   <ShareLink url={`${window.location.origin}/${p.slug}`} className="mt-4" />
 
-                  <div className="mt-3 grid grid-cols-4 gap-2">
+                  {/* 2×2 sur mobile : 4 colonnes forceraient la carte à déborder (désalignement) */}
+                  <div className="mt-3 grid grid-cols-2 gap-2 min-[440px]:grid-cols-4">
                     <Button as={Link} to={`/edit/${p.slug}`} variant="secondary" size="sm">{t('dash.edit')}</Button>
                     <Button as={Link} to={`/stats/${p.slug}`} variant="secondary" size="sm">{t('dash.stats')}</Button>
                     <Button as="a" href={`/${p.slug}`} target="_blank" rel="noreferrer" variant="dark" size="sm">{t('dash.see')}</Button>
