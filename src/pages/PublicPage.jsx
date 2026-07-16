@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Volume2, VolumeX, Wallet } from 'lucide-react'
+import { Volume2, VolumeX } from 'lucide-react'
 import { BioImmersive } from '../components/PhoneMockup'
 import { TipModal } from '../components/TipModal'
 import { ContactModal } from '../components/ContactModal'
@@ -114,21 +114,8 @@ export default function PublicPage({ slug: slugProp }) {
         </>
       )}
 
-      {/* Ajouter la carte au Wallet (affiché seulement si configuré côté serveur) */}
-      {(data.wallet?.apple || data.wallet?.google) && (
-        <div className="fixed inset-x-0 bottom-4 z-30 flex flex-wrap items-center justify-center gap-2 px-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          {data.wallet.apple && (
-            <a href={`/api/wallet/apple/${slug}`} className="press inline-flex items-center gap-2 rounded-full bg-black/85 px-4 py-2.5 text-sm font-bold text-white shadow-hard backdrop-blur">
-              <Wallet size={16} /> {t('wallet.apple')}
-            </a>
-          )}
-          {data.wallet.google && (
-            <a href={`/api/wallet/google/${slug}`} className="press inline-flex items-center gap-2 rounded-full border-2 border-ink bg-white px-4 py-2.5 text-sm font-bold text-ink shadow-hard">
-              <Wallet size={16} /> {t('wallet.google')}
-            </a>
-          )}
-        </div>
-      )}
+      {/* Le bouton « Ajouter au Wallet » est réservé au propriétaire (éditeur + onboarding) —
+          jamais affiché aux visiteurs de la page publique. */}
     </div>
   )
 }

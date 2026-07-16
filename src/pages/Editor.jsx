@@ -80,6 +80,12 @@ export default function Editor() {
   const btnFileRef = useRef(null)
   const pendingBtn = useRef(null)
 
+  // Dispo Wallet (config serveur) → boutons « Ajouter au Wallet » dans la carte lien.
+  const [wallet, setWallet] = useState(null)
+  useEffect(() => {
+    api.publicPage(routeSlug).then((d) => setWallet(d.wallet || null)).catch(() => {})
+  }, [routeSlug])
+
   // ---------- Autosave + annulation ----------
   const [dirty, setDirty] = useState(false) // modifs non encore persistées
   const [canUndo, setCanUndo] = useState(false)
@@ -393,6 +399,17 @@ export default function Editor() {
             <Button variant="secondary" size="sm" className="mt-3 w-full lg:hidden" onClick={() => setShowQR(true)}>
               <QrCode size={15} /> {t('edit.qr')}
             </Button>
+            {/* Ajouter sa propre carte au Wallet (si configuré côté serveur) */}
+            {wallet?.apple && (
+              <a href={`/api/wallet/apple/${page.slug}`} className="press mt-3 inline-flex w-full items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-black px-4 py-2.5 font-display text-sm font-extrabold text-white">
+                 {t('wallet.apple')}
+              </a>
+            )}
+            {wallet?.google && (
+              <a href={`/api/wallet/google/${page.slug}`} className="press mt-2 inline-flex w-full items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white px-4 py-2.5 font-display text-sm font-extrabold text-ink">
+                {t('wallet.google')}
+              </a>
+            )}
             {user?.plan === 'pro' && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(page.slug) && (
               <div className="mt-4 border-t border-ink/10 pt-3">
                 <p className="text-xs font-extrabold uppercase tracking-wide text-ink/50">{t('share.proLink')}</p>
