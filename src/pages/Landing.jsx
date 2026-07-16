@@ -931,6 +931,8 @@ export default function Landing() {
   const { user } = useAuth()
   const nav = useNavigate()
   const onStart = () => { track('cta_start', { loggedIn: !!user }); nav(user ? '/dashboard' : '/login') }
+  // La landing est prête : congédie l'intro de chargement (splash inline d'index.html).
+  useEffect(() => { window.__aavenIntroDone?.() }, [])
   return (
     <div className="min-h-screen bg-brand-cream font-sans text-brand-ink antialiased">
       <Header onStart={onStart} />
