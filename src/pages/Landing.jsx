@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, useMotionTemplate, useSpring, useReducedMotion } from 'framer-motion'
 import Marquee from 'react-fast-marquee'
-import { ResponsiveContainer, LineChart, Line } from 'recharts'
 import {
   Sparkles, ArrowRight, Check, Star, Menu, X, Instagram, CalendarCheck,
   ShoppingBag, MapPin, Dumbbell, Palette, Zap, BarChart3,
@@ -698,7 +697,30 @@ function ProfileShowcase({ onStart }) {
 }
 
 /* ============================ Bento features ============================ */
-const CHART = [{ v: 8 }, { v: 14 }, { v: 11 }, { v: 22 }, { v: 18 }, { v: 30 }, { v: 26 }, { v: 38 }]
+// Courbe décorative en SVG pur : recharts (~150 Ko gzip avec d3) était embarqué
+// dans le bundle uniquement pour ces 8 points.
+const CHART = [8, 14, 11, 22, 18, 30, 26, 38]
+function Sparkline({ data, className = '' }) {
+  const W = 100, H = 40, PAD = 3
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const pts = data.map((v, i) => [
+    PAD + (i * (W - PAD * 2)) / (data.length - 1),
+    H - PAD - ((v - min) / (max - min)) * (H - PAD * 2),
+  ])
+  // Lissage type « monotone » : courbes de Bézier entre chaque point.
+  const d = pts.map(([x, y], i) => {
+    if (i === 0) return `M ${x} ${y}`
+    const [px, py] = pts[i - 1]
+    const cx = (px + x) / 2
+    return `C ${cx} ${py}, ${cx} ${y}, ${x} ${y}`
+  }).join(' ')
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className={className} aria-hidden>
+      <path d={d} fill="none" stroke="#D6FF00" strokeWidth="3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  )
+}
 function BentoFeatures() {
   const c = useCopy()
   const { lang } = useI18n()
@@ -716,7 +738,7 @@ function BentoFeatures() {
               <div><BarChart3 className="text-brand-neon" /><h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">{fe.analytics[0]}</h3><p className="mt-1 font-sans text-sm text-white/60">{fe.analytics[1]}</p></div>
               <div className="text-right"><p className="font-display text-3xl font-extrabold text-brand-neon">+842</p><p className="font-sans text-xs text-white/60">{fe.analytics[2]}</p></div>
             </div>
-            <div className="mt-4 h-28"><ResponsiveContainer width="100%" height="100%"><LineChart data={CHART}><Line type="monotone" dataKey="v" stroke="#D6FF00" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></div>
+            <div className="mt-4 h-28"><Sparkline data={CHART} className="h-full w-full" /></div>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-[28px] border-2 border-brand-ink bg-white p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-5" data-testid="feature-leads">
             <Mail className="text-brand-coral" /><h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">{fe.leads[0]}</h3><p className="mt-1 font-sans text-sm text-brand-muted">{fe.leads[1]}</p>
