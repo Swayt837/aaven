@@ -632,8 +632,9 @@ function BgVideo({ src, loop = false, sound = false, className, style }) {
     setMuted(v.muted)
   }
 
-  // Poster (1re frame) pour les vidéos de templates → affichage instantané pendant le buffering.
-  const poster = /\/templates\/.+\.mp4($|\?)/.test(src || '') ? src.replace(/\.mp4(\?.*)?$/, '.jpg') : undefined
+  // Poster (1re frame) : templates ET uploads (généré à l'upload) → fond instantané
+  // pendant le buffering. Vieille vidéo sans poster → 404 silencieux, sans effet.
+  const poster = /^https?:\/\/.+\.(mp4|mov|webm)($|\?)/i.test(src || '') ? src.replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg') : undefined
 
   return (
     <>

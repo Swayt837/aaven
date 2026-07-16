@@ -81,6 +81,22 @@ export async function savePublic(buffer, { mimetype, originalname, pageId }) {
   return `/uploads/${key}`
 }
 
+// Écrit un asset public à une CLÉ EXACTE (ex. le poster « <clé-vidéo>.jpg »,
+// dérivable côté client depuis l'URL de la vidéo). Renvoie l'URL publique.
+export async function savePublicAt(key, buffer, mimetype) {
+  if (USE_R2) {
+    await r2.client.send(new r2.PutObjectCommand({ Bucket: R2_PUBLIC_BUCKET, Key: key, Body: buffer, ContentType: mimetype, CacheControl: PUBLIC_CACHE }))
+    return `${R2_PUBLIC_BASE}/${key}`
+  }
+  if (USE_SUPABASE) {
+    const { error } = await supa.storage.from(PUBLIC_BUCKET).upload(key, buffer, { contentType: mimetype, upsert: true, cacheControl: '2592000' })
+    if (error) throw new Error(error.message)
+    return supa.storage.from(PUBLIC_BUCKET).getPublicUrl(key).data.publicUrl
+  }
+  fs.writeFileSync(path.join(uploadsDir, key), buffer)
+  return `/uploads/${key}`
+}
+
 // Fichier produit (privé, jamais public). Renvoie la clé à stocker dans filePath.
 export async function saveProductFile(buffer, { originalname, mimetype, pageId }) {
   const key = `${pageId}-${nanoid(10)}${extFromName(originalname)}`

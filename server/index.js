@@ -13,8 +13,9 @@ import { nanoid } from 'nanoid'
 import { Users, Pages, Buttons, Clicks, Tips, Messages, Products, Purchases } from './db.js'
 import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
-import { savePublic, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
+import { savePublic, savePublicAt, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
 import { faststartIfVideo } from './faststart.js'
+import { generatePoster } from './poster.js'
 import { purgePage, cachePurgeEnabled } from './cf-cache.js'
 import { appleWalletConfigured, googleWalletConfigured, buildApplePass, buildGoogleSaveUrl } from './wallet.js'
 import { SEO_META, SEO_SLUGS } from '../src/lib/seoContent.js'
@@ -532,6 +533,15 @@ app.post('/api/pages/:slug/upload-media', requireAuth, ownPage, writeLimiter, me
     // Vidéos MP4 : remux faststart (moov au début) → autoplay <video> garanti côté page publique.
     const buffer = await faststartIfVideo(req.file.buffer, req.file.mimetype)
     const url = await savePublic(buffer, { mimetype: req.file.mimetype, originalname: req.file.originalname, pageId: req.page.id })
+    // Vidéos : poster (1re frame) à « <clé>.jpg » → fond affiché instantanément
+    // pendant le chargement (le client dérive l'URL du poster depuis celle de la vidéo).
+    if (req.file.mimetype.startsWith('video/')) {
+      generatePoster(buffer).then((poster) => {
+        if (!poster) return
+        const key = url.split('/').pop().replace(/\.\w+$/, '') + '.jpg'
+        return savePublicAt(key, poster, 'image/jpeg')
+      }).catch((e) => console.warn('  Poster vidéo non généré:', e?.message || e))
+    }
     res.json({ url })
   } catch (e) {
     console.error(`  Upload média échoué (storage=${storageMode}, type=${req.file?.mimetype}):`, e?.message || e)
