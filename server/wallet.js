@@ -170,8 +170,9 @@ export async function buildApplePass(page) {
 
   pass.type = bg ? 'eventTicket' : 'generic'
   pass.primaryFields.push({ key: 'name', value: page.title || page.slug })
+  // Une info par ligne (secondary puis auxiliary) : aéré, jamais collé.
   pass.secondaryFields.push({ key: 'handle', label: 'PROFIL', value: handle(page) })
-  if (page.headline) pass.secondaryFields.push({ key: 'tagline', label: 'MÉTIER', value: page.headline })
+  if (page.headline) pass.auxiliaryFields.push({ key: 'tagline', label: 'MÉTIER', value: page.headline })
   // Dos de la carte : lien cliquable + bio + localisation.
   pass.backFields.push({ key: 'url', label: 'Ma page', value: publicUrl(page.slug) })
   if (page.bio) pass.backFields.push({ key: 'bio', label: 'À propos', value: page.bio })
@@ -190,20 +191,32 @@ function signGoogleJwt(payload) {
 }
 
 // Renvoie l'URL "Enregistrer dans Google Wallet" (classe + objet en ligne).
+// Personnalisé : photo de profil en logo rond + fond du thème (image ou poster
+// de la vidéo) en bannière hero. Les URLs doivent être publiques (Google les télécharge).
 export function buildGoogleSaveUrl(page) {
   if (!googleWalletConfigured) return null
+  const theme = page.theme || {}
   const classId = `${google.issuerId}.aaven_bio`
   const objectId = `${google.issuerId}.${page.slug}`.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+  // Photo de profil (rond en haut de carte) — repli : logo Aaven.
+  const logoUri = /^https?:\/\//.test(page.avatarUrl || '') ? page.avatarUrl : `${APP_URL}/logo-mark.png`
+  // Bannière : image de fond du thème, sinon poster de la vidéo de fond.
+  let heroUri = /^https?:\/\//.test(theme.bgImage || '') ? theme.bgImage : null
+  if (!heroUri && /^https?:\/\/.+\.(mp4|mov|webm)($|\?)/i.test(theme.bgVideo || '')) {
+    heroUri = theme.bgVideo.replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg')
+  }
 
   const genericObject = {
     id: objectId,
     classId,
     state: 'ACTIVE',
     hexBackgroundColor: '#15161A',
-    logo: { sourceUri: { uri: `${APP_URL}/logo-mark.png` } },
+    logo: { sourceUri: { uri: logoUri } },
+    ...(heroUri ? { heroImage: { sourceUri: { uri: heroUri } } } : {}),
     cardTitle: { defaultValue: { language: 'fr', value: 'Aaven' } },
     header: { defaultValue: { language: 'fr', value: page.title || page.slug } },
-    subheader: { defaultValue: { language: 'fr', value: handle(page) } },
+    subheader: { defaultValue: { language: 'fr', value: page.headline || handle(page) } },
     barcode: { type: 'QR_CODE', value: publicUrl(page.slug) },
     linksModuleData: {
       uris: [{ uri: publicUrl(page.slug), description: 'Voir le profil' }],
