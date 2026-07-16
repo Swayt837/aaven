@@ -82,12 +82,59 @@ async function avatarThumbnails(avatarUrl) {
   }
 }
 
-// Construit le .pkpass (Buffer) pour une page. Style "generic" :
-// photo de profil (thumbnail) + nom + handle + métier + QR, labels à la couleur du thème.
+// Fond de carte depuis le thème du créateur : son image de fond, ou le POSTER de sa
+// vidéo de fond (1re frame, générée à l'upload). iOS l'affiche flouté derrière la carte.
+// → PNG 180x220 (+@2x/@3x). null si aucun fond http(s) exploitable.
+async function backgroundImages(theme) {
+  let src = /^https?:\/\//.test(theme.bgImage || '') ? theme.bgImage : null
+  if (!src && /^https?:\/\/.+\.(mp4|mov|webm)($|\?)/i.test(theme.bgVideo || '')) {
+    src = theme.bgVideo.replace(/\.(mp4|mov|webm)(\?.*)?$/i, '.jpg') // poster de la vidéo
+  }
+  if (!src) return null
+  let ffmpegPath = null
+  try { ffmpegPath = (await import('ffmpeg-static')).default } catch { return null }
+  if (!ffmpegPath) return null
+  const { execFile } = await import('child_process')
+  const { promisify } = await import('util')
+  const os = await import('os')
+  const run = promisify(execFile)
+
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 6000)
+  let buf
+  try {
+    const res = await fetch(src, { signal: ctrl.signal })
+    if (!res.ok) return null
+    buf = Buffer.from(await res.arrayBuffer())
+  } catch { return null } finally { clearTimeout(timer) }
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'passbg-'))
+  try {
+    const inPath = path.join(dir, 'in.img')
+    fs.writeFileSync(inPath, buf)
+    const out = {}
+    for (const [name, w, h] of [['background.png', 180, 220], ['background@2x.png', 360, 440], ['background@3x.png', 540, 660]]) {
+      const outPath = path.join(dir, name)
+      // Couvre le cadre 180x220 (crop central) — iOS floute de toute façon.
+      await run(ffmpegPath, ['-y', '-i', inPath, '-vf', `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`, outPath], { timeout: 15000 })
+      out[name] = fs.readFileSync(outPath)
+    }
+    return out
+  } catch {
+    return null
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* ignore */ }
+  }
+}
+
+// Construit le .pkpass (Buffer) pour une page.
+// Avec fond (image du thème ou poster vidéo) → style "eventTicket" : iOS l'affiche
+// flouté derrière la carte + photo de profil. Sans fond → "generic" sombre élégant.
 export async function buildApplePass(page) {
   if (!appleWalletConfigured) return null
   const { PKPass } = await import('passkit-generator')
 
+  const theme = page.theme || {}
   const buffers = {}
   for (const f of ['icon.png', 'icon@2x.png', 'icon@3x.png', 'logo.png', 'logo@2x.png']) {
     const p = path.join(ASSETS, f)
@@ -96,8 +143,9 @@ export async function buildApplePass(page) {
   // Photo de profil sur la carte (comme une vraie carte de visite).
   const thumbs = await avatarThumbnails(page.avatarUrl)
   if (thumbs) Object.assign(buffers, thumbs)
-
-  const theme = page.theme || {}
+  // Fond personnalisé (flouté par iOS) — seul le style eventTicket le supporte.
+  const bg = await backgroundImages(theme)
+  if (bg) Object.assign(buffers, bg)
   const pass = new PKPass(
     buffers,
     {
@@ -120,7 +168,7 @@ export async function buildApplePass(page) {
     }
   )
 
-  pass.type = 'generic'
+  pass.type = bg ? 'eventTicket' : 'generic'
   pass.primaryFields.push({ key: 'name', value: page.title || page.slug })
   pass.secondaryFields.push({ key: 'handle', label: 'PROFIL', value: handle(page) })
   if (page.headline) pass.secondaryFields.push({ key: 'tagline', label: 'MÉTIER', value: page.headline })
