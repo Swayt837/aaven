@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, useMotionTemplate, useSpring, useReducedMotion } from 'framer-motion'
 import Marquee from 'react-fast-marquee'
-import { ResponsiveContainer, LineChart, Line } from 'recharts'
 import {
   Sparkles, ArrowRight, Check, Star, Menu, X, Instagram, CalendarCheck,
   ShoppingBag, MapPin, Dumbbell, Palette, Zap, BarChart3,
@@ -42,7 +41,7 @@ const T = {
     nav: { features: 'Fonctionnalités', examples: 'Exemples', pricing: 'Tarifs', testimonials: 'Témoignages' },
     start: 'Commencer',
     heroBadge: 'Ton identité professionnelle',
-    heroSub: 'Crée ta vitrine professionnelle, ajoute-la à Apple Wallet ou Google Wallet et partage-la instantanément par QR code ou NFC.',
+    heroSub: 'Quand quelqu’un te découvre, ton Aaven te présente, convertit et encaisse pour toi. Ajoute-le à Apple Wallet ou Google Wallet et partage-le en un scan, par QR code ou NFC.',
     heroCta: 'Créer mon Aaven gratuitement', heroSee: 'Voir un exemple',
     heroMicro: '✦ Gratuit pour démarrer · Évolue quand tu veux',
     heroChecks: ['60 secondes', 'Sans carte bancaire', 'Sans engagement'],
@@ -92,7 +91,7 @@ const T = {
     nav: { features: 'Features', examples: 'Examples', pricing: 'Pricing', testimonials: 'Reviews' },
     start: 'Get started',
     heroBadge: 'Your professional identity',
-    heroSub: 'Create your professional showcase, add it to Apple Wallet or Google Wallet and share it instantly via QR code or NFC.',
+    heroSub: 'When someone discovers you, your Aaven introduces you, converts and gets you paid. Add it to Apple Wallet or Google Wallet and share it in one scan, via QR code or NFC.',
     heroCta: 'Create my Aaven for free', heroSee: 'See an example',
     heroMicro: '✦ Free to start · Upgrade anytime',
     heroChecks: ['60 seconds', 'No credit card', 'No commitment'],
@@ -169,6 +168,51 @@ function Badge({ children, tone = 'neon', className = '', testid }) {
   return <span data-testid={testid} className={`inline-flex items-center gap-1.5 rounded-full border-2 border-brand-ink px-3 py-1 font-display text-[11px] font-extrabold uppercase tracking-[0.18em] shadow-[3px_3px_0px_#0A0A0A] ${tones[tone]} ${className}`}>{children}</span>
 }
 const Container = ({ children, className = '' }) => <div className={`mx-auto max-w-7xl px-5 md:px-10 ${className}`}>{children}</div>
+
+/* ============================ Tilt 3D (Apple-like) ============================ */
+// Effet « vitrine produit » : l'objet suit le curseur avec une rotation 3D amortie
+// (spring) et un reflet lumineux qui glisse sur la vitre, comme sur les pages
+// produit Apple. Actif uniquement à la souris (pointer: fine) et coupé si
+// l'utilisateur préfère réduire les animations.
+function Tilt3D({ children, max = 9, radius = 40, depth = false, className = '' }) {
+  const reduced = useReducedMotion()
+  const [enabled, setEnabled] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: fine)')
+    const update = () => setEnabled(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  const px = useMotionValue(0.5)
+  const py = useMotionValue(0.5)
+  const hover = useMotionValue(0)
+  const spring = { stiffness: 150, damping: 18, mass: 0.5 }
+  const rx = useSpring(useTransform(py, [0, 1], [max, -max]), spring)
+  const ry = useSpring(useTransform(px, [0, 1], [-max, max]), spring)
+  const gx = useTransform(px, (v) => `${v * 100}%`)
+  const gy = useTransform(py, (v) => `${v * 100}%`)
+  const glare = useMotionTemplate`radial-gradient(320px circle at ${gx} ${gy}, rgba(255,255,255,0.32), rgba(255,255,255,0.07) 45%, transparent 68%)`
+  const glareOpacity = useSpring(hover, { stiffness: 120, damping: 20 })
+
+  if (!enabled || reduced) return <div className={className}>{children}</div>
+
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    px.set((e.clientX - r.left) / r.width)
+    py.set((e.clientY - r.top) / r.height)
+    hover.set(1)
+  }
+  const onLeave = () => { px.set(0.5); py.set(0.5); hover.set(0) }
+  return (
+    <div className={className} style={{ perspective: '1100px' }} onPointerMove={onMove} onPointerLeave={onLeave}>
+      <motion.div className="relative will-change-transform" style={{ rotateX: rx, rotateY: ry, transformStyle: depth ? 'preserve-3d' : undefined }}>
+        {children}
+        <motion.div aria-hidden className="pointer-events-none absolute inset-0 z-30" style={{ background: glare, opacity: glareOpacity, borderRadius: radius, transform: depth ? 'translateZ(1px)' : undefined }} />
+      </motion.div>
+    </div>
+  )
+}
 
 /* ============================ Header ============================ */
 function Header({ onStart }) {
@@ -267,35 +311,37 @@ function HeroPhone({ lang }) {
   return (
     <div className="relative mx-auto w-[290px] sm:mb-44">
       {/* Téléphone : la vraie page en live, DÉFILABLE (molette/doigt).
-          Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet. */}
-      <div
-        role="link"
-        tabIndex={0}
-        aria-label="Voir un profil Aaven réel"
-        onClick={() => { track('hero_profile_click'); window.open(HERO_PROFILE_URL, '_blank', 'noopener') }}
-        onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
-        // L'animation vit ICI (wrapper) : si le conteneur qui clippe (overflow-hidden
-        // arrondi) est lui-même animé, Chrome perd le clip pendant la transition et les
-        // coins carrés de la vidéo dépassent du cadre.
-        className="relative z-10 cursor-pointer rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A] transition-transform duration-300 hover:-translate-y-1"
-      >
-        <div className="isolate relative overflow-hidden rounded-[31px]" style={{ transform: 'translateZ(0)' }}>
-          <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
-          {real?.page ? (
-            <div className="relative h-[560px]">
-              <BioImmersive
-                page={real.page}
-                buttons={real.buttons}
-                supporters={supporters}
-                branding={real.branding !== false}
-                kenBurns={false}
-              />
-            </div>
-          ) : (
-            <HeroPhoneStatic lang={lang} />
-          )}
+          Un clic (pas un scroll) ouvre aaven.fr/flo-btt dans un nouvel onglet.
+          Le tilt 3D vit sur un wrapper AU-DESSUS du conteneur qui clippe : si le
+          conteneur overflow-hidden arrondi est lui-même animé, Chrome perd le clip
+          pendant la transition et les coins carrés de la vidéo dépassent du cadre. */}
+      <Tilt3D className="relative z-10" max={8} radius={40}>
+        <div
+          role="link"
+          tabIndex={0}
+          aria-label="Voir un profil Aaven réel"
+          onClick={() => { track('hero_profile_click'); window.open(HERO_PROFILE_URL, '_blank', 'noopener') }}
+          onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
+          className="relative cursor-pointer rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]"
+        >
+          <div className="isolate relative overflow-hidden rounded-[31px]" style={{ transform: 'translateZ(0)' }}>
+            <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
+            {real?.page ? (
+              <div className="relative h-[560px]">
+                <BioImmersive
+                  page={real.page}
+                  buttons={real.buttons}
+                  supporters={supporters}
+                  branding={real.branding !== false}
+                  kenBurns={false}
+                />
+              </div>
+            ) : (
+              <HeroPhoneStatic lang={lang} />
+            )}
+          </div>
         </div>
-      </div>
+      </Tilt3D>
 
       {/* Carte Wallet : glisse de sous le téléphone puis reste posée en dessous.
           Départ caché derrière le téléphone (y:-90) → slide vers le bas. */}
@@ -342,9 +388,9 @@ function Hero({ onStart }) {
             </motion.div>
             <motion.h1 variants={fadeUp} className="mt-7 font-display text-[42px] font-extrabold leading-[0.98] tracking-[-0.04em] text-brand-ink sm:text-5xl md:text-6xl lg:text-[64px]">
               {lang === 'en' ? (
-                <>Your professional{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">digital</span> business card,{' '}<span className="font-serif font-medium italic">always in your phone.</span></>
+                <>Your{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identity</span>,{' '}<span className="font-serif font-medium italic">beyond a business card.</span></>
               ) : (
-                <>Ta carte de visite professionnelle{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">digitale</span>,{' '}<span className="font-serif font-medium italic">toujours dans ton téléphone.</span></>
+                <>Ton{' '}<span className="relative inline-block -rotate-2 bg-brand-coral px-3 text-white">identité</span>,{' '}<span className="font-serif font-medium italic">bien plus qu’une carte de visite.</span></>
               )}
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-7 max-w-xl font-sans text-lg text-brand-muted md:text-xl">{c.heroSub}</motion.p>
@@ -540,6 +586,7 @@ function PhoneCard({ p, copy, notif, wallLabel }) {
   const rowCls = 'border border-white/20 bg-white/10 text-white backdrop-blur-md'
   return (
     <div className="relative mx-auto w-[320px]" data-testid={`profile-card-${p.id}`}>
+      <Tilt3D max={7} radius={42} depth>
       <div className="relative overflow-hidden rounded-[42px] border-[10px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]">
         <div className="absolute left-1/2 top-0 z-20 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
         <div className="relative min-h-[560px] px-6 pb-8 pt-12 text-white">
@@ -603,9 +650,14 @@ function PhoneCard({ p, copy, notif, wallLabel }) {
           </div>
         </div>
       </div>
-      <div className="absolute -right-4 top-24 rotate-3 animate-float rounded-2xl border-2 border-brand-ink bg-white px-3 py-2 shadow-[4px_4px_0px_#0A0A0A]">
-        <p className="flex items-center gap-1.5 font-display text-xs font-extrabold"><Heart size={12} className="text-brand-coral" fill="currentColor" /> {notif}</p>
+      {/* La notif flotte sur un plan au-dessus du téléphone : quand la carte
+          s'incline, elle se détache visuellement (parallaxe 3D). */}
+      <div className="absolute -right-4 top-24" style={{ transform: 'translateZ(48px)' }}>
+        <div className="rotate-3 animate-float rounded-2xl border-2 border-brand-ink bg-white px-3 py-2 shadow-[4px_4px_0px_#0A0A0A]">
+          <p className="flex items-center gap-1.5 font-display text-xs font-extrabold"><Heart size={12} className="text-brand-coral" fill="currentColor" /> {notif}</p>
+        </div>
       </div>
+      </Tilt3D>
     </div>
   )
 }
@@ -645,7 +697,30 @@ function ProfileShowcase({ onStart }) {
 }
 
 /* ============================ Bento features ============================ */
-const CHART = [{ v: 8 }, { v: 14 }, { v: 11 }, { v: 22 }, { v: 18 }, { v: 30 }, { v: 26 }, { v: 38 }]
+// Courbe décorative en SVG pur : recharts (~150 Ko gzip avec d3) était embarqué
+// dans le bundle uniquement pour ces 8 points.
+const CHART = [8, 14, 11, 22, 18, 30, 26, 38]
+function Sparkline({ data, className = '' }) {
+  const W = 100, H = 40, PAD = 3
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const pts = data.map((v, i) => [
+    PAD + (i * (W - PAD * 2)) / (data.length - 1),
+    H - PAD - ((v - min) / (max - min)) * (H - PAD * 2),
+  ])
+  // Lissage type « monotone » : courbes de Bézier entre chaque point.
+  const d = pts.map(([x, y], i) => {
+    if (i === 0) return `M ${x} ${y}`
+    const [px, py] = pts[i - 1]
+    const cx = (px + x) / 2
+    return `C ${cx} ${py}, ${cx} ${y}, ${x} ${y}`
+  }).join(' ')
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className={className} aria-hidden>
+      <path d={d} fill="none" stroke="#D6FF00" strokeWidth="3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  )
+}
 function BentoFeatures() {
   const c = useCopy()
   const { lang } = useI18n()
@@ -663,7 +738,7 @@ function BentoFeatures() {
               <div><BarChart3 className="text-brand-neon" /><h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">{fe.analytics[0]}</h3><p className="mt-1 font-sans text-sm text-white/60">{fe.analytics[1]}</p></div>
               <div className="text-right"><p className="font-display text-3xl font-extrabold text-brand-neon">+842</p><p className="font-sans text-xs text-white/60">{fe.analytics[2]}</p></div>
             </div>
-            <div className="mt-4 h-28"><ResponsiveContainer width="100%" height="100%"><LineChart data={CHART}><Line type="monotone" dataKey="v" stroke="#D6FF00" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></div>
+            <div className="mt-4 h-28"><Sparkline data={CHART} className="h-full w-full" /></div>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-[28px] border-2 border-brand-ink bg-white p-7 shadow-[6px_6px_0px_#0A0A0A] md:col-span-8 lg:col-span-5" data-testid="feature-leads">
             <Mail className="text-brand-coral" /><h3 className="mt-3 font-display text-2xl font-extrabold tracking-[-0.02em]">{fe.leads[0]}</h3><p className="mt-1 font-sans text-sm text-brand-muted">{fe.leads[1]}</p>
@@ -856,6 +931,8 @@ export default function Landing() {
   const { user } = useAuth()
   const nav = useNavigate()
   const onStart = () => { track('cta_start', { loggedIn: !!user }); nav(user ? '/dashboard' : '/login') }
+  // La landing est prête : congédie l'intro de chargement (splash inline d'index.html).
+  useEffect(() => { window.__aavenIntroDone?.() }, [])
   return (
     <div className="min-h-screen bg-brand-cream font-sans text-brand-ink antialiased">
       <Header onStart={onStart} />

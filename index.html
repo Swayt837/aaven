@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%230A0A0A'/><path d='M28 72 L50 28 L72 72' fill='none' stroke='white' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/><path d='M39 58 H61' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Aaven — l'alternative à Linktree qui convertit. Une page bio adaptée à ton métier (Créateur, Bar, Freelance) avec tips, QR code et analytics. Gratuit, sans carte." />
+    <meta name="description" content="Aaven — bien plus qu'une carte de visite. Ton identité professionnelle qui te présente, convertit et encaisse pour toi : Wallet, QR code, NFC, tips et analytics. Gratuit, sans carte." />
     <meta name="theme-color" content="#F7C948" />
     <meta name="keywords" content="link in bio, linktree alternative, page bio, créateur, tips, QR code, freelance, bar" />
     <link rel="canonical" href="https://www.aaven.fr/" />
@@ -12,8 +12,8 @@
     <!-- Open Graph / réseaux sociaux -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Aaven" />
-    <meta property="og:title" content="Aaven — Ta page bio qui rapporte" />
-    <meta property="og:description" content="Pas un Linktree générique. Une vraie machine à conversion adaptée à ton métier — tips, QR code imprimable et analytics inclus." />
+    <meta property="og:title" content="Aaven — Bien plus qu'une carte de visite" />
+    <meta property="og:description" content="Ton identité professionnelle qui te présente, convertit et encaisse pour toi — Wallet, QR code, NFC, tips et analytics inclus." />
     <meta property="og:url" content="https://www.aaven.fr/" />
     <meta property="og:image" content="https://www.aaven.fr/og-image.png" />
     <meta property="og:image:width" content="1200" />
@@ -23,8 +23,8 @@
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Aaven — Ta page bio qui rapporte" />
-    <meta name="twitter:description" content="L'alternative à Linktree qui convertit. Tips, QR code, analytics. Gratuit, sans carte." />
+    <meta name="twitter:title" content="Aaven — Bien plus qu'une carte de visite" />
+    <meta name="twitter:description" content="Ton identité professionnelle qui te présente, convertit et encaisse pour toi. Wallet, QR code, NFC, analytics. Gratuit, sans carte." />
     <meta name="twitter:image" content="https://www.aaven.fr/og-image.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -32,11 +32,104 @@
     <!-- CDN médias (vidéos de fond, posters, avatars) : ouvre DNS+TLS au plus tôt. -->
     <link rel="preconnect" href="https://cdn.aaven.fr" />
     <link rel="dns-prefetch" href="https://cdn.aaven.fr" />
+    <!-- Photos de la landing (profils, témoignages) -->
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <!-- Fonts en chargement asynchrone (media="print" → "all" une fois chargé) :
+         le CSS Google Fonts ne bloque plus le premier rendu ; display=swap
+         affiche le texte immédiatement avec la police système en attendant. -->
     <link
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
-    <title>Aaven — Ta page bio qui rapporte</title>
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    <title>Aaven — Bien plus qu'une carte de visite</title>
+
+    <!-- Intro de chargement (splash) : inline pour s'afficher AVANT le bundle React,
+         elle masque le chargement au lieu de le faire subir. Uniquement sur "/",
+         une fois par session, jamais sur les pages publiques ni les sous-domaines.
+         React la congédie via window.__aavenIntroDone() dès que la landing est montée. -->
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0a;
+        transform: translateY(0);
+        transition: transform 0.9s cubic-bezier(0.7, 0, 0.18, 1), border-radius 0.9s cubic-bezier(0.7, 0, 0.18, 1);
+        will-change: transform;
+      }
+      #splash.on { display: flex; }
+      #splash.out { transform: translateY(-101%); border-radius: 0 0 64px 64px; }
+      #splash .s-glow {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(42% 34% at 50% 46%, rgba(255, 77, 66, 0.14), transparent 70%),
+          radial-gradient(30% 24% at 62% 60%, rgba(214, 255, 0, 0.05), transparent 70%);
+        animation: s-breathe 3.2s ease-in-out infinite;
+      }
+      #splash .s-inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: opacity 0.45s ease, transform 0.45s ease;
+      }
+      #splash.out .s-inner { opacity: 0; transform: translateY(-16px) scale(0.985); }
+      #splash .s-mark { width: 66px; height: 66px; color: #fff; }
+      #splash .s-mark path {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: s-draw 0.9s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+      }
+      #splash .s-mark .s-p2 { animation-delay: 0.55s; animation-duration: 0.5s; }
+      #splash .s-word {
+        margin-top: 22px;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-size: 30px;
+        font-weight: 800;
+        color: #fff;
+        opacity: 0;
+        animation: s-word 1s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+      }
+      #splash .s-tag {
+        margin-top: 10px;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: italic;
+        font-size: 15px;
+        letter-spacing: 0.01em;
+        color: rgba(255, 255, 255, 0.52);
+        opacity: 0;
+        animation: s-fade 0.8s ease 1.15s forwards;
+      }
+      @keyframes s-draw { to { stroke-dashoffset: 0; } }
+      @keyframes s-word {
+        from { opacity: 0; letter-spacing: 0.34em; transform: translateY(8px); }
+        to { opacity: 1; letter-spacing: 0.045em; transform: translateY(0); }
+      }
+      @keyframes s-fade { to { opacity: 1; } }
+      @keyframes s-breathe {
+        0%, 100% { opacity: 0.75; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #splash .s-mark path, #splash .s-word, #splash .s-tag, #splash .s-glow { animation: none; }
+        #splash .s-mark path { stroke-dashoffset: 0; }
+        #splash .s-word, #splash .s-tag { opacity: 1; }
+        #splash { transition: opacity 0.4s ease; }
+        #splash.out { transform: none; border-radius: 0; opacity: 0; }
+      }
+    </style>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -44,12 +137,52 @@
         "name": "Aaven",
         "url": "https://www.aaven.fr/",
         "logo": "https://www.aaven.fr/logo-mark.svg",
-        "description": "Aaven — l'alternative à Linktree qui convertit : une carte de visite digitale qui transforme tes visiteurs en clients, réservations et revenus."
+        "description": "Aaven — bien plus qu'une carte de visite : ton identité professionnelle qui te présente, convertit et transforme tes visiteurs en clients, réservations et revenus.",
+        "slogan": "Bien plus qu'une carte de visite"
       }
     </script>
   </head>
   <body>
     <div id="root"></div>
+    <div id="splash" aria-hidden="true">
+      <div class="s-glow"></div>
+      <div class="s-inner">
+        <svg class="s-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path class="s-p1" pathLength="1" d="M4.5 20 L12 4 L19.5 20" />
+          <path class="s-p2" pathLength="1" d="M8.2 13.6 H15.8" />
+        </svg>
+        <div class="s-word">Aaven</div>
+        <div class="s-tag">Bien plus qu&rsquo;une carte de visite.</div>
+      </div>
+    </div>
+    <script>
+      // Splash : décide en < 1 ms si l'intro se joue, puis expose le congé.
+      ;(function () {
+        var el = document.getElementById('splash')
+        if (!el) return
+        var seen = null
+        try { seen = sessionStorage.getItem('aaven_intro') } catch (e) { /* stockage bloqué */ }
+        // Jamais sur un sous-domaine vanity, une autre route que "/", ou une 2e vue de la session.
+        if (window.__AAVEN_SUB__ || location.pathname !== '/' || seen) { el.remove(); return }
+        try { sessionStorage.setItem('aaven_intro', '1') } catch (e) { /* noop */ }
+        var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+        el.classList.add('on')
+        var t0 = Date.now()
+        var MIN = reduced ? 250 : 1900 // laisse l'animation se jouer entièrement
+        var done = false
+        function hide () {
+          if (done) return
+          done = true
+          var wait = Math.max(0, MIN - (Date.now() - t0))
+          setTimeout(function () {
+            el.classList.add('out')
+            setTimeout(function () { el.remove() }, 1000)
+          }, wait)
+        }
+        window.__aavenIntroDone = hide
+        setTimeout(hide, 5000) // sécurité : l'intro ne bloque JAMAIS la page
+      })()
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
