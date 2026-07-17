@@ -137,9 +137,6 @@ export default function Editor() {
   const [sheetTall, setSheetTall] = useState(false)
   // Surbrillance temporaire d'une carte (desktop) quand on y accède via un chip.
   const [highlightCat, setHighlightCat] = useState(null)
-  // Mode « vu par tes visiteurs » : rejoue l'arrivée sur la page (kenBurns + son),
-  // comme sur un téléphone inconnu — le moment waouh avant de partager.
-  const [visitor, setVisitor] = useState(false)
   const mCat = (k) => (sheet === k ? '' : 'max-lg:hidden') // visibilité mobile d'une carte
   function openCat(k) { setSheet(k); setSheetTall(k === 'style') }
   // Édition contextuelle : ouvre la bonne section depuis un chip sur l'aperçu.
@@ -436,18 +433,10 @@ export default function Editor() {
           <ChevronLeft size={18} strokeWidth={2.5} />
         </Link>
       </div>
-      <div className="fixed right-3 top-3 z-30 flex flex-col gap-2 lg:hidden">
+      <div className="fixed right-3 top-3 z-30 lg:hidden">
         <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-white shadow-hard-sm">
           <Eye size={17} />
         </a>
-        <button
-          type="button"
-          onClick={() => setVisitor((v) => !v)}
-          aria-label={visitor ? t('edit.visitorStop') : t('edit.visitor')}
-          className={`press grid h-10 w-10 place-items-center rounded-full border-2 border-ink shadow-hard-sm ${visitor ? 'bg-ink text-white' : 'bg-white'}`}
-        >
-          {visitor ? '✕' : '▶'}
-        </button>
       </div>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 max-lg:pt-16 lg:grid-cols-2">
@@ -932,48 +921,35 @@ export default function Editor() {
           <p className={`font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50 ${sheet ? 'max-lg:hidden' : ''}`}>{t('edit.preview')}</p>
           <PhoneFrame bg={mode.cardBg} bare>
             <BioImmersive
-              key={visitor ? 'visitor' : 'edit'} /* remonte le composant → rejoue l'arrivée */
               page={page}
               buttons={buttons}
               supporters={theme.showSupporters ? SUPPORTERS_SAMPLE : null}
               products={products.filter((p) => p.active)}
               branding={(user?.plan || 'free') !== 'pro'}
-              kenBurns={visitor}
-              sound={visitor}
+              kenBurns={false}
             />
           </PhoneFrame>
           {/* Chips d'édition contextuelle (desktop) : on touche ce qu'on veut changer */}
-          {!visitor && (
-            <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
-              {EDIT_CHIPS.map(([cat, emoji, label]) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => openSection(cat)}
-                  title={t(label)}
-                  aria-label={t(label)}
-                  className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-lg shadow-hard-sm transition-transform hover:-translate-y-0.5"
-                >
-                  <span aria-hidden>{emoji}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {/* Mode visiteur (desktop) : rejoue la page comme à l'arrivée d'un inconnu */}
-          <button
-            type="button"
-            onClick={() => setVisitor((v) => !v)}
-            className={`press mx-auto mt-4 hidden items-center gap-2 rounded-full border-2 border-ink px-4 py-2 font-display text-sm font-extrabold lg:flex ${visitor ? 'bg-ink text-white' : 'bg-white'}`}
-          >
-            {visitor ? <>✕ {t('edit.visitorStop')}</> : <>▶ {t('edit.visitor')}</>}
-          </button>
+          <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
+            {EDIT_CHIPS.map(([cat, emoji, label]) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => openSection(cat)}
+                title={t(label)}
+                aria-label={t(label)}
+                className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-lg shadow-hard-sm transition-transform hover:-translate-y-0.5"
+              >
+                <span aria-hidden>{emoji}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </main>
 
       {/* Assistant mobile : l'aperçu est l'écran, ce bouton ouvre le sheet d'édition.
-          Les chips verticaux à droite ouvrent directement la bonne section.
-          En mode visiteur, tout s'efface : immersion complète. */}
-      {!sheet && !visitor && (
+          Les chips verticaux à droite ouvrent directement la bonne section. */}
+      {!sheet && (
         <>
           <div className="fixed right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2 lg:hidden">
             {EDIT_CHIPS.map(([cat, emoji, label]) => (
