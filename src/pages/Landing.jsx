@@ -940,7 +940,9 @@ function FinalCTA({ onStart }) {
 export default function Landing() {
   const { user } = useAuth()
   const nav = useNavigate()
-  const onStart = () => { track('cta_start', { loggedIn: !!user }); nav(user ? '/dashboard' : '/login') }
+  // Invité → onboarding direct (guest onboarding) : il construit sa page d'abord,
+  // la connexion n'est demandée qu'au moment de la mettre en ligne.
+  const onStart = () => { track('cta_start', { loggedIn: !!user }); nav(user ? '/dashboard' : '/onboarding') }
   // La landing est prête : congédie l'intro de chargement (splash inline d'index.html).
   useEffect(() => { window.__aavenIntroDone?.() }, [])
   return (

@@ -191,6 +191,12 @@ const dict = {
     'login.title': 'A premium way to connect',
     'login.google': 'Continue with Google',
     'login.legal': 'En continuant, tu acceptes nos Conditions et notre Politique de confidentialité.',
+    'login.draft': 'Ta page est prête ! Connecte-toi pour la mettre en ligne et la retrouver partout.',
+    'onb.preview.title': 'Ta page est prête ✨',
+    'onb.preview.subtitle': 'La voici, exactement comme tes visiteurs la verront.',
+    'onb.preview.publish': 'Mettre ma page en ligne',
+    'onb.preview.edit': 'Modifier mes infos',
+    'onb.preview.note': 'Connexion en 10 secondes — ta page est sauvegardée.',
     'login.secured': '🛡️ LOG IN SECURED BY',
 
     // Onboarding
@@ -730,6 +736,12 @@ const dict = {
     'login.title': 'A premium way to connect',
     'login.google': 'Continue with Google',
     'login.legal': 'By continuing, you agree to our Terms and Privacy Policy.',
+    'login.draft': 'Your page is ready! Log in to publish it and access it anywhere.',
+    'onb.preview.title': 'Your page is ready ✨',
+    'onb.preview.subtitle': 'Here it is, exactly as your visitors will see it.',
+    'onb.preview.publish': 'Publish my page',
+    'onb.preview.edit': 'Edit my info',
+    'onb.preview.note': '10-second login — your page is saved.',
     'login.secured': '🛡️ LOG IN SECURED BY',
 
     'onb.title': 'What do you want from your bio link?',

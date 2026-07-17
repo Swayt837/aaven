@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { QrCode, Wallet } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Button, Card, Input, Textarea, Label } from '../components/ui'
 import { ShareLink } from '../components/ShareLink'
 import { QRModal } from '../components/QRModal'
+import { PhoneFrame, BioImmersive } from '../components/PhoneMockup'
 import { useI18n } from '../lib/i18n'
+import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
-import { MODES } from '../lib/modes'
+import { MODES, PRESETS, BUTTON_TYPES } from '../lib/modes'
 import { track } from '../lib/analytics'
 import { PROFESSIONS_BY_CATEGORY, professionBySlug } from '../lib/professions'
-import { modeForCategory } from '../lib/professionEngine'
+import { modeForCategory, themeForProfession, blockToButton, SOCIAL_BUTTON_TYPES } from '../lib/professionEngine'
+import { saveDraft, readDraft, clearDraft } from '../lib/draft'
 import { toast } from '../components/Toast'
 
 // Étape 1 : l'objectif compte plus que le métier (un photographe et un bartender
@@ -23,10 +26,12 @@ const GOALS = [
 ]
 
 export default function Onboarding() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
+  const { user, loading } = useAuth()
   const nav = useNavigate()
   const [params] = useSearchParams()
-  // steps : 'goal' (objectif) → 'profession' (picker) → 'mode' (fallback) → 'identity' → 'done'
+  // steps : 'goal' (objectif) → 'profession' (picker) → 'mode' (fallback) → 'identity'
+  //         → 'preview' (invités : aperçu de LA page avant le login) → 'done'
   const [step, setStep] = useState('goal')
   const [goal, setGoal] = useState(null)
   const [profession, setProfession] = useState(null) // objet profession ou null (générique)
@@ -72,24 +77,81 @@ export default function Onboarding() {
     setStep('identity')
   }
 
-  async function create() {
-    if (!title.trim()) return
+  // Création serveur — utilisée par le flux connecté ET par la reprise de brouillon
+  // post-login (qui ne peut pas dépendre du state React, mis à jour de façon asynchrone).
+  async function createFrom(d) {
     setBusy(true)
     try {
-      const body = { title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode }
-      if (profession) body.profession = profession.slug
+      const body = { title: d.title.trim(), headline: (d.headline || '').trim(), bio: (d.bio || '').trim(), mode: d.mode }
+      if (d.profession) body.profession = d.profession
       const { page } = await api.createPage(body)
-      track('page_created', { mode, profession: profession?.slug || 'generic', goal: goal || 'skipped' })
-      if (profession) track('template_applied', { profession: profession.slug })
+      track('page_created', { mode: d.mode, profession: d.profession || 'generic', goal: d.goal || 'skipped' })
+      if (d.profession) track('template_applied', { profession: d.profession })
       try { localStorage.removeItem('bb_profession') } catch { /* noop */ }
+      clearDraft()
       // Dispo Wallet (dépend de la config serveur) pour le « moment magique ».
-      api.publicPage(page.slug).then((d) => setWallet(d.wallet || null)).catch(() => {})
+      api.publicPage(page.slug).then((w) => setWallet(w.wallet || null)).catch(() => {})
       setCreated(page)
       setStep('done')
     } catch (e) {
       toast.error(e.message)
+      setStep('identity') // reprise manuelle, champs préremplis
+    } finally {
       setBusy(false)
     }
+  }
+
+  function create() {
+    if (!title.trim()) return
+    // Invité : pas de mur de connexion ici — on lui montre d'abord SA page.
+    if (!user) {
+      track('guest_preview', { profession: profession?.slug || 'generic' })
+      setStep('preview')
+      return
+    }
+    createFrom({ title, headline, bio, mode, profession: profession?.slug, goal })
+  }
+
+  // Invité qui veut publier : le brouillon traverse le login via localStorage
+  // (les redirections OAuth externes perdent le state React), puis la création
+  // est rejouée automatiquement au retour.
+  function publishAsGuest() {
+    saveDraft({ title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode, profession: profession?.slug || '', goal })
+    if (profession) { try { localStorage.setItem('bb_profession', profession.slug) } catch { /* noop */ } }
+    track('guest_draft_saved', { profession: profession?.slug || 'generic' })
+    nav('/login')
+  }
+
+  // Reprise post-login : brouillon invité en attente → restauration + création auto.
+  const resumedRef = useRef(false)
+  useEffect(() => {
+    if (loading || !user || resumedRef.current) return
+    const d = readDraft()
+    if (!d) return
+    resumedRef.current = true
+    const p = d.profession ? professionBySlug(d.profession) : null
+    const m = p ? modeForCategory(p.category) : d.mode
+    setProfession(p)
+    setMode(m)
+    setGoal(d.goal || null)
+    setTitle(d.title)
+    setHeadline(d.headline || '')
+    setBio(d.bio || '')
+    track('guest_draft_resumed', { profession: d.profession || 'generic' })
+    createFrom({ ...d, mode: m })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading])
+
+  // Aperçu local invité : même dérivation que le serveur (Profession Engine) —
+  // thème du métier + boutons des template_blocks (réseaux sociaux exclus,
+  // 1er bouton mis en avant) ; repli sur le preset du mode générique.
+  function buildGuestPreview() {
+    const page = { title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode, slug: '', theme: profession ? themeForProfession(profession) : {} }
+    const blocks = profession
+      ? profession.template_blocks.map(blockToButton).filter((b) => !SOCIAL_BUTTON_TYPES.has(b.type)).map((b, i) => ({ ...b, featured: i === 0 }))
+      : (PRESETS[mode] || []).map((p) => ({ type: p.type, label: BUTTON_TYPES[p.type].label[lang] || BUTTON_TYPES[p.type].label.fr, featured: !!p.featured }))
+    const buttons = blocks.map((b, i) => ({ id: 'g' + i, type: b.type, label: b.label, icon: BUTTON_TYPES[b.type]?.icon || 'Link', url: '', isActive: true, featured: b.featured, position: i, clicks: 0 }))
+    return { page, buttons }
   }
 
   const cardBg = mode ? MODES[mode].cardBg : '#FFFFFF'
@@ -98,8 +160,8 @@ export default function Onboarding() {
     <div className="min-h-screen bg-cream" style={{ background: 'radial-gradient(110% 60% at 85% -5%, #FFF1EC 0%, transparent 55%), radial-gradient(90% 50% at 0% 0%, #FBFCEB 0%, transparent 50%), #F7F7F5' }}>
       <Header variant="dashboard" />
       <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="font-display text-4xl">{step === 'goal' ? t('onb.goal.title') : t('onb.title')}</h1>
-        <p className="mt-3 text-lg font-medium text-ink/70">{step === 'goal' ? t('onb.goal.subtitle') : step === 'profession' ? t('onb.prof.subtitle') : t('onb.subtitle')}</p>
+        <h1 className="font-display text-4xl">{step === 'goal' ? t('onb.goal.title') : step === 'preview' ? t('onb.preview.title') : t('onb.title')}</h1>
+        <p className="mt-3 text-lg font-medium text-ink/70">{step === 'goal' ? t('onb.goal.subtitle') : step === 'profession' ? t('onb.prof.subtitle') : step === 'preview' ? t('onb.preview.subtitle') : t('onb.subtitle')}</p>
 
         {/* Étape 0 — l'objectif (plus important que le métier) */}
         {step === 'goal' && (
@@ -208,6 +270,26 @@ export default function Onboarding() {
             </div>
           </Card>
         )}
+
+        {/* Étape invité — l'aperçu de SA page AVANT le login : le moment de
+            conversion. La connexion n'est demandée que pour la mettre en ligne. */}
+        {step === 'preview' && (() => {
+          const pv = buildGuestPreview()
+          return (
+            <div className="mt-8">
+              <div className="mx-auto w-full max-w-[320px]">
+                <PhoneFrame bg={cardBg} bare>
+                  <BioImmersive page={pv.page} buttons={pv.buttons} products={[]} branding kenBurns={false} />
+                </PhoneFrame>
+              </div>
+              <div className="mx-auto mt-6 flex max-w-md flex-col gap-2">
+                <Button size="lg" className="w-full" onClick={publishAsGuest}>🚀 {t('onb.preview.publish')}</Button>
+                <Button variant="secondary" className="w-full" onClick={() => setStep('identity')}>{t('onb.preview.edit')}</Button>
+                <p className="mt-1 text-center text-xs font-semibold text-ink/50">{t('onb.preview.note')}</p>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Le moment magique : la carte est réelle → Wallet + QR immédiatement. */}
         {step === 'done' && created && (

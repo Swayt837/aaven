@@ -61,7 +61,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/onboarding" element={<Protected><Onboarding /></Protected>} />
+          {/* Public : un invité crée sa page AVANT de se connecter (guest onboarding) —
+            la connexion n'est demandée qu'au moment de la mettre en ligne. */}
+        <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
           <Route path="/edit/:slug" element={<Protected><Editor /></Protected>} />
           <Route path="/stats/:slug" element={<Protected><Stats /></Protected>} />
