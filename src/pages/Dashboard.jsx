@@ -10,6 +10,7 @@ import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { modeOf } from '../lib/modes'
 import { track } from '../lib/analytics'
+import { readDraft } from '../lib/draft'
 import { toast } from '../components/Toast'
 
 const FEE_LABEL = { free: '5%', creator: '1%', pro: '0%' }
@@ -35,12 +36,14 @@ export default function Dashboard() {
     api.connectStatus().then(setConnect).catch(() => {})
   }, [refresh])
 
-  // Funnel métier : profession en attente (landing → login) + aucune page
-  // → on enchaîne directement sur l'onboarding pré-appliqué, sans écran vide.
+  // Funnel : brouillon invité en attente (guest onboarding → login) → reprise
+  // immédiate sur l'onboarding qui crée la page automatiquement. Sinon, profession
+  // en attente + aucune page → onboarding pré-appliqué, sans écran vide.
   useEffect(() => {
+    if (!Array.isArray(pages)) return
     let pending = null
     try { pending = localStorage.getItem('bb_profession') } catch { /* private mode */ }
-    if (pending && Array.isArray(pages) && pages.length === 0) nav('/onboarding', { replace: true })
+    if (readDraft() || (pending && pages.length === 0)) nav('/onboarding', { replace: true })
   }, [pages, nav])
 
   const plan = user?.plan || 'free'

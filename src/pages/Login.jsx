@@ -4,6 +4,7 @@ import { Logo } from '../components/Logo'
 import { Button } from '../components/ui'
 import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
+import { readDraft } from '../lib/draft'
 
 const GLYPHS = '✦ ✚ ◆ ⬡ ✜ ❖ ✱ ◇ ✦ ✚ ◆ ⬡ ✜ ❖ ✱ ◇'
 
@@ -43,6 +44,13 @@ export default function Login() {
           {t('login.eyebrow')}
         </p>
         <h1 className="font-display mt-2 text-5xl">{t('login.title')}</h1>
+
+        {/* Guest onboarding : sa page l'attend, la connexion sert à la mettre en ligne */}
+        {readDraft() && (
+          <p className="mx-auto mt-5 max-w-xs rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-bold text-ink shadow-soft">
+            ✨ {t('login.draft')}
+          </p>
+        )}
 
         <Button variant="dark" size="lg" className="mt-8 w-full" onClick={login}>
           <GoogleG /> {t('login.google')}

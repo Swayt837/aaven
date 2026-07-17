@@ -31,11 +31,13 @@ export default function ProfessionLanding({ slug }) {
   const heroMuted = theme.text === 'light' ? 'text-white/70' : 'text-brand-ink/60'
   const gradient = `linear-gradient(${theme.gradAngle}deg, ${theme.gradFrom}, ${theme.gradTo})`
 
-  // CTA → onboarding pré-appliqué. localStorage pour survivre au détour par /login.
+  // CTA → onboarding pré-appliqué, connecté OU invité (guest onboarding : la
+  // connexion n'arrive qu'au moment de publier). localStorage pour survivre
+  // au détour OAuth du login.
   const start = () => {
     track('cta_start', { source: 'profession_landing', profession: p.slug })
     try { localStorage.setItem('bb_profession', p.slug) } catch { /* private mode */ }
-    nav(user ? `/onboarding?profession=${p.slug}` : `/login?profession=${p.slug}`)
+    nav(`/onboarding?profession=${p.slug}`)
   }
 
   const blocks = p.template_blocks.map(blockToButton)
