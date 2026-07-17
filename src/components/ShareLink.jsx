@@ -32,7 +32,11 @@ export function ShareLink({ url, className = '' }) {
 
   return (
     <div className={`flex items-stretch gap-2 ${className}`}>
-      <div className="flex min-w-0 flex-1 items-center rounded-brutal border border-ink/15 bg-white px-3 text-sm font-bold">
+      {/* w-0 : sans largeur définie, le texte nowrap de l'URL fixe la largeur
+          MINIMALE intrinsèque de toute la rangée (min-w-0 ne plafonne pas la
+          contribution) → la carte du dashboard devenait plus large que l'écran
+          sur mobile et toute la page débordait à droite. */}
+      <div className="flex w-0 min-w-0 flex-1 items-center rounded-brutal border border-ink/15 bg-white px-3 text-sm font-bold">
         <span className="truncate">{url.replace(/^https?:\/\//, '')}</span>
       </div>
       <button
