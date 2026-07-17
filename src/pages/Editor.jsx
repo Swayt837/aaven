@@ -16,8 +16,10 @@ import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
-import { modeOf, BUTTON_TYPES } from '../lib/modes'
+import { modeOf, BUTTON_TYPES, PRESETS } from '../lib/modes'
 import { getTheme } from '../lib/themes'
+import { professionBySlug } from '../lib/professions'
+import { blockToButton, SOCIAL_BUTTON_TYPES } from '../lib/professionEngine'
 import { toast } from '../components/Toast'
 import { nanoid } from 'nanoid'
 
@@ -76,10 +78,9 @@ const CONVERT_TYPES = new Set(['tip', 'services', 'course', 'reserve', 'bookcall
 function Checklist({ page, theme, buttons, t, onGo }) {
   const activeCount = buttons.filter((b) => b.isActive).length
   const items = [
-    ['photo', !!page.avatarUrl, 'profil'],
     ['headline', !!(page.headline || page.bio), 'profil'],
     ['style', !!theme.template || theme.bgType === 'video' || !!theme.bgImage, 'style'],
-    ['links', activeCount >= 3, 'liens'],
+    ['links', activeCount >= 2, 'liens'],
     ['convert', buttons.some((b) => b.isActive && CONVERT_TYPES.has(b.type)), 'liens'],
   ]
   const done = items.filter(([, ok]) => ok).length
@@ -136,6 +137,9 @@ export default function Editor() {
   const [sheetTall, setSheetTall] = useState(false)
   // Surbrillance temporaire d'une carte (desktop) quand on y accède via un chip.
   const [highlightCat, setHighlightCat] = useState(null)
+  // Mode « vu par tes visiteurs » : rejoue l'arrivée sur la page (kenBurns + son),
+  // comme sur un téléphone inconnu — le moment waouh avant de partager.
+  const [visitor, setVisitor] = useState(false)
   const mCat = (k) => (sheet === k ? '' : 'max-lg:hidden') // visibilité mobile d'une carte
   function openCat(k) { setSheet(k); setSheetTall(k === 'style') }
   // Édition contextuelle : ouvre la bonne section depuis un chip sur l'aperçu.
@@ -213,6 +217,15 @@ export default function Editor() {
   const theme = getTheme(page)
   const activeCount = buttons.filter((b) => b.isActive).length
   const publicUrl = `${window.location.origin}/${page.slug}`
+
+  // Suggestions du picker : les blocs du MÉTIER de l'utilisateur (Profession
+  // Engine) pas encore présents sur la page ; repli sur le preset du mode.
+  const prof = professionBySlug(user?.profession)
+  const existingTypes = new Set(buttons.map((b) => b.type))
+  const suggested = (prof
+    ? prof.template_blocks.map(blockToButton).filter((s) => !SOCIAL_BUTTON_TYPES.has(s.type))
+    : (PRESETS[page.mode] || []).map((p) => ({ type: p.type, label: '' }))
+  ).filter((s, i, arr) => BUTTON_TYPES[s.type] && !existingTypes.has(s.type) && arr.findIndex((x) => x.type === s.type) === i)
 
   // Capture l'état AVANT une modification (pour ↩ Annuler). Les rafales d'une même
   // action (frappe dans un champ, glissement d'un slider) sont groupées en 1 snapshot.
@@ -313,7 +326,7 @@ export default function Editor() {
     // Suppression réversible : pas de confirm() bloquant, un toast avec Annuler.
     toast(t('edit.btnDeleted'), { action: { label: t('edit.undo'), onClick: undo } })
   }
-  function addBtn(type) {
+  function addBtn(type, label) {
     snapshot('add')
     const def = BUTTON_TYPES[type]
     setButtons((bs) => [
@@ -321,7 +334,7 @@ export default function Editor() {
       {
         id: nanoid(8),
         type,
-        label: def.label[lang] || def.label.fr,
+        label: (label || def.label[lang] || def.label.fr).slice(0, 60),
         icon: def.icon,
         url: '',
         isActive: true,
@@ -423,10 +436,18 @@ export default function Editor() {
           <ChevronLeft size={18} strokeWidth={2.5} />
         </Link>
       </div>
-      <div className="fixed right-3 top-3 z-30 lg:hidden">
+      <div className="fixed right-3 top-3 z-30 flex flex-col gap-2 lg:hidden">
         <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-white shadow-hard-sm">
           <Eye size={17} />
         </a>
+        <button
+          type="button"
+          onClick={() => setVisitor((v) => !v)}
+          aria-label={visitor ? t('edit.visitorStop') : t('edit.visitor')}
+          className={`press grid h-10 w-10 place-items-center rounded-full border-2 border-ink shadow-hard-sm ${visitor ? 'bg-ink text-white' : 'bg-white'}`}
+        >
+          {visitor ? '✕' : '▶'}
+        </button>
       </div>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 max-lg:pt-16 lg:grid-cols-2">
@@ -839,6 +860,26 @@ export default function Editor() {
                     <SmartLinkInput onAdd={addSmartBtn} />
                     <SmartManualTiles onAdd={addSmartBtn} />
                   </div>
+                  {/* Suggestions personnalisées : les blocs recommandés pour le
+                      métier de l'utilisateur (Profession Engine) non encore ajoutés. */}
+                  {suggested.length > 0 && (
+                    <div>
+                      <p className="mb-1.5 mt-3 px-1 font-display text-xs font-extrabold uppercase text-coral">
+                        ✦ {t('edit.pick.suggested')}
+                      </p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {suggested.map((s) => (
+                          <button
+                            key={s.type + s.label}
+                            onClick={() => addBtn(s.type, s.label)}
+                            className="press flex items-center gap-2 rounded-lg border-2 border-coral bg-coral/5 px-2.5 py-2 text-left text-sm font-bold"
+                          >
+                            <Icon name={BUTTON_TYPES[s.type].icon} size={16} /> {s.label || BUTTON_TYPES[s.type].label[lang] || BUTTON_TYPES[s.type].label.fr}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {/* Boutons classiques groupés par objectif : on choisit un BUT
                       (encaisser, être réservé…), pas un « type de bouton ». */}
                   {PICK_GROUPS.map(([group, emoji, keys]) => {
@@ -891,35 +932,48 @@ export default function Editor() {
           <p className={`font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50 ${sheet ? 'max-lg:hidden' : ''}`}>{t('edit.preview')}</p>
           <PhoneFrame bg={mode.cardBg} bare>
             <BioImmersive
+              key={visitor ? 'visitor' : 'edit'} /* remonte le composant → rejoue l'arrivée */
               page={page}
               buttons={buttons}
               supporters={theme.showSupporters ? SUPPORTERS_SAMPLE : null}
               products={products.filter((p) => p.active)}
               branding={(user?.plan || 'free') !== 'pro'}
-              kenBurns={false}
+              kenBurns={visitor}
+              sound={visitor}
             />
           </PhoneFrame>
           {/* Chips d'édition contextuelle (desktop) : on touche ce qu'on veut changer */}
-          <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
-            {EDIT_CHIPS.map(([cat, emoji, label]) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => openSection(cat)}
-                title={t(label)}
-                aria-label={t(label)}
-                className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-lg shadow-hard-sm transition-transform hover:-translate-y-0.5"
-              >
-                <span aria-hidden>{emoji}</span>
-              </button>
-            ))}
-          </div>
+          {!visitor && (
+            <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
+              {EDIT_CHIPS.map(([cat, emoji, label]) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => openSection(cat)}
+                  title={t(label)}
+                  aria-label={t(label)}
+                  className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-lg shadow-hard-sm transition-transform hover:-translate-y-0.5"
+                >
+                  <span aria-hidden>{emoji}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Mode visiteur (desktop) : rejoue la page comme à l'arrivée d'un inconnu */}
+          <button
+            type="button"
+            onClick={() => setVisitor((v) => !v)}
+            className={`press mx-auto mt-4 hidden items-center gap-2 rounded-full border-2 border-ink px-4 py-2 font-display text-sm font-extrabold lg:flex ${visitor ? 'bg-ink text-white' : 'bg-white'}`}
+          >
+            {visitor ? <>✕ {t('edit.visitorStop')}</> : <>▶ {t('edit.visitor')}</>}
+          </button>
         </div>
       </main>
 
       {/* Assistant mobile : l'aperçu est l'écran, ce bouton ouvre le sheet d'édition.
-          Les chips verticaux à droite ouvrent directement la bonne section. */}
-      {!sheet && (
+          Les chips verticaux à droite ouvrent directement la bonne section.
+          En mode visiteur, tout s'efface : immersion complète. */}
+      {!sheet && !visitor && (
         <>
           <div className="fixed right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2 lg:hidden">
             {EDIT_CHIPS.map(([cat, emoji, label]) => (
