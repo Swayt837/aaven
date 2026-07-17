@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Trash2, Eye, QrCode, Plus, X, Upload, RotateCcw, Check } from 'lucide-react'
-import { Button, Card, Input, Textarea, Label } from '../components/ui'
+import { Button, Card, Input, Textarea, Label, Badge } from '../components/ui'
+import { Confetti } from '../components/Confetti'
 import { Icon } from '../components/Icon'
 import { PhoneFrame, BioImmersive } from '../components/PhoneMockup'
 import { ThemeEditor } from '../components/ThemeEditor'
@@ -75,6 +76,7 @@ const CONVERT_TYPES = new Set(['tip', 'services', 'course', 'reserve', 'bookcall
 
 // Checklist « Ta page est prête à X % » : activation + guidage sans tutoriel.
 // Chaque étape manquante est cliquable et ouvre directement la bonne section.
+// Quand on atteint 100 % pendant la session → confettis (une seule fois).
 function Checklist({ page, theme, buttons, t, onGo }) {
   const activeCount = buttons.filter((b) => b.isActive).length
   const items = [
@@ -85,8 +87,19 @@ function Checklist({ page, theme, buttons, t, onGo }) {
   ]
   const done = items.filter(([, ok]) => ok).length
   const pct = Math.round((done / items.length) * 100)
+  const prevPct = useRef(pct)
+  const [party, setParty] = useState(false)
+  useEffect(() => {
+    if (prevPct.current < 100 && pct === 100) {
+      setParty(true)
+      const timer = setTimeout(() => setParty(false), 4500)
+      return () => clearTimeout(timer)
+    }
+    prevPct.current = pct
+  }, [pct])
   return (
-    <div className="rounded-brutal border-2 border-ink bg-white p-4 shadow-hard-sm">
+    <div className="rounded-card border border-ink/10 bg-white p-4 shadow-soft">
+      {party && <div className="pointer-events-none fixed inset-0 z-[70]" aria-hidden><Confetti /></div>}
       <div className="flex items-center justify-between gap-3">
         <p className="font-display text-sm font-extrabold">
           {pct === 100 ? t('edit.check.done') : t('edit.check.title', { pct })}
@@ -94,7 +107,7 @@ function Checklist({ page, theme, buttons, t, onGo }) {
         <span className="font-display text-sm font-extrabold text-coral">{pct}%</span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10">
-        <div className="h-full rounded-full bg-coral transition-all duration-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-gradient-to-r from-coral to-sun transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
       {pct < 100 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -104,13 +117,23 @@ function Checklist({ page, theme, buttons, t, onGo }) {
               type="button"
               onClick={() => !ok && onGo(cat)}
               disabled={ok}
-              className={`press inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${ok ? 'border-transparent bg-ink/5 text-ink/40 line-through' : 'border-ink bg-cream text-ink'}`}
+              className={`press inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${ok ? 'border-transparent bg-ink/5 text-ink/40 line-through' : 'border-ink/20 bg-cream text-ink shadow-soft'}`}
             >
               {ok && <Check size={12} strokeWidth={3} />} {t('edit.check.' + key)}
             </button>
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// En-tête de section éditorial : pastille emoji + titre en casse normale.
+function SectionTitle({ emoji, children, className = '' }) {
+  return (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cream text-lg">{emoji}</span>
+      <h2 className="font-display text-xl tracking-[-0.02em]">{children}</h2>
     </div>
   )
 }
@@ -410,14 +433,15 @@ export default function Editor() {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
-      {/* Barre sticky — desktop uniquement (mobile : boutons flottants, plus d'aperçu) */}
-      <div className="sticky top-0 z-30 border-b-2 border-ink bg-cream/95 backdrop-blur max-lg:hidden">
+    <div className="min-h-screen bg-cream" style={{ background: 'radial-gradient(110% 60% at 85% -5%, #FFF1EC 0%, transparent 55%), radial-gradient(90% 50% at 0% 0%, #FBFCEB 0%, transparent 50%), #F7F7F5' }}>
+      {/* Barre sticky glass — desktop uniquement (mobile : boutons flottants, plus d'aperçu) */}
+      <div className="sticky top-0 z-30 border-b border-ink/10 bg-white/85 backdrop-blur-xl max-lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
           <Button as={Link} to="/dashboard" variant="secondary" size="sm">{t('edit.dashboard')}</Button>
           <div className="flex items-center gap-2">
             {/* Statut autosave : plus de bouton Enregistrer */}
-            <span className={`font-display text-sm font-extrabold ${saving || dirty ? 'text-ink/45' : 'text-green-700'}`}>
+            <span className={`flex items-center gap-1.5 font-display text-sm font-extrabold ${saving || dirty ? 'text-ink/45' : 'text-green-700'}`}>
+              <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${saving || dirty ? 'animate-pulse bg-sun' : 'bg-green-600'}`} />
               {saving ? t('edit.autosaving') : dirty ? t('edit.autosaving') : t('edit.saved')}
             </span>
             <Button variant="secondary" size="sm" onClick={undo} disabled={!canUndo} title={t('edit.undo')}><RotateCcw size={16} /> {t('edit.undo')}</Button>
@@ -429,12 +453,12 @@ export default function Editor() {
 
       {/* Mobile : boutons flottants minimaux (retour + voir) — la barre est masquée */}
       <div className="fixed left-3 top-3 z-30 lg:hidden">
-        <Link to="/dashboard" aria-label={t('edit.dashboard')} className="press grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-white shadow-hard-sm">
+        <Link to="/dashboard" aria-label={t('edit.dashboard')} className="press grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/90 shadow-soft backdrop-blur">
           <ChevronLeft size={18} strokeWidth={2.5} />
         </Link>
       </div>
       <div className="fixed right-3 top-3 z-30 lg:hidden">
-        <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border-2 border-ink bg-white shadow-hard-sm">
+        <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/90 shadow-soft backdrop-blur">
           <Eye size={17} />
         </a>
       </div>
@@ -443,7 +467,7 @@ export default function Editor() {
         {/* Colonne formulaire — bottom sheet sur mobile (52vh max : l'aperçu réduit
             reste visible au-dessus, pas de voile qui le cacherait) */}
         <div
-          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border-2 max-lg:border-b-0 max-lg:border-ink max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:shadow-[0_-8px_30px_rgba(10,10,10,0.15)] max-lg:transition-all max-lg:duration-300 ${sheetTall ? 'max-lg:max-h-[75vh]' : 'max-lg:max-h-[38vh]'} ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
+          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border max-lg:border-b-0 max-lg:border-ink/10 max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:shadow-[0_-8px_30px_rgba(10,10,10,0.15)] max-lg:transition-all max-lg:duration-300 ${sheetTall ? 'max-lg:max-h-[75vh]' : 'max-lg:max-h-[38vh]'} ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
         >
           {/* En-tête du sheet (mobile) — la poignée agrandit/réduit le panneau */}
           <div className="sticky -top-2 z-10 -mx-4 border-b border-ink/10 bg-cream px-4 pb-2 pt-2 lg:hidden">
@@ -453,7 +477,7 @@ export default function Editor() {
               aria-label={sheetTall ? t('edit.sheetShrink') : t('edit.sheetExpand')}
               className="mx-auto -mt-1 mb-1 block w-20 py-1.5"
             >
-              <span className="mx-auto block h-1 w-10 rounded-full bg-ink/20" />
+              <span className="mx-auto block h-1 w-12 rounded-full bg-ink/25" />
             </button>
             <div className="flex items-center justify-between">
               {sheet && sheet !== 'menu' ? (
@@ -465,16 +489,16 @@ export default function Editor() {
                 <span className={`text-[11px] font-bold ${saving || dirty ? 'text-ink/40' : 'text-green-700'}`}>
                   {saving || dirty ? t('edit.autosaving') : t('edit.saved')}
                 </span>
-                <button type="button" onClick={undo} disabled={!canUndo} aria-label={t('edit.undo')} className="press rounded-full border-2 border-ink p-1.5 disabled:opacity-30"><RotateCcw size={15} /></button>
+                <button type="button" onClick={undo} disabled={!canUndo} aria-label={t('edit.undo')} className="press rounded-full border border-ink/15 bg-white p-1.5 shadow-soft disabled:opacity-30"><RotateCcw size={15} /></button>
                 <button
                   type="button"
                   onClick={() => setSheetTall((s) => !s)}
                   aria-label={sheetTall ? t('edit.sheetShrink') : t('edit.sheetExpand')}
-                  className="press rounded-full border-2 border-ink p-1.5"
+                  className="press rounded-full border border-ink/15 bg-white p-1.5 shadow-soft"
                 >
                   {sheetTall ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
                 </button>
-                <button type="button" onClick={() => setSheet(null)} aria-label="Fermer" className="press rounded-full border-2 border-ink p-1.5"><X size={15} /></button>
+                <button type="button" onClick={() => setSheet(null)} aria-label="Fermer" className="press rounded-full border border-ink/15 bg-white p-1.5 shadow-soft"><X size={15} /></button>
               </div>
             </div>
           </div>
@@ -496,7 +520,7 @@ export default function Editor() {
                     key={key}
                     type="button"
                     onClick={() => openCat(key)}
-                    className="press rounded-brutal border-2 border-ink bg-white p-4 text-left shadow-hard-sm"
+                    className="press rounded-card border border-ink/10 bg-white p-4 text-left shadow-soft"
                   >
                     <span className="text-2xl" aria-hidden>{emoji}</span>
                     <span className="font-display mt-1.5 block text-sm font-extrabold">{t(label)}</span>
@@ -513,7 +537,7 @@ export default function Editor() {
 
           {/* LIEN PUBLIC */}
           <Card id="sec-carte" className={`scroll-mt-24 p-5 transition-shadow ${mCat('carte')}${hl('carte')}`}>
-            <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('share.yourLink')}</h2>
+            <SectionTitle emoji="📱">{t('share.yourLink')}</SectionTitle>
             <ShareLink url={publicUrl} className="mt-3" />
             {/* QR accessible sur mobile (la barre du haut qui le portait y est masquée) */}
             <Button variant="secondary" size="sm" className="mt-3 w-full lg:hidden" onClick={() => setShowQR(true)}>
@@ -540,7 +564,7 @@ export default function Editor() {
 
           {/* IDENTITÉ */}
           <Card id="sec-profil" className={`scroll-mt-24 p-5 transition-shadow ${mCat('profil')}${hl('profil')}`}>
-            <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('edit.identity')}</h2>
+            <SectionTitle emoji="👤">{t('edit.identity')}</SectionTitle>
             <div className="mt-4 space-y-3">
               <div><Label>{t('edit.title')}</Label><Input value={page.title} onChange={(e) => setField('title', e.target.value)} /></div>
               <div><Label>{t('edit.headline')}</Label><Input value={page.headline || ''} onChange={(e) => setField('headline', e.target.value)} placeholder={t('edit.headlinePh')} maxLength={80} /></div>
@@ -565,7 +589,7 @@ export default function Editor() {
                 <Label>{t('edit.avatar')}</Label>
                 {page.avatarUrl ? (
                   <div className="flex items-center gap-3">
-                    <img src={page.avatarUrl} alt="" className="h-14 w-14 rounded-full border-2 border-ink object-cover" />
+                    <img src={page.avatarUrl} alt="" className="h-14 w-14 rounded-full border border-ink/10 object-cover shadow-soft" />
                     <Button variant="secondary" size="sm" onClick={() => avatarRef.current?.click()}>{t('edit.change')}</Button>
                     <button type="button" onClick={() => setField('avatarUrl', '')} className="press text-sm font-bold text-coral">{t('edit.removePhoto')}</button>
                   </div>
@@ -574,7 +598,7 @@ export default function Editor() {
                     type="button"
                     onClick={() => avatarRef.current?.click()}
                     disabled={avatarBusy}
-                    className="press flex w-full items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 font-display text-sm font-extrabold shadow-hard-sm disabled:opacity-50"
+                    className="press flex w-full items-center justify-center gap-2 rounded-xl border border-ink/15 bg-white py-2.5 font-display text-sm font-extrabold shadow-soft disabled:opacity-50"
                   >
                     <Upload size={16} /> {avatarBusy ? t('edit.uploading') : t('edit.uploadPhoto')}
                   </button>
@@ -596,15 +620,17 @@ export default function Editor() {
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={!theme.noindex}
                 onClick={() => setTheme({ noindex: !theme.noindex })}
-                className="flex w-full items-center justify-between gap-3 rounded-brutal border-2 border-ink bg-white px-4 py-3 text-left"
+                className="flex w-full items-center justify-between gap-3 rounded-card border border-ink/10 bg-white px-4 py-3 text-left shadow-soft"
               >
                 <span>
                   <span className="font-display text-sm font-extrabold">{t('edit.seoIndex')}</span>
                   <span className="block text-[11px] font-semibold text-ink/50">{t('edit.seoIndexHint')}</span>
                 </span>
-                <span className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${!theme.noindex ? 'bg-coral' : 'bg-white'}`}>
-                  <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${!theme.noindex ? 'left-4' : 'left-0.5'}`} />
+                <span className={`relative h-6 w-10 shrink-0 rounded-full transition ${!theme.noindex ? 'bg-coral' : 'bg-ink/15'}`}>
+                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${!theme.noindex ? 'left-[18px]' : 'left-0.5'}`} />
                 </span>
               </button>
             </div>
@@ -612,15 +638,15 @@ export default function Editor() {
 
           {/* THÈME & STYLE */}
           <Card id="sec-style" className={`scroll-mt-24 p-5 transition-shadow ${mCat('style')}${hl('style')}`}>
-            <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.theme')}</h2>
+            <SectionTitle emoji="🎨" className="mb-4">{t('edit.theme')}</SectionTitle>
             <ThemeEditor slug={routeSlug} theme={theme} plan={user?.plan || 'free'} onChange={setTheme} />
           </Card>
 
           {/* BOUTONS */}
           <Card id="sec-liens" className={`scroll-mt-24 p-5 transition-shadow ${mCat('liens')}${hl('liens')}`}>
-            <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">
-              {t('edit.buttons')} · {activeCount} {t('edit.buttonsActive')}
-            </h2>
+            <SectionTitle emoji="🔗">
+              {t('edit.buttons')} <span className="font-sans text-sm font-bold text-ink/45">· {activeCount} {t('edit.buttonsActive')}</span>
+            </SectionTitle>
 
             <div className="mt-4 space-y-2">
               {buttons.map((b, i) => (
@@ -628,7 +654,7 @@ export default function Editor() {
                   key={b.id}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onDrop(i)}
-                  className={`rounded-brutal border-2 border-ink bg-white p-2.5 ${b.isActive ? '' : 'opacity-50'}`}
+                  className={`rounded-card border border-ink/10 bg-white p-2.5 shadow-soft ${b.isActive ? '' : 'opacity-50'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -639,24 +665,26 @@ export default function Editor() {
                     >
                       <GripVertical size={16} />
                     </span>
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-ink" style={{ background: mode.cardBg }}>
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-ink/10" style={{ background: mode.cardBg }}>
                       <Icon name={b.icon} size={16} />
                     </span>
                     <input
                       value={b.label}
                       onChange={(e) => updateBtn(b.id, { label: e.target.value })}
-                      className="min-w-0 flex-1 rounded-lg border-2 border-ink px-2 py-1.5 font-display text-sm font-extrabold"
+                      className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 font-display text-sm font-extrabold transition focus:border-coral/50 focus:outline-none"
                     />
                     <div className="flex shrink-0 flex-col">
                       <button onClick={() => move(i, -1)} aria-label="↑" className="press"><ChevronUp size={16} /></button>
                       <button onClick={() => move(i, 1)} aria-label="↓" className="press"><ChevronDown size={16} /></button>
                     </div>
                     <button
+                      role="switch"
+                      aria-checked={b.isActive}
                       onClick={() => updateBtn(b.id, { isActive: !b.isActive })}
-                      className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${b.isActive ? 'bg-coral' : 'bg-white'}`}
+                      className={`relative h-6 w-10 shrink-0 rounded-full transition ${b.isActive ? 'bg-coral' : 'bg-ink/15'}`}
                       aria-label="actif"
                     >
-                      <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${b.isActive ? 'left-4' : 'left-0.5'}`} />
+                      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${b.isActive ? 'left-[18px]' : 'left-0.5'}`} />
                     </button>
                     <button onClick={() => removeBtn(b.id)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
                   </div>
@@ -674,9 +702,9 @@ export default function Editor() {
                         value={b.url || ''}
                         onChange={(e) => updateBtn(b.id, { url: e.target.value })}
                         placeholder={BUTTON_TYPES[b.type]?.urlPh || t('edit.url')}
-                        className="min-w-0 flex-1 rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                        className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
                       />
-                      <button type="button" onClick={() => pickBtnFile(b.id)} title={t('edit.uploadFile')} className="press grid shrink-0 place-items-center rounded-lg border-2 border-ink bg-white px-2.5">
+                      <button type="button" onClick={() => pickBtnFile(b.id)} title={t('edit.uploadFile')} className="press grid shrink-0 place-items-center rounded-lg border border-ink/15 bg-white px-2.5 shadow-soft">
                         <Upload size={15} />
                       </button>
                     </div>
@@ -703,7 +731,7 @@ export default function Editor() {
                   {b.type === 'reserve' && (
                     <div className="mt-2">
                       <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.reserve.mode')}</p>
-                      <div className="flex gap-1.5">
+                      <div className="flex rounded-xl bg-ink/5 p-0.5">
                         {['link', 'phone', 'form'].map((m) => {
                           const cur = b.config?.mode || 'link'
                           return (
@@ -711,7 +739,7 @@ export default function Editor() {
                               key={m}
                               type="button"
                               onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
-                              className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${cur === m ? 'bg-ink text-white' : 'bg-white'}`}
+                              className={`press flex-1 rounded-[10px] px-2 py-1.5 text-xs font-bold transition ${cur === m ? 'bg-white text-ink shadow-soft' : 'text-ink/55'}`}
                             >
                               {t('edit.reserve.' + m)}
                             </button>
@@ -723,7 +751,7 @@ export default function Editor() {
                           value={b.config?.phone || ''}
                           onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), phone: e.target.value } })}
                           placeholder="+33 6 12 34 56 78"
-                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                          className="mt-2 w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
                         />
                       )}
                       {(b.config?.mode || 'link') === 'form' && (
@@ -734,7 +762,7 @@ export default function Editor() {
                   {b.type === 'quote' && (
                     <div className="mt-2">
                       <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.quote.mode')}</p>
-                      <div className="flex gap-1.5">
+                      <div className="flex rounded-xl bg-ink/5 p-0.5">
                         {['whatsapp', 'email', 'form'].map((m) => {
                           const cur = b.config?.mode || 'form'
                           return (
@@ -742,7 +770,7 @@ export default function Editor() {
                               key={m}
                               type="button"
                               onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
-                              className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${cur === m ? 'bg-ink text-white' : 'bg-white'}`}
+                              className={`press flex-1 rounded-[10px] px-2 py-1.5 text-xs font-bold transition ${cur === m ? 'bg-white text-ink shadow-soft' : 'text-ink/55'}`}
                             >
                               {t('edit.quote.' + m)}
                             </button>
@@ -754,7 +782,7 @@ export default function Editor() {
                           value={b.config?.phone || ''}
                           onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), phone: e.target.value } })}
                           placeholder="+33 6 12 34 56 78"
-                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                          className="mt-2 w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
                         />
                       )}
                       {(b.config?.mode || 'form') === 'email' && (
@@ -762,7 +790,7 @@ export default function Editor() {
                           value={b.config?.email || ''}
                           onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), email: e.target.value } })}
                           placeholder="contact@exemple.com"
-                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                          className="mt-2 w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
                         />
                       )}
                       <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.quote.hint')}</p>
@@ -771,7 +799,7 @@ export default function Editor() {
                   {b.type === 'contact' && (
                     <div className="mt-2">
                       <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.contact.mode')}</p>
-                      <div className="flex gap-1.5">
+                      <div className="flex rounded-xl bg-ink/5 p-0.5">
                         {['form', 'email', 'whatsapp'].map((m) => {
                           const cur = b.config?.mode || 'form'
                           return (
@@ -779,7 +807,7 @@ export default function Editor() {
                               key={m}
                               type="button"
                               onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
-                              className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${cur === m ? 'bg-ink text-white' : 'bg-white'}`}
+                              className={`press flex-1 rounded-[10px] px-2 py-1.5 text-xs font-bold transition ${cur === m ? 'bg-white text-ink shadow-soft' : 'text-ink/55'}`}
                             >
                               {t('edit.contact.' + m)}
                             </button>
@@ -791,7 +819,7 @@ export default function Editor() {
                           value={b.config?.email || ''}
                           onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), email: e.target.value } })}
                           placeholder="contact@exemple.com"
-                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                          className="mt-2 w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
                         />
                       )}
                       {(b.config?.mode || 'form') === 'whatsapp' && (
@@ -799,7 +827,7 @@ export default function Editor() {
                           value={b.config?.phone || ''}
                           onChange={(e) => updateBtn(b.id, { config: { ...(b.config || {}), phone: e.target.value } })}
                           placeholder="+33 6 12 34 56 78"
-                          className="mt-2 w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+                          className="mt-2 w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
                         />
                       )}
                       <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.contact.hint')}</p>
@@ -810,7 +838,7 @@ export default function Editor() {
                       <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.ctaIdeas')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {(EMO_CTAS[page.mode]?.[lang] || EMO_CTAS[page.mode]?.fr || []).map((s) => (
-                          <button key={s} type="button" onClick={() => updateBtn(b.id, { label: s })} className="press rounded-full border-2 border-ink bg-cream px-2.5 py-1 text-xs font-bold">
+                          <button key={s} type="button" onClick={() => updateBtn(b.id, { label: s })} className="press rounded-full border border-ink/15 bg-cream px-2.5 py-1 text-xs font-bold">
                             {s}
                           </button>
                         ))}
@@ -824,7 +852,7 @@ export default function Editor() {
                             min="1"
                             value={(theme.tipAmounts || [3, 5, 10, 20])[idx] ?? ''}
                             onChange={(e) => setTipAmount(idx, e.target.value)}
-                            className="w-16 rounded-lg border-2 border-ink px-2 py-1.5 text-sm font-bold"
+                            className="w-16 rounded-lg border border-ink/15 px-2 py-1.5 text-sm font-bold transition focus:border-coral/50 focus:outline-none"
                           />
                         ))}
                       </div>
@@ -845,7 +873,7 @@ export default function Editor() {
                     <button onClick={() => setShowPicker(false)}><X size={16} /></button>
                   </div>
                   {/* Smart Content : colle un lien → carte auto, ou carte visuelle manuelle */}
-                  <div className="space-y-3 rounded-brutal border-2 border-ink bg-cream/70 p-3">
+                  <div className="space-y-3 rounded-card border border-ink/10 bg-cream/70 p-3">
                     <SmartLinkInput onAdd={addSmartBtn} />
                     <SmartManualTiles onAdd={addSmartBtn} />
                   </div>
@@ -861,7 +889,7 @@ export default function Editor() {
                           <button
                             key={s.type + s.label}
                             onClick={() => addBtn(s.type, s.label)}
-                            className="press flex items-center gap-2 rounded-lg border-2 border-coral bg-coral/5 px-2.5 py-2 text-left text-sm font-bold"
+                            className="press flex items-center gap-2 rounded-lg border border-coral/40 bg-coral/5 px-2.5 py-2 text-left text-sm font-bold shadow-soft"
                           >
                             <Icon name={BUTTON_TYPES[s.type].icon} size={16} /> {s.label || BUTTON_TYPES[s.type].label[lang] || BUTTON_TYPES[s.type].label.fr}
                           </button>
@@ -883,7 +911,7 @@ export default function Editor() {
                           {entries.map((key) => {
                             const def = BUTTON_TYPES[key]
                             return (
-                              <button key={key} onClick={() => addBtn(key)} className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold">
+                              <button key={key} onClick={() => addBtn(key)} className="press flex items-center gap-2 rounded-lg border border-ink/12 bg-white px-2.5 py-2 text-left text-sm font-bold">
                                 <Icon name={def.icon} size={16} /> {def.label[lang] || def.label.fr}
                               </button>
                             )
@@ -900,13 +928,13 @@ export default function Editor() {
 
           {/* SMART SOCIALS — catégorie mobile dédiée « Réseaux » (séparée des boutons) */}
           <Card id="sec-reseaux" className={`scroll-mt-24 p-5 transition-shadow ${mCat('reseaux')}${hl('reseaux')}`}>
-            <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.socials.title')}</h2>
+            <SectionTitle emoji="📲" className="mb-4">{t('edit.socials.title')}</SectionTitle>
             <SmartSocialsEditor theme={theme} onChange={setTheme} />
           </Card>
 
           {/* PRODUITS DIGITAUX */}
           <Card id="sec-produits" className={`scroll-mt-24 p-5 transition-shadow ${mCat('produits')}${hl('produits')}`}>
-            <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.products')}</h2>
+            <SectionTitle emoji="🛍️" className="mb-4">{t('edit.products')}</SectionTitle>
             <ProductsEditor slug={routeSlug} products={products} onReload={loadProducts} />
           </Card>
         </div>
@@ -918,7 +946,16 @@ export default function Editor() {
           className={`relative lg:sticky lg:top-24 lg:self-start ${sheet ? 'max-lg:fixed max-lg:left-1/2 max-lg:top-14 max-lg:z-30 max-lg:w-[340px] max-lg:origin-top max-lg:-translate-x-1/2 max-lg:scale-[var(--pv-scale)]' : ''}`}
           style={{ '--pv-scale': pvScale }}
         >
-          <p className={`font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50 ${sheet ? 'max-lg:hidden' : ''}`}>{t('edit.preview')}</p>
+          <div className={`mb-3 flex justify-center ${sheet ? 'max-lg:hidden' : ''}`}>
+            <Badge color="white">{t('edit.preview')}</Badge>
+          </div>
+          {/* Halo d'accent flou derrière le téléphone : l'aperçu est mis en scène,
+              teinté par la couleur d'accent de la page elle-même. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-6 bottom-6 top-14 rounded-[48px] opacity-20 blur-[60px]"
+            style={{ background: theme.accent || mode.accent }}
+          />
           <PhoneFrame bg={mode.cardBg} bare>
             <BioImmersive
               page={page}
@@ -938,7 +975,7 @@ export default function Editor() {
                 onClick={() => openSection(cat)}
                 title={t(label)}
                 aria-label={t(label)}
-                className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-lg shadow-hard-sm transition-transform hover:-translate-y-0.5"
+                className="press grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-white text-lg shadow-soft transition-transform hover:-translate-y-0.5"
               >
                 <span aria-hidden>{emoji}</span>
               </button>
@@ -958,7 +995,7 @@ export default function Editor() {
                 type="button"
                 onClick={() => openSection(cat)}
                 aria-label={t(label)}
-                className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white/95 text-lg shadow-hard-sm backdrop-blur"
+                className="press grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-white/95 text-lg shadow-soft backdrop-blur"
               >
                 <span aria-hidden>{emoji}</span>
               </button>

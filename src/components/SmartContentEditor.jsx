@@ -51,13 +51,13 @@ export function SmartLinkInput({ onAdd }) {
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !busy && resolve()}
           placeholder={t('edit.smart.paste')}
-          className="min-w-0 flex-1 rounded-lg border-2 border-ink px-2.5 py-2 text-sm font-semibold"
+          className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2.5 py-2 text-sm font-semibold"
         />
         <button
           type="button"
           onClick={resolve}
           disabled={busy || !url.trim()}
-          className="press shrink-0 rounded-lg border-2 border-ink bg-ink px-3 py-2 text-sm font-extrabold text-white disabled:opacity-40"
+          className="press shrink-0 rounded-lg border border-ink/15 bg-ink px-3 py-2 text-sm font-extrabold text-white disabled:opacity-40"
         >
           {busy ? <Loader2 size={16} className="animate-spin" /> : t('edit.smart.add')}
         </button>
@@ -88,7 +88,7 @@ export function SmartManualTiles({ onAdd }) {
             type="button"
             // Cartes visuelles : affichées en entier par défaut (le Peek cacherait le visuel).
             onClick={() => onAdd({ kind, url: '', peek: false, meta: {}, images: [] }, t(labelKey))}
-            className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold"
+            className="press flex items-center gap-2 rounded-lg border border-ink/15 bg-white px-2.5 py-2 text-left text-sm font-bold"
           >
             <Ic size={16} /> {t(labelKey)}
           </button>
@@ -143,9 +143,9 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
             {(cfg.images || []).map((src, i) => (
               <span key={i} className="group relative">
                 {/\.(mp4|webm|mov)(\?|$)/i.test(src) ? (
-                  <video src={src} muted playsInline className="h-12 w-12 rounded-lg border-2 border-ink object-cover" />
+                  <video src={src} muted playsInline className="h-12 w-12 rounded-lg border border-ink/15 object-cover" />
                 ) : (
-                  <img src={src} alt="" className="h-12 w-12 rounded-lg border-2 border-ink object-cover" />
+                  <img src={src} alt="" className="h-12 w-12 rounded-lg border border-ink/15 object-cover" />
                 )}
                 {cfg.kind === 'beforeafter' && (
                   <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded bg-ink px-1 text-[8px] font-extrabold uppercase text-white">
@@ -186,7 +186,7 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
         value={cfg.meta?.title || ''}
         onChange={(e) => set({ meta: { ...(cfg.meta || {}), title: e.target.value } })}
         placeholder={t('edit.smart.titleField')}
-        className="w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+        className="w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm"
       />
 
       {/* Lien au clic */}
@@ -194,7 +194,7 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
         value={cfg.url || ''}
         onChange={(e) => set({ url: e.target.value })}
         placeholder={t('edit.smart.destination')}
-        className="w-full rounded-lg border-2 border-ink/30 px-2 py-1.5 text-sm"
+        className="w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm"
       />
 
       {/* Mode Peek — cartes média (pas l'avant/après dont le slider EST l'interaction) */}
@@ -202,14 +202,14 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
         <button
           type="button"
           onClick={() => set({ peek: !cfg.peek })}
-          className="flex w-full items-center justify-between gap-2 rounded-lg border-2 border-ink/20 bg-cream/60 px-2.5 py-2 text-left"
+          className="flex w-full items-center justify-between gap-2 rounded-lg border border-ink/15 bg-cream/60 px-2.5 py-2 text-left"
         >
           <span>
             <span className="block text-xs font-extrabold">{t('edit.smart.peek')}</span>
             <span className="block text-[10px] font-medium text-ink/50">{t('edit.smart.peekHint')}</span>
           </span>
-          <span className={`relative h-5 w-9 shrink-0 rounded-full border-2 border-ink transition ${cfg.peek ? 'bg-coral' : 'bg-white'}`}>
-            <span className={`absolute top-0.5 h-3 w-3 rounded-full border-2 border-ink bg-white transition-all ${cfg.peek ? 'left-4' : 'left-0.5'}`} />
+          <span className={`relative h-5 w-9 shrink-0 rounded-full transition ${cfg.peek ? 'bg-coral' : 'bg-ink/15'}`}>
+            <span className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white shadow transition-all ${cfg.peek ? 'left-4' : 'left-0.5'}`} />
           </span>
         </button>
       )}

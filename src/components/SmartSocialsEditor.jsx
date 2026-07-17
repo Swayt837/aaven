@@ -31,7 +31,7 @@ function StatField({ network, url, value, onChange, t }) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('edit.socials.statPh')}
         disabled={!url}
-        className="w-16 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-center text-sm disabled:opacity-40"
+        className="w-16 rounded-lg border border-ink/15 px-2 py-1.5 text-center text-sm disabled:opacity-40"
         maxLength={12}
       />
       {canAuto && (
@@ -74,7 +74,7 @@ function Seg({ options, value, onChange, t }) {
           key={val}
           type="button"
           onClick={() => onChange(val)}
-          className={`press flex-1 rounded-lg border-2 border-ink px-2 py-1.5 text-xs font-bold ${value === val ? 'bg-ink text-white' : 'bg-white'}`}
+          className={`press flex-1 rounded-lg border border-ink/15 px-2 py-1.5 text-xs font-bold ${value === val ? 'bg-ink text-white' : 'bg-white'}`}
         >
           {t(key)}
         </button>
@@ -125,14 +125,14 @@ export function SmartSocialsEditor({ theme, onChange }) {
           const cur = byNetwork[key]
           return (
             <div key={key} className="flex items-center gap-2">
-              <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 ${cur?.url ? 'border-ink bg-ink text-white' : 'border-ink/20 text-ink/40'}`} title={label}>
+              <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${cur?.url ? 'border-ink bg-ink text-white' : 'border-ink/20 text-ink/40'}`} title={label}>
                 <Ic size={15} />
               </span>
               <input
                 value={cur?.url || ''}
                 onChange={(e) => setNetwork(key, { url: e.target.value })}
                 placeholder={ph}
-                className="min-w-0 flex-1 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 text-sm"
               />
               <StatField
                 network={key}
@@ -148,14 +148,14 @@ export function SmartSocialsEditor({ theme, onChange }) {
         {/* Sites web : plusieurs possibles → une icône (favicon) + modale de liens */}
         {websites.map((w, i) => (
           <div key={`web-${i}`} className="flex items-center gap-2">
-            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 ${w.url ? 'border-ink bg-ink text-white' : 'border-ink/20 text-ink/40'}`} title="Site web">
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${w.url ? 'border-ink bg-ink text-white' : 'border-ink/20 text-ink/40'}`} title="Site web">
               <Globe size={15} />
             </span>
             <input
               value={w.url || ''}
               onChange={(e) => setWebsite(i, { url: e.target.value })}
               placeholder="https://..."
-              className="min-w-0 flex-1 rounded-lg border-2 border-ink/25 px-2 py-1.5 text-sm"
+              className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 text-sm"
             />
             <button type="button" onClick={() => removeWebsite(i)} aria-label={t('common.delete')} className="press shrink-0 text-coral">
               <Trash2 size={15} />
@@ -188,11 +188,11 @@ export function SmartSocialsEditor({ theme, onChange }) {
         <button
           type="button"
           onClick={() => setCfg({ animations: cfg.animations === false })}
-          className="flex w-full items-center justify-between gap-3 rounded-lg border-2 border-ink/20 bg-cream/60 px-2.5 py-2 text-left"
+          className="flex w-full items-center justify-between gap-3 rounded-lg border border-ink/15 bg-cream/60 px-2.5 py-2 text-left"
         >
           <span className="text-xs font-extrabold">{t('edit.socials.animations')}</span>
-          <span className={`relative h-5 w-9 shrink-0 rounded-full border-2 border-ink transition ${cfg.animations !== false ? 'bg-coral' : 'bg-white'}`}>
-            <span className={`absolute top-0.5 h-3 w-3 rounded-full border-2 border-ink bg-white transition-all ${cfg.animations !== false ? 'left-4' : 'left-0.5'}`} />
+          <span className={`relative h-5 w-9 shrink-0 rounded-full transition ${cfg.animations !== false ? 'bg-coral' : 'bg-ink/15'}`}>
+            <span className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white shadow transition-all ${cfg.animations !== false ? 'left-4' : 'left-0.5'}`} />
           </span>
         </button>
       </div>
