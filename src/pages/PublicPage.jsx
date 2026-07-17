@@ -12,6 +12,7 @@ import { ShareStory } from '../components/ShareStory'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
 import { getTheme } from '../lib/themes'
+import { toast } from '../components/Toast'
 
 export default function PublicPage({ slug: slugProp }) {
   const params = useParams()
@@ -70,7 +71,7 @@ export default function PublicPage({ slug: slugProp }) {
       const r = await api.buyProduct(slug, pr.id)
       if (r.url) window.location.href = r.url
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
     }
   }
 

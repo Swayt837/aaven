@@ -22,9 +22,9 @@ export function LinksEditor({ items, onChange, labelKeys = {} }) {
         {list.map((it, i) => {
           const fav = it.url ? faviconUrl(it.url) : null
           return (
-            <div key={i} className="space-y-1.5 rounded-lg border-2 border-ink/20 p-2">
+            <div key={i} className="space-y-1.5 rounded-lg border border-ink/15 p-2">
               <div className="flex items-center gap-1.5">
-                <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg border-2 border-ink/15 bg-cream">
+                <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-ink/15 bg-cream">
                   {fav ? <img src={fav} alt="" width={16} height={16} onError={(e) => { e.currentTarget.style.display = 'none' }} /> : <LinkIcon size={14} className="text-ink/40" />}
                 </span>
                 <Input value={it.url || ''} onChange={(e) => update(i, { url: e.target.value })} placeholder={t(k.url)} />

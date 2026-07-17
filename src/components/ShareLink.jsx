@@ -32,13 +32,13 @@ export function ShareLink({ url, className = '' }) {
 
   return (
     <div className={`flex items-stretch gap-2 ${className}`}>
-      <div className="flex min-w-0 flex-1 items-center rounded-brutal border-2 border-ink bg-white px-3 text-sm font-bold">
+      <div className="flex min-w-0 flex-1 items-center rounded-brutal border border-ink/15 bg-white px-3 text-sm font-bold">
         <span className="truncate">{url.replace(/^https?:\/\//, '')}</span>
       </div>
       <button
         type="button"
         onClick={copy}
-        className={`press flex shrink-0 items-center gap-1.5 rounded-brutal border-2 border-ink px-3 py-2 text-sm font-extrabold ${copied ? 'bg-green-200' : 'bg-sun'}`}
+        className={`press flex shrink-0 items-center gap-1.5 rounded-brutal border border-ink/15 px-3 py-2 text-sm font-extrabold ${copied ? 'bg-green-200' : 'bg-sun'}`}
       >
         {copied ? <><Check size={16} strokeWidth={3} /> {t('share.copied')}</> : <><Copy size={16} /> {t('share.copy')}</>}
       </button>
@@ -47,7 +47,7 @@ export function ShareLink({ url, className = '' }) {
           type="button"
           onClick={share}
           aria-label={t('share.share')}
-          className="press flex shrink-0 items-center justify-center rounded-brutal border-2 border-ink bg-white px-3 py-2"
+          className="press flex shrink-0 items-center justify-center rounded-brutal border border-ink/15 bg-white px-3 py-2"
         >
           <Share2 size={16} />
         </button>

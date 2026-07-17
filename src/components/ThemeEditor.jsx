@@ -7,6 +7,7 @@ import { LAYOUTS } from '../lib/themes'
 import { STYLES, FONTS, BUTTON_STYLES, TEMPLATES, PERSONAS } from '../lib/templates'
 import { ImageFramer } from './ImageFramer'
 import { UpgradeModal } from './UpgradeModal'
+import { toast } from './Toast'
 
 // Vignette vidéo : affiche la DERNIÈRE frame (cale la lecture à la fin, sans jouer).
 function VideoThumb({ src, poster }) {
@@ -59,7 +60,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       if (!isGif) {
         const dur = await readDuration(file).catch(() => 0)
         const max = isPro ? 30.5 : 8.5
-        if (dur > max) { e.target.value = ''; return alert(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
+        if (dur > max) { e.target.value = ''; return toast.error(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
       }
       setUploadingVideo(true)
       const { url } = await api.uploadMedia(slug, file)
@@ -128,7 +129,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
                     type="button"
                     onClick={() => applyTemplate(tpl)}
                     title={tpl.desc[lang] || tpl.desc.fr}
-                    className={`group relative aspect-[3/4] overflow-hidden rounded-xl border-2 border-ink text-left shadow-hard-sm transition ${theme.template === tpl.key ? 'ring-2 ring-coral ring-offset-2' : 'hover:-translate-y-0.5'}`}
+                    className={`group relative aspect-[3/4] overflow-hidden rounded-xl border border-ink/15 text-left shadow-soft transition ${theme.template === tpl.key ? 'ring-2 ring-coral ring-offset-2' : 'hover:-translate-y-0.5'}`}
                   >
                     {vid ? (
                       <VideoThumb src={vid} poster={tpl.preview} />
@@ -137,7 +138,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
                     )}
                     <span className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.78) 12%, rgba(0,0,0,.05) 60%)' }} />
                     {theme.template === tpl.key && (
-                      <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full border-2 border-ink bg-white">
+                      <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full border border-ink/15 bg-white">
                         <Check size={12} strokeWidth={3} />
                       </span>
                     )}
@@ -159,7 +160,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="press flex flex-1 items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 font-display text-sm font-extrabold shadow-hard-sm disabled:opacity-50"
+            className="press flex flex-1 items-center justify-center gap-2 rounded-brutal border border-ink/15 bg-white py-2.5 font-display text-sm font-extrabold shadow-soft disabled:opacity-50"
           >
             <Upload size={16} /> {uploading ? t('edit.uploading') : t('edit.upload')}
           </button>
@@ -167,7 +168,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
             type="button"
             onClick={() => (!isFree ? videoRef.current?.click() : setUpgrade(true))}
             disabled={uploadingVideo}
-            className="press flex flex-1 items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 font-display text-sm font-extrabold shadow-hard-sm disabled:opacity-50"
+            className="press flex flex-1 items-center justify-center gap-2 rounded-brutal border border-ink/15 bg-white py-2.5 font-display text-sm font-extrabold shadow-soft disabled:opacity-50"
           >
             {!isFree ? <Film size={16} /> : <Lock size={14} />} {uploadingVideo ? t('edit.uploading') : t('edit.uploadMedia')}
           </button>
@@ -179,7 +180,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
 
         {theme.bgVideo && theme.bgVideoOwn ? (
           <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-between rounded-brutal border-2 border-ink bg-cream px-3 py-2 text-sm font-bold">
+            <div className="flex items-center justify-between rounded-brutal border border-ink/15 bg-cream px-3 py-2 text-sm font-bold">
               <span className="flex items-center gap-2"><Film size={16} /> {t('edit.videoSet')}</span>
               <button type="button" onClick={() => set({ bgVideo: '', bgVideoOwn: false })} className="text-coral">{t('edit.removePhoto')}</button>
             </div>
@@ -221,7 +222,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
               key={key}
               type="button"
               onClick={() => set({ style: key, font: s.font, btnStyle: s.btn })}
-              className={`rounded-lg border-2 border-ink px-1 py-2 text-[11px] font-extrabold transition ${theme.style === key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
+              className={`rounded-lg border border-ink/15 px-1 py-2 text-[11px] font-extrabold transition ${theme.style === key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
             >
               {s.name[lang] || s.name.fr}
             </button>
@@ -238,7 +239,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
               key={l.key}
               type="button"
               onClick={() => set({ layout: l.key })}
-              className={`flex flex-col items-center gap-1 rounded-lg border-2 border-ink px-1 py-2 text-[10px] font-extrabold uppercase transition ${theme.layout === l.key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
+              className={`flex flex-col items-center gap-1 rounded-lg border border-ink/15 px-1 py-2 text-[10px] font-extrabold uppercase transition ${theme.layout === l.key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
             >
               <span className="text-base leading-none">{l.emoji}</span>
               {l.label[lang] || l.label.fr}
@@ -258,7 +259,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
               onClick={() => set({ font: key })}
               title={f.name[lang] || f.name.fr}
               style={{ fontFamily: f.css }}
-              className={`rounded-lg border-2 border-ink px-1 py-2 text-base font-extrabold transition ${theme.font === key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
+              className={`rounded-lg border border-ink/15 px-1 py-2 text-base font-extrabold transition ${theme.font === key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
             >
               Aa
             </button>
@@ -275,7 +276,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
               key={key}
               type="button"
               onClick={() => set({ btnStyle: key })}
-              className={`rounded-lg border-2 border-ink px-1 py-2 text-[11px] font-extrabold transition ${theme.btnStyle === key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
+              className={`rounded-lg border border-ink/15 px-1 py-2 text-[11px] font-extrabold transition ${theme.btnStyle === key ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}
             >
               {b.name[lang] || b.name.fr}
             </button>
@@ -288,7 +289,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
         <Label>{t('edit.btnSize')}</Label>
         <div className="grid grid-cols-3 gap-1.5">
           {[['sm', 'edit.btnSize.sm'], ['md', 'edit.btnSize.md'], ['lg', 'edit.btnSize.lg']].map(([k, lab]) => (
-            <button key={k} type="button" onClick={() => set({ btnSize: k })} className={`rounded-lg border-2 border-ink px-1 py-2 text-[11px] font-extrabold transition ${(theme.btnSize || 'md') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
+            <button key={k} type="button" onClick={() => set({ btnSize: k })} className={`rounded-lg border border-ink/15 px-1 py-2 text-[11px] font-extrabold transition ${(theme.btnSize || 'md') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
               {t(lab)}
             </button>
           ))}
@@ -299,14 +300,14 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       <button
         type="button"
         onClick={() => set({ featureFirst: theme.featureFirst === false })}
-        className="flex w-full items-center justify-between gap-3 rounded-brutal border-2 border-ink bg-white px-4 py-3 text-left"
+        className="flex w-full items-center justify-between gap-3 rounded-brutal border border-ink/15 bg-white px-4 py-3 text-left"
       >
         <span>
           <span className="font-display text-sm font-extrabold">{t('edit.featureFirst')}</span>
           <span className="block text-[11px] font-semibold text-ink/50">{t('edit.featureFirstHint')}</span>
         </span>
-        <span className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${theme.featureFirst !== false ? 'bg-coral' : 'bg-white'}`}>
-          <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${theme.featureFirst !== false ? 'left-4' : 'left-0.5'}`} />
+        <span className={`relative h-6 w-10 shrink-0 rounded-full transition ${theme.featureFirst !== false ? 'bg-coral' : 'bg-ink/15'}`}>
+          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${theme.featureFirst !== false ? 'left-[18px]' : 'left-0.5'}`} />
         </span>
       </button>
 
@@ -315,7 +316,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
         <Label>{t('edit.headlineStyle')}</Label>
         <div className="grid grid-cols-5 gap-1.5">
           {[['pill', 'edit.hl.pill'], ['line', 'edit.hl.line'], ['accent', 'edit.hl.accent'], ['outline', 'edit.hl.outline'], ['serif', 'edit.hl.serif']].map(([k, lab]) => (
-            <button key={k} type="button" onClick={() => set({ headlineStyle: k })} className={`rounded-lg border-2 border-ink px-1 py-2 text-[10px] font-extrabold transition ${(theme.headlineStyle || 'pill') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
+            <button key={k} type="button" onClick={() => set({ headlineStyle: k })} className={`rounded-lg border border-ink/15 px-1 py-2 text-[10px] font-extrabold transition ${(theme.headlineStyle || 'pill') === k ? 'bg-ink text-white' : 'bg-white hover:-translate-y-0.5'}`}>
               {t(lab)}
             </button>
           ))}
@@ -326,14 +327,14 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       <div className="flex flex-wrap items-end gap-4 border-t-2 border-ink/10 pt-3">
         <div>
           <Label>{t('edit.textColor')}</Label>
-          <div className="inline-flex overflow-hidden rounded-lg border-2 border-ink text-xs font-extrabold">
+          <div className="inline-flex overflow-hidden rounded-lg border border-ink/15 text-xs font-extrabold">
             <button type="button" onClick={() => set({ text: 'dark' })} className={`px-3 py-1.5 ${theme.text === 'dark' ? 'bg-ink text-white' : 'bg-white'}`}>{t('edit.textDark')}</button>
             <button type="button" onClick={() => set({ text: 'light' })} className={`px-3 py-1.5 ${theme.text === 'light' ? 'bg-ink text-white' : 'bg-white'}`}>{t('edit.textLight')}</button>
           </div>
         </div>
         <label className="text-xs font-bold">
           <span className="mb-1 flex items-center gap-1"><Sparkles size={12} /> {t('edit.accent')}</span>
-          <input type="color" value={theme.accent} onChange={(e) => set({ accent: e.target.value })} className="h-9 w-14 cursor-pointer rounded-lg border-2 border-ink" />
+          <input type="color" value={theme.accent} onChange={(e) => set({ accent: e.target.value })} className="h-9 w-14 cursor-pointer rounded-lg border border-ink/15" />
         </label>
       </div>
 
@@ -341,14 +342,14 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       <button
         type="button"
         onClick={() => set({ showSupporters: !theme.showSupporters })}
-        className="flex w-full items-center justify-between gap-3 rounded-brutal border-2 border-ink bg-white px-4 py-3 text-left"
+        className="flex w-full items-center justify-between gap-3 rounded-brutal border border-ink/15 bg-white px-4 py-3 text-left"
       >
         <span>
           <span className="font-display text-sm font-extrabold">{t('edit.supporters')}</span>
           <span className="block text-[11px] font-semibold text-ink/50">{t('edit.supportersHint')}</span>
         </span>
-        <span className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${theme.showSupporters ? 'bg-coral' : 'bg-white'}`}>
-          <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${theme.showSupporters ? 'left-4' : 'left-0.5'}`} />
+        <span className={`relative h-6 w-10 shrink-0 rounded-full transition ${theme.showSupporters ? 'bg-coral' : 'bg-ink/15'}`}>
+          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${theme.showSupporters ? 'left-[18px]' : 'left-0.5'}`} />
         </span>
       </button>
 

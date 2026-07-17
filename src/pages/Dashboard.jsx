@@ -10,6 +10,7 @@ import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { modeOf } from '../lib/modes'
 import { track } from '../lib/analytics'
+import { toast } from '../components/Toast'
 
 const FEE_LABEL = { free: '5%', creator: '1%', pro: '0%' }
 
@@ -20,6 +21,9 @@ export default function Dashboard() {
   const [pages, setPages] = useState(null)
   const [connect, setConnect] = useState(null)
   const [connecting, setConnecting] = useState(false)
+  // Suppression en 2 taps (remplace le confirm() natif) : le 1er tap arme le
+  // bouton (« Confirmer ? ») pendant 3,5 s, le 2e supprime vraiment.
+  const [confirmSlug, setConfirmSlug] = useState(null)
 
   async function load() {
     const { pages } = await api.myPages()
@@ -47,7 +51,7 @@ export default function Dashboard() {
       if (r.url) { track('checkout_started', { plan: p }); window.location.href = r.url }
       else await refresh()
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
     }
   }
   async function manage() {
@@ -56,7 +60,7 @@ export default function Dashboard() {
       if (r.url) window.location.href = r.url
       else { await api.billingDowngrade(); await refresh() } // démo : repasse en Free
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
     }
   }
 
@@ -67,16 +71,26 @@ export default function Dashboard() {
       if (r.url) window.location.href = r.url
       else setConnect({ demo: true, connected: true, payoutsEnabled: true })
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
     } finally {
       setConnecting(false)
     }
   }
 
   async function remove(slug) {
-    if (!confirm(t('dash.delete.confirm'))) return
-    await api.deletePage(slug)
-    load()
+    if (confirmSlug !== slug) {
+      setConfirmSlug(slug)
+      setTimeout(() => setConfirmSlug((c) => (c === slug ? null : c)), 3500)
+      return
+    }
+    setConfirmSlug(null)
+    try {
+      await api.deletePage(slug)
+      toast(t('dash.deleted'))
+      load()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
@@ -164,7 +178,7 @@ export default function Dashboard() {
                     <Button as={Link} to={`/stats/${p.slug}`} variant="secondary" size="sm">{t('dash.stats')}</Button>
                     <Button as="a" href={`/${p.slug}`} target="_blank" rel="noreferrer" variant="dark" size="sm">{t('dash.see')}</Button>
                     <Button variant="danger" size="sm" onClick={() => remove(p.slug)} aria-label={t('common.delete')}>
-                      <Trash2 size={16} />
+                      {confirmSlug === p.slug ? <span className="px-1 text-xs font-extrabold">{t('common.confirmDel')}</span> : <Trash2 size={16} />}
                     </Button>
                   </div>
                 </Card>

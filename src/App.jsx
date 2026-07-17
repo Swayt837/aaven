@@ -24,6 +24,7 @@ const Blog = lazy(() => import('./pages/Blog'))
 import { SEO_SLUGS } from './lib/seoContent'
 import { PROFESSION_SLUGS } from './lib/professions'
 import { CookieBanner } from './components/CookieBanner'
+import { Toasts } from './components/Toast'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -48,6 +49,7 @@ export default function App() {
         <Routes>
           <Route path="*" element={<PublicPage slug={forcedSub} />} />
         </Routes>
+        <Toasts />
         <CookieBanner />
       </>
     )
@@ -78,6 +80,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      <Toasts />
       <CookieBanner />
     </>
   )

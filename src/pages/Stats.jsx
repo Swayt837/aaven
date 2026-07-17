@@ -6,6 +6,7 @@ import { Button, Card } from '../components/ui'
 import { Icon } from '../components/Icon'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
+import { toast } from '../components/Toast'
 
 export default function Stats() {
   const { slug } = useParams()
@@ -30,7 +31,7 @@ export default function Stats() {
       setTips((ts) => ts.map((x) => (x.id === id ? { ...x, reply: tip.reply } : x)))
       setReplies((r) => ({ ...r, [id]: '' }))
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
     }
   }
 

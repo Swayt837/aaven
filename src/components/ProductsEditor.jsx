@@ -3,6 +3,7 @@ import { Trash2, Plus, Upload, X } from 'lucide-react'
 import { Button, Input, Textarea, Label } from './ui'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
+import { toast } from './Toast'
 
 // Gestion des produits digitaux d'une page (liste + ajout + suppression + actif).
 export function ProductsEditor({ slug, products, onReload }) {
@@ -17,6 +18,8 @@ export function ProductsEditor({ slug, products, onReload }) {
   const [busy, setBusy] = useState(false)
   const [coverBusy, setCoverBusy] = useState(false)
   const [err, setErr] = useState('')
+  // Suppression en 2 taps (remplace le confirm() natif) : 1er tap = « Confirmer ? ».
+  const [confirmId, setConfirmId] = useState(null)
   const coverRef = useRef(null)
 
   async function onCoverFile(e) {
@@ -58,20 +61,29 @@ export function ProductsEditor({ slug, products, onReload }) {
     onReload()
   }
   async function remove(p) {
-    if (!confirm(`${t('common.delete')} « ${p.title} » ?`)) return
-    await api.deleteProduct(slug, p.id)
-    onReload()
+    if (confirmId !== p.id) {
+      setConfirmId(p.id)
+      setTimeout(() => setConfirmId((c) => (c === p.id ? null : c)), 3500)
+      return
+    }
+    setConfirmId(null)
+    try {
+      await api.deleteProduct(slug, p.id)
+      onReload()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
     <div>
       <div className="space-y-2">
         {products.map((p) => (
-          <div key={p.id} className={`flex items-center gap-2 rounded-brutal border-2 border-ink bg-white p-2.5 ${p.active ? '' : 'opacity-50'}`}>
+          <div key={p.id} className={`flex items-center gap-2 rounded-brutal border border-ink/15 bg-white p-2.5 ${p.active ? '' : 'opacity-50'}`}>
             {p.coverImage ? (
-              <img src={p.coverImage} alt="" className="h-10 w-10 shrink-0 rounded-lg border-2 border-ink object-cover" />
+              <img src={p.coverImage} alt="" className="h-10 w-10 shrink-0 rounded-lg border border-ink/15 object-cover" />
             ) : (
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border-2 border-ink bg-cream">📦</span>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-ink/15 bg-cream">📦</span>
             )}
             <div className="min-w-0 flex-1">
               <p className="truncate font-display text-sm font-extrabold">{p.title}</p>
@@ -79,18 +91,20 @@ export function ProductsEditor({ slug, products, onReload }) {
             </div>
             <button
               onClick={() => toggle(p)}
-              className={`relative h-6 w-10 shrink-0 rounded-full border-2 border-ink transition ${p.active ? 'bg-coral' : 'bg-white'}`}
+              className={`relative h-6 w-10 shrink-0 rounded-full transition ${p.active ? 'bg-coral' : 'bg-ink/15'}`}
               aria-label="actif"
             >
-              <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${p.active ? 'left-4' : 'left-0.5'}`} />
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${p.active ? 'left-[18px]' : 'left-0.5'}`} />
             </button>
-            <button onClick={() => remove(p)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
+            <button onClick={() => remove(p)} aria-label={t('common.delete')} className="press shrink-0 text-coral">
+              {confirmId === p.id ? <span className="text-xs font-extrabold">{t('common.confirmDel')}</span> : <Trash2 size={16} />}
+            </button>
           </div>
         ))}
       </div>
 
       {open ? (
-        <div className="mt-3 rounded-brutal border-2 border-ink bg-cream p-3">
+        <div className="mt-3 rounded-brutal border border-ink/15 bg-cream p-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-display text-xs font-extrabold uppercase text-ink/60">{t('edit.addProduct')}</span>
             <button onClick={() => setOpen(false)}><X size={16} /></button>
@@ -105,16 +119,16 @@ export function ProductsEditor({ slug, products, onReload }) {
               <Label>{t('edit.prodCover')}</Label>
               <div className="flex gap-2">
                 <Input value={coverImage} onChange={(e) => setCoverImage(e.target.value)} placeholder="https://…" />
-                <button type="button" onClick={() => coverRef.current?.click()} disabled={coverBusy} title={t('edit.uploadCover')} className="press grid shrink-0 place-items-center rounded-brutal border-2 border-ink bg-white px-3 shadow-hard-sm disabled:opacity-50">
+                <button type="button" onClick={() => coverRef.current?.click()} disabled={coverBusy} title={t('edit.uploadCover')} className="press grid shrink-0 place-items-center rounded-brutal border border-ink/15 bg-white px-3 shadow-soft disabled:opacity-50">
                   <Upload size={16} />
                 </button>
                 <input ref={coverRef} type="file" accept="image/*" onChange={onCoverFile} className="hidden" />
               </div>
-              {coverImage ? <img src={coverImage} alt="" className="mt-2 h-14 w-14 rounded-lg border-2 border-ink object-cover" /> : null}
+              {coverImage ? <img src={coverImage} alt="" className="mt-2 h-14 w-14 rounded-lg border border-ink/15 object-cover" /> : null}
             </div>
             <div>
               <Label>{t('edit.prodFile')}</Label>
-              <button type="button" onClick={() => fileRef.current?.click()} className="press flex w-full items-center justify-center gap-2 rounded-brutal border-2 border-ink bg-white py-2.5 text-sm font-extrabold shadow-hard-sm">
+              <button type="button" onClick={() => fileRef.current?.click()} className="press flex w-full items-center justify-center gap-2 rounded-brutal border border-ink/15 bg-white py-2.5 text-sm font-extrabold shadow-soft">
                 <Upload size={16} /> {file ? file.name : t('edit.prodFile')}
               </button>
               <input ref={fileRef} type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="hidden" />
