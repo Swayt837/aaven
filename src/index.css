@@ -21,6 +21,17 @@ body,
   min-height: 100%;
 }
 
+/* Garde-fou : aucun élément isolé ne doit pouvoir créer un scroll horizontal
+   (sur iOS, un contenu plus large que l'écran élargit le viewport de layout et
+   TOUTE la page déborde à droite). `clip` ne crée pas de conteneur de scroll
+   (position: sticky continue de fonctionner) ; `hidden` en repli pour les
+   anciens navigateurs. */
+html,
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 /* Respecte la préférence "réduire les animations" */
 @media (prefers-reduced-motion: reduce) {
   html {
