@@ -7,6 +7,7 @@ import { LAYOUTS } from '../lib/themes'
 import { STYLES, FONTS, BUTTON_STYLES, TEMPLATES, PERSONAS } from '../lib/templates'
 import { ImageFramer } from './ImageFramer'
 import { UpgradeModal } from './UpgradeModal'
+import { toast } from './Toast'
 
 // Vignette vidéo : affiche la DERNIÈRE frame (cale la lecture à la fin, sans jouer).
 function VideoThumb({ src, poster }) {
@@ -59,7 +60,7 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
       if (!isGif) {
         const dur = await readDuration(file).catch(() => 0)
         const max = isPro ? 30.5 : 8.5
-        if (dur > max) { e.target.value = ''; return alert(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
+        if (dur > max) { e.target.value = ''; return toast.error(isPro ? t('edit.videoMax15') : t('edit.videoMax5')) }
       }
       setUploadingVideo(true)
       const { url } = await api.uploadMedia(slug, file)

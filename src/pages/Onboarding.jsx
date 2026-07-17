@@ -11,6 +11,7 @@ import { MODES } from '../lib/modes'
 import { track } from '../lib/analytics'
 import { PROFESSIONS_BY_CATEGORY, professionBySlug } from '../lib/professions'
 import { modeForCategory } from '../lib/professionEngine'
+import { toast } from '../components/Toast'
 
 // Étape 1 : l'objectif compte plus que le métier (un photographe et un bartender
 // peuvent vouloir la même chose). Sert l'analytics + le sentiment de progression.
@@ -86,7 +87,7 @@ export default function Onboarding() {
       setCreated(page)
       setStep('done')
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
       setBusy(false)
     }
   }

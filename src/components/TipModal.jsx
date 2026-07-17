@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { Button, Textarea } from './ui'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
+import { toast } from './Toast'
 
 const DEFAULT_PRESETS = [3, 5, 10, 20]
 
@@ -27,7 +28,7 @@ export function TipModal({ slug, amounts, onClose }) {
         window.location.href = res.url // Stripe Checkout (réel) ou page de succès simulée
       }
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
       setLoading(false)
     }
   }

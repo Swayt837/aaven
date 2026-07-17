@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Trash2, Eye, QrCode, Plus, X, Upload, RotateCcw } from 'lucide-react'
+import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Trash2, Eye, QrCode, Plus, X, Upload, RotateCcw, Check } from 'lucide-react'
 import { Button, Card, Input, Textarea, Label } from '../components/ui'
 import { Icon } from '../components/Icon'
 import { PhoneFrame, BioImmersive } from '../components/PhoneMockup'
@@ -18,6 +18,7 @@ import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { modeOf, BUTTON_TYPES } from '../lib/modes'
 import { getTheme } from '../lib/themes'
+import { toast } from '../components/Toast'
 import { nanoid } from 'nanoid'
 
 // Réseaux couverts par le rang Smart Socials → retirés du picker de boutons classiques.
@@ -48,6 +49,71 @@ const SUPPORTERS_SAMPLE = {
   ],
 }
 
+// Picker de boutons groupé par OBJECTIF (plutôt qu'une grille plate de 16 types) :
+// l'utilisateur pense « je veux encaisser / être réservé », pas « type de bouton ».
+const PICK_GROUPS = [
+  ['cash', '💶', ['tip', 'services', 'course']],
+  ['book', '📅', ['reserve', 'bookcall']],
+  ['contact', '📞', ['contact', 'quote', 'call', 'whatsapp']],
+  ['show', '🎬', ['products', 'menu', 'reviews', 'directions']],
+  ['other', '✨', ['link', 'twitch', 'snapchat']],
+]
+
+// Raccourcis d'édition contextuelle affichés sur l'aperçu : le chemin naturel
+// devient « je touche ce que je veux changer », le menu par catégories reste en secours.
+const EDIT_CHIPS = [
+  ['profil', '👤', 'edit.m.profil'],
+  ['liens', '🔗', 'edit.m.liens'],
+  ['style', '🎨', 'edit.m.style'],
+  ['produits', '🛍️', 'edit.m.produits'],
+]
+
+// Types de boutons « qui convertissent » pour la checklist de progression.
+const CONVERT_TYPES = new Set(['tip', 'services', 'course', 'reserve', 'bookcall', 'quote', 'contact'])
+
+// Checklist « Ta page est prête à X % » : activation + guidage sans tutoriel.
+// Chaque étape manquante est cliquable et ouvre directement la bonne section.
+function Checklist({ page, theme, buttons, t, onGo }) {
+  const activeCount = buttons.filter((b) => b.isActive).length
+  const items = [
+    ['photo', !!page.avatarUrl, 'profil'],
+    ['headline', !!(page.headline || page.bio), 'profil'],
+    ['style', !!theme.template || theme.bgType === 'video' || !!theme.bgImage, 'style'],
+    ['links', activeCount >= 3, 'liens'],
+    ['convert', buttons.some((b) => b.isActive && CONVERT_TYPES.has(b.type)), 'liens'],
+  ]
+  const done = items.filter(([, ok]) => ok).length
+  const pct = Math.round((done / items.length) * 100)
+  return (
+    <div className="rounded-brutal border-2 border-ink bg-white p-4 shadow-hard-sm">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-display text-sm font-extrabold">
+          {pct === 100 ? t('edit.check.done') : t('edit.check.title', { pct })}
+        </p>
+        <span className="font-display text-sm font-extrabold text-coral">{pct}%</span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10">
+        <div className="h-full rounded-full bg-coral transition-all duration-500" style={{ width: `${pct}%` }} />
+      </div>
+      {pct < 100 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {items.map(([key, ok, cat]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => !ok && onGo(cat)}
+              disabled={ok}
+              className={`press inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${ok ? 'border-transparent bg-ink/5 text-ink/40 line-through' : 'border-ink bg-cream text-ink'}`}
+            >
+              {ok && <Check size={12} strokeWidth={3} />} {t('edit.check.' + key)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Editor() {
   const { slug: routeSlug } = useParams()
   const { t, lang } = useI18n()
@@ -65,7 +131,25 @@ export default function Editor() {
   // bottom sheet par catégorie. null = fermé · 'menu' = choix · sinon catégorie active.
   // Desktop (lg+) : sans effet, l'éditeur complet reste en colonne.
   const [sheet, setSheet] = useState(null)
+  // Sheet extensible : 38vh par défaut (l'aperçu reste roi), 75vh pour les panneaux
+  // longs (Style). Toggle via la poignée ou le chevron de l'en-tête.
+  const [sheetTall, setSheetTall] = useState(false)
+  // Surbrillance temporaire d'une carte (desktop) quand on y accède via un chip.
+  const [highlightCat, setHighlightCat] = useState(null)
   const mCat = (k) => (sheet === k ? '' : 'max-lg:hidden') // visibilité mobile d'une carte
+  function openCat(k) { setSheet(k); setSheetTall(k === 'style') }
+  // Édition contextuelle : ouvre la bonne section depuis un chip sur l'aperçu.
+  // Mobile → sheet direct (sans passer par le menu) · desktop → scroll + surbrillance.
+  function openSection(cat) {
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      openCat(cat)
+    } else {
+      document.getElementById('sec-' + cat)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setHighlightCat(cat)
+      setTimeout(() => setHighlightCat(null), 1500)
+    }
+  }
+  const hl = (k) => (highlightCat === k ? ' ring-4 ring-coral/40' : '')
   // Échelle de l'aperçu réduit (sheet ouvert) : l'aperçu occupe ~60-70% de l'écran.
   const [pvScale, setPvScale] = useState(0.6)
   useEffect(() => {
@@ -179,7 +263,7 @@ export default function Editor() {
       const { url } = await api.uploadMedia(routeSlug, file)
       updateBtn(id, { url })
     } catch (ex) {
-      alert(ex.message)
+      toast.error(ex.message)
     } finally {
       pendingBtn.current = null
       if (btnFileRef.current) btnFileRef.current.value = ''
@@ -194,7 +278,7 @@ export default function Editor() {
       const { url } = await api.uploadImage(routeSlug, file)
       setField('avatarUrl', url)
     } catch (ex) {
-      alert(ex.message)
+      toast.error(ex.message)
     } finally {
       setAvatarBusy(false)
       if (avatarRef.current) avatarRef.current.value = ''
@@ -226,6 +310,8 @@ export default function Editor() {
   function removeBtn(id) {
     snapshot('rm:' + id)
     setButtons((bs) => bs.filter((b) => b.id !== id))
+    // Suppression réversible : pas de confirm() bloquant, un toast avec Annuler.
+    toast(t('edit.btnDeleted'), { action: { label: t('edit.undo'), onClick: undo } })
   }
   function addBtn(type) {
     snapshot('add')
@@ -347,14 +433,21 @@ export default function Editor() {
         {/* Colonne formulaire — bottom sheet sur mobile (52vh max : l'aperçu réduit
             reste visible au-dessus, pas de voile qui le cacherait) */}
         <div
-          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:max-h-[38vh] max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border-2 max-lg:border-b-0 max-lg:border-ink max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:shadow-[0_-8px_30px_rgba(10,10,10,0.15)] max-lg:transition-transform max-lg:duration-300 ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
+          className={`space-y-6 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:overflow-y-auto max-lg:rounded-t-[24px] max-lg:border-2 max-lg:border-b-0 max-lg:border-ink max-lg:bg-cream max-lg:px-4 max-lg:pb-10 max-lg:pt-2 max-lg:shadow-[0_-8px_30px_rgba(10,10,10,0.15)] max-lg:transition-all max-lg:duration-300 ${sheetTall ? 'max-lg:max-h-[75vh]' : 'max-lg:max-h-[38vh]'} ${sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-[110%]'}`}
         >
-          {/* En-tête du sheet (mobile) */}
+          {/* En-tête du sheet (mobile) — la poignée agrandit/réduit le panneau */}
           <div className="sticky -top-2 z-10 -mx-4 border-b border-ink/10 bg-cream px-4 pb-2 pt-2 lg:hidden">
-            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-ink/20" />
+            <button
+              type="button"
+              onClick={() => setSheetTall((s) => !s)}
+              aria-label={sheetTall ? t('edit.sheetShrink') : t('edit.sheetExpand')}
+              className="mx-auto -mt-1 mb-1 block w-20 py-1.5"
+            >
+              <span className="mx-auto block h-1 w-10 rounded-full bg-ink/20" />
+            </button>
             <div className="flex items-center justify-between">
               {sheet && sheet !== 'menu' ? (
-                <button type="button" onClick={() => setSheet('menu')} className="press font-display text-sm font-extrabold">← {t('common.back')}</button>
+                <button type="button" onClick={() => setSheet('menu')} className="press font-display text-sm font-extrabold">{t('common.back')}</button>
               ) : (
                 <span className="font-display text-sm font-extrabold">{t('edit.m.what')}</span>
               )}
@@ -363,36 +456,53 @@ export default function Editor() {
                   {saving || dirty ? t('edit.autosaving') : t('edit.saved')}
                 </span>
                 <button type="button" onClick={undo} disabled={!canUndo} aria-label={t('edit.undo')} className="press rounded-full border-2 border-ink p-1.5 disabled:opacity-30"><RotateCcw size={15} /></button>
+                <button
+                  type="button"
+                  onClick={() => setSheetTall((s) => !s)}
+                  aria-label={sheetTall ? t('edit.sheetShrink') : t('edit.sheetExpand')}
+                  className="press rounded-full border-2 border-ink p-1.5"
+                >
+                  {sheetTall ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+                </button>
                 <button type="button" onClick={() => setSheet(null)} aria-label="Fermer" className="press rounded-full border-2 border-ink p-1.5"><X size={15} /></button>
               </div>
             </div>
           </div>
 
-          {/* Choix de catégorie (mobile) */}
+          {/* Choix de catégorie (mobile) — précédé de la checklist de progression */}
           {sheet === 'menu' && (
-            <div className="grid grid-cols-2 gap-2.5 lg:hidden">
-              {[
-                ['profil', '👤', 'edit.m.profil'],
-                ['liens', '🔗', 'edit.m.liens'],
-                ['style', '🎨', 'edit.m.style'],
-                ['produits', '🛍️', 'edit.m.produits'],
-                ['carte', '📱', 'edit.m.carte'],
-              ].map(([key, emoji, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setSheet(key)}
-                  className="press rounded-brutal border-2 border-ink bg-white p-4 text-left shadow-hard-sm"
-                >
-                  <span className="text-2xl" aria-hidden>{emoji}</span>
-                  <span className="font-display mt-1.5 block text-sm font-extrabold">{t(label)}</span>
-                </button>
-              ))}
+            <div className="space-y-2.5 lg:hidden">
+              <Checklist page={page} theme={theme} buttons={buttons} t={t} onGo={openCat} />
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  ['profil', '👤', 'edit.m.profil'],
+                  ['liens', '🔗', 'edit.m.liens'],
+                  ['reseaux', '📲', 'edit.m.reseaux'],
+                  ['style', '🎨', 'edit.m.style'],
+                  ['produits', '🛍️', 'edit.m.produits'],
+                  ['carte', '📱', 'edit.m.carte'],
+                ].map(([key, emoji, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => openCat(key)}
+                    className="press rounded-brutal border-2 border-ink bg-white p-4 text-left shadow-hard-sm"
+                  >
+                    <span className="text-2xl" aria-hidden>{emoji}</span>
+                    <span className="font-display mt-1.5 block text-sm font-extrabold">{t(label)}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
+          {/* Checklist de progression (desktop — sur mobile elle vit dans le menu du sheet) */}
+          <div className="max-lg:hidden">
+            <Checklist page={page} theme={theme} buttons={buttons} t={t} onGo={openSection} />
+          </div>
+
           {/* LIEN PUBLIC */}
-          <Card className={`p-5 ${mCat('carte')}`}>
+          <Card id="sec-carte" className={`scroll-mt-24 p-5 transition-shadow ${mCat('carte')}${hl('carte')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('share.yourLink')}</h2>
             <ShareLink url={publicUrl} className="mt-3" />
             {/* QR accessible sur mobile (la barre du haut qui le portait y est masquée) */}
@@ -419,7 +529,7 @@ export default function Editor() {
           </Card>
 
           {/* IDENTITÉ */}
-          <Card className={`p-5 ${mCat('profil')}`}>
+          <Card id="sec-profil" className={`scroll-mt-24 p-5 transition-shadow ${mCat('profil')}${hl('profil')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">{t('edit.identity')}</h2>
             <div className="mt-4 space-y-3">
               <div><Label>{t('edit.title')}</Label><Input value={page.title} onChange={(e) => setField('title', e.target.value)} /></div>
@@ -491,13 +601,13 @@ export default function Editor() {
           </Card>
 
           {/* THÈME & STYLE */}
-          <Card className={`p-5 ${mCat('style')}`}>
+          <Card id="sec-style" className={`scroll-mt-24 p-5 transition-shadow ${mCat('style')}${hl('style')}`}>
             <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.theme')}</h2>
             <ThemeEditor slug={routeSlug} theme={theme} plan={user?.plan || 'free'} onChange={setTheme} />
           </Card>
 
           {/* BOUTONS */}
-          <Card className={`p-5 ${mCat('liens')}`}>
+          <Card id="sec-liens" className={`scroll-mt-24 p-5 transition-shadow ${mCat('liens')}${hl('liens')}`}>
             <h2 className="font-display text-lg font-extrabold uppercase tracking-wide">
               {t('edit.buttons')} · {activeCount} {t('edit.buttonsActive')}
             </h2>
@@ -729,28 +839,43 @@ export default function Editor() {
                     <SmartLinkInput onAdd={addSmartBtn} />
                     <SmartManualTiles onAdd={addSmartBtn} />
                   </div>
-                  <p className="mb-1.5 mt-3 px-1 font-display text-xs font-extrabold uppercase text-ink/60">{t('edit.smart.classic')}</p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {Object.entries(BUTTON_TYPES).filter(([key]) => key !== 'smart' && !SOCIALS_IN_RANG.has(key)).map(([key, def]) => (
-                      <button key={key} onClick={() => addBtn(key)} className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold">
-                        <Icon name={def.icon} size={16} /> {def.label[lang] || def.label.fr}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Boutons classiques groupés par objectif : on choisit un BUT
+                      (encaisser, être réservé…), pas un « type de bouton ». */}
+                  {PICK_GROUPS.map(([group, emoji, keys]) => {
+                    const entries = keys.filter((k) => BUTTON_TYPES[k] && !SOCIALS_IN_RANG.has(k))
+                    if (!entries.length) return null
+                    return (
+                      <div key={group}>
+                        <p className="mb-1.5 mt-3 px-1 font-display text-xs font-extrabold uppercase text-ink/60">
+                          <span aria-hidden>{emoji}</span> {t('edit.pick.' + group)}
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {entries.map((key) => {
+                            const def = BUTTON_TYPES[key]
+                            return (
+                              <button key={key} onClick={() => addBtn(key)} className="press flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-2.5 py-2 text-left text-sm font-bold">
+                                <Icon name={def.icon} size={16} /> {def.label[lang] || def.label.fr}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </Card>
               )}
             </div>
             <input ref={btnFileRef} type="file" accept="application/pdf,image/*" onChange={onBtnFile} className="hidden" />
           </Card>
 
-          {/* SMART SOCIALS */}
-          <Card className={`p-5 ${mCat('liens')}`}>
+          {/* SMART SOCIALS — catégorie mobile dédiée « Réseaux » (séparée des boutons) */}
+          <Card id="sec-reseaux" className={`scroll-mt-24 p-5 transition-shadow ${mCat('reseaux')}${hl('reseaux')}`}>
             <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.socials.title')}</h2>
             <SmartSocialsEditor theme={theme} onChange={setTheme} />
           </Card>
 
           {/* PRODUITS DIGITAUX */}
-          <Card className={`p-5 ${mCat('produits')}`}>
+          <Card id="sec-produits" className={`scroll-mt-24 p-5 transition-shadow ${mCat('produits')}${hl('produits')}`}>
             <h2 className="font-display mb-4 text-lg font-extrabold uppercase tracking-wide">{t('edit.products')}</h2>
             <ProductsEditor slug={routeSlug} products={products} onReload={loadProducts} />
           </Card>
@@ -760,7 +885,7 @@ export default function Editor() {
             au-dessus du panneau (échelle calculée sur la hauteur d'écran) → on voit
             ses changements en direct pendant qu'on édite, comme une story. */}
         <div
-          className={`lg:sticky lg:top-24 lg:self-start ${sheet ? 'max-lg:fixed max-lg:left-1/2 max-lg:top-14 max-lg:z-30 max-lg:w-[340px] max-lg:origin-top max-lg:-translate-x-1/2 max-lg:scale-[var(--pv-scale)]' : ''}`}
+          className={`relative lg:sticky lg:top-24 lg:self-start ${sheet ? 'max-lg:fixed max-lg:left-1/2 max-lg:top-14 max-lg:z-30 max-lg:w-[340px] max-lg:origin-top max-lg:-translate-x-1/2 max-lg:scale-[var(--pv-scale)]' : ''}`}
           style={{ '--pv-scale': pvScale }}
         >
           <p className={`font-display mb-3 text-center text-xs font-extrabold uppercase tracking-widest text-ink/50 ${sheet ? 'max-lg:hidden' : ''}`}>{t('edit.preview')}</p>
@@ -774,20 +899,51 @@ export default function Editor() {
               kenBurns={false}
             />
           </PhoneFrame>
+          {/* Chips d'édition contextuelle (desktop) : on touche ce qu'on veut changer */}
+          <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
+            {EDIT_CHIPS.map(([cat, emoji, label]) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => openSection(cat)}
+                title={t(label)}
+                aria-label={t(label)}
+                className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-lg shadow-hard-sm transition-transform hover:-translate-y-0.5"
+              >
+                <span aria-hidden>{emoji}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </main>
 
-      {/* Assistant mobile : l'aperçu est l'écran, ce bouton ouvre le sheet d'édition */}
+      {/* Assistant mobile : l'aperçu est l'écran, ce bouton ouvre le sheet d'édition.
+          Les chips verticaux à droite ouvrent directement la bonne section. */}
       {!sheet && (
-        <div className="fixed inset-x-4 bottom-4 z-30 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setSheet('menu')}
-            className="press w-full rounded-brutal border-2 border-ink bg-coral py-3.5 font-display text-base font-extrabold text-white shadow-hard"
-          >
-            ✨ {t('edit.m.modify')}
-          </button>
-        </div>
+        <>
+          <div className="fixed right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2 lg:hidden">
+            {EDIT_CHIPS.map(([cat, emoji, label]) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => openSection(cat)}
+                aria-label={t(label)}
+                className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white/95 text-lg shadow-hard-sm backdrop-blur"
+              >
+                <span aria-hidden>{emoji}</span>
+              </button>
+            ))}
+          </div>
+          <div className="fixed inset-x-4 bottom-4 z-30 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSheet('menu')}
+              className="press w-full rounded-brutal border-2 border-ink bg-coral py-3.5 font-display text-base font-extrabold text-white shadow-hard"
+            >
+              ✨ {t('edit.m.modify')}
+            </button>
+          </div>
+        </>
       )}
 
       {showQR && <QRModal url={publicUrl} page={page} onClose={() => setShowQR(false)} />}

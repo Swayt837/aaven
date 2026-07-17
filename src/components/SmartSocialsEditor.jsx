@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Instagram, Youtube, Linkedin, Facebook, Globe, Music2, MessageCircle, Twitter, Pin, Trash2, Plus, RefreshCw } from 'lucide-react'
 import { api } from '../lib/api'
 import { useI18n } from '../lib/i18n'
+import { toast } from './Toast'
 
 // Réseaux dont la stat peut être récupérée automatiquement côté serveur
 // (YouTube Data API / Spotify — si les clés sont configurées).
@@ -16,9 +17,9 @@ function StatField({ network, url, value, onChange, t }) {
     try {
       const r = await api.socialStat(network, url)
       if (r.stat) onChange(r.stat)
-      else alert(t('edit.socials.statAutoFail'))
+      else toast.error(t('edit.socials.statAutoFail'))
     } catch {
-      alert(t('edit.socials.statAutoFail'))
+      toast.error(t('edit.socials.statAutoFail'))
     } finally {
       setBusy(false)
     }

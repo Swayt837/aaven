@@ -3,6 +3,7 @@ import { X, Check, Sparkles, ArrowRight } from 'lucide-react'
 import { api } from '../lib/api'
 import { useI18n } from '../lib/i18n'
 import { track } from '../lib/analytics'
+import { toast } from './Toast'
 
 const CONTENT = {
   fr: {
@@ -60,7 +61,7 @@ export function UpgradeModal({ open, onClose }) {
       if (r && r.url) { track('checkout_started', { plan }); window.location.href = r.url } // Stripe Checkout
       else window.location.reload() // mode démo : plan appliqué directement
     } catch (e) {
-      alert(e.message)
+      toast.error(e.message)
       setLoading(null)
     }
   }

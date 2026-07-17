@@ -3,6 +3,7 @@ import { Trash2, Plus, Upload, X } from 'lucide-react'
 import { Button, Input, Textarea, Label } from './ui'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
+import { toast } from './Toast'
 
 // Gestion des produits digitaux d'une page (liste + ajout + suppression + actif).
 export function ProductsEditor({ slug, products, onReload }) {
@@ -17,6 +18,8 @@ export function ProductsEditor({ slug, products, onReload }) {
   const [busy, setBusy] = useState(false)
   const [coverBusy, setCoverBusy] = useState(false)
   const [err, setErr] = useState('')
+  // Suppression en 2 taps (remplace le confirm() natif) : 1er tap = « Confirmer ? ».
+  const [confirmId, setConfirmId] = useState(null)
   const coverRef = useRef(null)
 
   async function onCoverFile(e) {
@@ -58,9 +61,18 @@ export function ProductsEditor({ slug, products, onReload }) {
     onReload()
   }
   async function remove(p) {
-    if (!confirm(`${t('common.delete')} « ${p.title} » ?`)) return
-    await api.deleteProduct(slug, p.id)
-    onReload()
+    if (confirmId !== p.id) {
+      setConfirmId(p.id)
+      setTimeout(() => setConfirmId((c) => (c === p.id ? null : c)), 3500)
+      return
+    }
+    setConfirmId(null)
+    try {
+      await api.deleteProduct(slug, p.id)
+      onReload()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
@@ -84,7 +96,9 @@ export function ProductsEditor({ slug, products, onReload }) {
             >
               <span className={`absolute top-0.5 h-4 w-4 rounded-full border-2 border-ink bg-white transition-all ${p.active ? 'left-4' : 'left-0.5'}`} />
             </button>
-            <button onClick={() => remove(p)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
+            <button onClick={() => remove(p)} aria-label={t('common.delete')} className="press shrink-0 text-coral">
+              {confirmId === p.id ? <span className="text-xs font-extrabold">{t('common.confirmDel')}</span> : <Trash2 size={16} />}
+            </button>
           </div>
         ))}
       </div>

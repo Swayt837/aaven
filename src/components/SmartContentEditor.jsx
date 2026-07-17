@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Sparkles, ImagePlus, Columns2, GalleryHorizontal, Grid3x3, Trash2, Loader2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { useI18n } from '../lib/i18n'
+import { toast } from './Toast'
 
 // ============================ Smart Content — éditeur ============================
 // 1. SmartLinkInput : l'utilisateur colle un lien → détection auto (YouTube, TikTok,
@@ -123,7 +124,7 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
       }
       set({ images: [...(cfg.images || []), ...urls].slice(0, maxImages) })
     } catch (err) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setUploading(false)
       e.target.value = ''
