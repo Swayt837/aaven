@@ -9,11 +9,12 @@ import { PhoneFrame, BioImmersive } from '../components/PhoneMockup'
 import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
-import { MODES, PRESETS, BUTTON_TYPES } from '../lib/modes'
+import { MODES } from '../lib/modes'
 import { track } from '../lib/analytics'
 import { PROFESSIONS_BY_CATEGORY, professionBySlug } from '../lib/professions'
-import { modeForCategory, themeForProfession, blockToButton, SOCIAL_BUTTON_TYPES } from '../lib/professionEngine'
-import { saveDraft, readDraft, clearDraft } from '../lib/draft'
+import { modeForCategory } from '../lib/professionEngine'
+import { saveDraft, readDraft, clearDraft, buildDraftPage } from '../lib/draft'
+import { dataUrlToFile, isDataUrl } from '../lib/localMedia'
 import { toast } from '../components/Toast'
 
 // Étape 1 : l'objectif compte plus que le métier (un photographe et un bartender
@@ -85,6 +86,40 @@ export default function Onboarding() {
       const body = { title: d.title.trim(), headline: (d.headline || '').trim(), bio: (d.bio || '').trim(), mode: d.mode }
       if (d.profession) body.profession = d.profession
       const { page } = await api.createPage(body)
+      // Replay des personnalisations de l'éditeur invité : les images locales
+      // (data-URL du brouillon) sont d'abord réellement uploadées, puis TOUT
+      // (thème, avatar, boutons) est appliqué en un seul updatePage — les
+      // boutons partent sans id (le sync serveur les crée).
+      if (d.page && d.buttons) {
+        try {
+          const up = async (val, name) => (isDataUrl(val) ? (await api.uploadImage(page.slug, await dataUrlToFile(val, name))).url : val)
+          const avatarUrl = await up(d.page.avatarUrl, 'avatar.jpg')
+          const theme = { ...(d.page.theme || {}) }
+          if (theme.bgImage) theme.bgImage = await up(theme.bgImage, 'bg.jpg')
+          const buttons = []
+          for (const b of d.buttons) {
+            const cfg = b.config ? structuredClone(b.config) : undefined
+            if (cfg?.images?.length) {
+              for (let i = 0; i < cfg.images.length; i++) cfg.images[i] = await up(cfg.images[i], `img-${i}.jpg`)
+            }
+            if (cfg?.meta?.thumbnail) cfg.meta.thumbnail = await up(cfg.meta.thumbnail, 'thumb.jpg')
+            buttons.push({
+              type: b.type,
+              label: b.label,
+              icon: b.icon,
+              url: isDataUrl(b.url) ? await up(b.url, 'file.jpg') : b.url,
+              config: cfg,
+              isActive: b.isActive,
+              featured: b.featured,
+              position: buttons.length,
+            })
+          }
+          await api.updatePage(page.slug, { title: d.page.title, headline: d.page.headline, bio: d.page.bio, avatarUrl, theme, buttons })
+          track('guest_customizations_applied', { buttons: buttons.length })
+        } catch (re) {
+          toast.error(re.message) // la page existe — personnalisations partielles, rattrapables dans l'éditeur
+        }
+      }
       track('page_created', { mode: d.mode, profession: d.profession || 'generic', goal: d.goal || 'skipped' })
       if (d.profession) track('template_applied', { profession: d.profession })
       try { localStorage.removeItem('bb_profession') } catch { /* noop */ }
@@ -116,7 +151,7 @@ export default function Onboarding() {
   // (les redirections OAuth externes perdent le state React), puis la création
   // est rejouée automatiquement au retour.
   function publishAsGuest() {
-    saveDraft({ title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode, profession: profession?.slug || '', goal })
+    saveDraft(draftMeta())
     if (profession) { try { localStorage.setItem('bb_profession', profession.slug) } catch { /* noop */ } }
     track('guest_draft_saved', { profession: profession?.slug || 'generic' })
     nav('/login')
@@ -142,16 +177,15 @@ export default function Onboarding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading])
 
-  // Aperçu local invité : même dérivation que le serveur (Profession Engine) —
-  // thème du métier + boutons des template_blocks (réseaux sociaux exclus,
-  // 1er bouton mis en avant) ; repli sur le preset du mode générique.
-  function buildGuestPreview() {
-    const page = { title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode, slug: '', theme: profession ? themeForProfession(profession) : {} }
-    const blocks = profession
-      ? profession.template_blocks.map(blockToButton).filter((b) => !SOCIAL_BUTTON_TYPES.has(b.type)).map((b, i) => ({ ...b, featured: i === 0 }))
-      : (PRESETS[mode] || []).map((p) => ({ type: p.type, label: BUTTON_TYPES[p.type].label[lang] || BUTTON_TYPES[p.type].label.fr, featured: !!p.featured }))
-    const buttons = blocks.map((b, i) => ({ id: 'g' + i, type: b.type, label: b.label, icon: BUTTON_TYPES[b.type]?.icon || 'Link', url: '', isActive: true, featured: b.featured, position: i, clicks: 0 }))
-    return { page, buttons }
+  // Métadonnées du brouillon courant (avant personnalisation éditeur).
+  const draftMeta = () => ({ title: title.trim(), headline: headline.trim(), bio: bio.trim(), mode, profession: profession?.slug || '', goal })
+
+  // L'invité veut personnaliser à fond avant de publier → éditeur invité complet.
+  function customizeAsGuest() {
+    saveDraft(draftMeta())
+    if (profession) { try { localStorage.setItem('bb_profession', profession.slug) } catch { /* noop */ } }
+    track('guest_customize', { profession: profession?.slug || 'generic' })
+    nav('/edit/draft')
   }
 
   const cardBg = mode ? MODES[mode].cardBg : '#FFFFFF'
@@ -274,7 +308,7 @@ export default function Onboarding() {
         {/* Étape invité — l'aperçu de SA page AVANT le login : le moment de
             conversion. La connexion n'est demandée que pour la mettre en ligne. */}
         {step === 'preview' && (() => {
-          const pv = buildGuestPreview()
+          const pv = buildDraftPage(draftMeta(), lang)
           return (
             <div className="mt-8">
               <div className="mx-auto w-full max-w-[320px]">
@@ -284,7 +318,8 @@ export default function Onboarding() {
               </div>
               <div className="mx-auto mt-6 flex max-w-md flex-col gap-2">
                 <Button size="lg" className="w-full" onClick={publishAsGuest}>🚀 {t('onb.preview.publish')}</Button>
-                <Button variant="secondary" className="w-full" onClick={() => setStep('identity')}>{t('onb.preview.edit')}</Button>
+                <Button variant="secondary" className="w-full" onClick={customizeAsGuest}>🎨 {t('onb.preview.customize')}</Button>
+                <button type="button" onClick={() => setStep('identity')} className="press mt-1 text-sm font-bold text-ink/50 hover:text-ink">{t('onb.preview.edit')}</button>
                 <p className="mt-1 text-center text-xs font-semibold text-ink/50">{t('onb.preview.note')}</p>
               </div>
             </div>

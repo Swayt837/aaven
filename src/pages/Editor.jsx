@@ -17,10 +17,13 @@ import { ShareLink } from '../components/ShareLink'
 import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
+import { track } from '../lib/analytics'
 import { modeOf, BUTTON_TYPES, PRESETS } from '../lib/modes'
 import { getTheme } from '../lib/themes'
 import { professionBySlug } from '../lib/professions'
 import { blockToButton, SOCIAL_BUTTON_TYPES } from '../lib/professionEngine'
+import { readDraft, saveDraft, buildDraftPage } from '../lib/draft'
+import { fileToDataUrl } from '../lib/localMedia'
 import { toast } from '../components/Toast'
 import { nanoid } from 'nanoid'
 
@@ -139,10 +142,15 @@ function SectionTitle({ emoji, children, className = '' }) {
 }
 
 export default function Editor() {
-  const { slug: routeSlug } = useParams()
+  // La route invité est /edit/draft (sans paramètre :slug) → repli 'draft'.
+  const { slug: routeSlug = 'draft' } = useParams()
   const { t, lang } = useI18n()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const nav = useNavigate()
+  // Mode invité : /edit/draft édite le brouillon local (localStorage), sans compte.
+  // Tout fonctionne sauf ce qui exige le serveur ; les images passent en data-URL
+  // locales et seront réellement uploadées à la mise en ligne (replay post-login).
+  const guest = routeSlug === 'draft'
 
   const [page, setPage] = useState(null)
   const [buttons, setButtons] = useState([])
@@ -191,8 +199,16 @@ export default function Editor() {
   // Dispo Wallet (config serveur) → boutons « Ajouter au Wallet » dans la carte lien.
   const [wallet, setWallet] = useState(null)
   useEffect(() => {
+    if (guest) return
     api.publicPage(routeSlug).then((d) => setWallet(d.wallet || null)).catch(() => {})
-  }, [routeSlug])
+  }, [routeSlug, guest])
+
+  // Invité : connecté → le resume de l'onboarding crée la vraie page ;
+  // pas de brouillon → rien à éditer, retour à l'onboarding.
+  useEffect(() => {
+    if (!guest || authLoading) return
+    if (user || !readDraft()) nav('/onboarding', { replace: true })
+  }, [guest, user, authLoading, nav])
 
   // ---------- Autosave + annulation ----------
   const [dirty, setDirty] = useState(false) // modifs non encore persistées
@@ -211,12 +227,23 @@ export default function Editor() {
   }
   useEffect(() => {
     loadedRef.current = false
+    if (guest) {
+      // Seed local : brouillon personnalisé s'il existe, sinon dérivation métier
+      // (mêmes règles que le serveur à la création).
+      const d = readDraft()
+      if (!d) return // l'effet de redirection s'en charge
+      const { page, buttons } = buildDraftPage(d, lang)
+      setPage(page)
+      setButtons(buttons)
+      return
+    }
     api.getPage(routeSlug).then(({ page, buttons }) => {
       setPage(page)
       setButtons(buttons.sort((a, b) => a.position - b.position))
     }).catch(() => nav('/dashboard'))
     loadProducts()
-  }, [routeSlug, nav])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeSlug, nav, guest])
 
   // Chaque modification (page ou boutons) déclenche un save 1,2 s après la dernière frappe.
   useEffect(() => {
@@ -240,7 +267,7 @@ export default function Editor() {
 
   // Suggestions du picker : les blocs du MÉTIER de l'utilisateur (Profession
   // Engine) pas encore présents sur la page ; repli sur le preset du mode.
-  const prof = professionBySlug(user?.profession)
+  const prof = professionBySlug(guest ? (readDraft()?.profession || '') : user?.profession)
   const existingTypes = new Set(buttons.map((b) => b.type))
   const suggested = (prof
     ? prof.template_blocks.map(blockToButton).filter((s) => !SOCIAL_BUTTON_TYPES.has(s.type))
@@ -293,6 +320,13 @@ export default function Editor() {
     const id = pendingBtn.current
     if (!file || !id) return
     try {
+      if (guest) {
+        // Invité : image → data-URL locale (uploadée à la mise en ligne).
+        // Un PDF ne tient pas dans le brouillon local → après publication.
+        if (!file.type.startsWith('image/')) { toast(t('edit.guest.afterPublish')); return }
+        updateBtn(id, { url: await fileToDataUrl(file, 1280) })
+        return
+      }
       const { url } = await api.uploadMedia(routeSlug, file)
       updateBtn(id, { url })
     } catch (ex) {
@@ -308,8 +342,13 @@ export default function Editor() {
     if (!file) return
     setAvatarBusy(true)
     try {
-      const { url } = await api.uploadImage(routeSlug, file)
-      setField('avatarUrl', url)
+      if (guest) {
+        // Invité : la photo vit en local (compressée), uploadée à la mise en ligne.
+        setField('avatarUrl', await fileToDataUrl(file, 512, 0.85))
+      } else {
+        const { url } = await api.uploadImage(routeSlug, file)
+        setField('avatarUrl', url)
+      }
     } catch (ex) {
       toast.error(ex.message)
     } finally {
@@ -390,7 +429,27 @@ export default function Editor() {
   // Autosave : sérialisé (un save à la fois). Si l'utilisateur modifie pendant le
   // vol, la réponse serveur n'est PAS appliquée (elle écraserait ses frappes) —
   // le timer déjà réarmé repartira avec l'état le plus récent.
+  // Sérialise l'état courant dans le brouillon local (mode invité).
+  function saveGuestDraft() {
+    const meta = readDraft() || {}
+    return saveDraft({ ...meta, title: page.title, headline: page.headline, bio: page.bio, mode: page.mode, page, buttons })
+  }
+
+  // Invité prêt : le brouillon (personnalisations incluses) traverse le login,
+  // puis l'onboarding crée la page et rejoue tout automatiquement.
+  function publishNow() {
+    if (!saveGuestDraft()) { toast.error(t('edit.guest.tooBig')); return }
+    track('guest_editor_publish')
+    nav('/login')
+  }
+
   async function autoSave() {
+    // Invité : l'autosave écrit le brouillon local, pas le serveur.
+    if (guest) {
+      if (!saveGuestDraft()) toast.error(t('edit.guest.tooBig'))
+      setDirty(false)
+      return
+    }
     if (savingRef.current) {
       saveTimer.current = setTimeout(autoSave, 600)
       return
@@ -437,7 +496,7 @@ export default function Editor() {
       {/* Barre sticky glass — desktop uniquement (mobile : boutons flottants, plus d'aperçu) */}
       <div className="sticky top-0 z-30 border-b border-ink/10 bg-white/85 backdrop-blur-xl max-lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
-          <Button as={Link} to="/dashboard" variant="secondary" size="sm">{t('edit.dashboard')}</Button>
+          <Button as={Link} to={guest ? '/onboarding' : '/dashboard'} variant="secondary" size="sm">{guest ? t('common.back') : t('edit.dashboard')}</Button>
           <div className="flex items-center gap-2">
             {/* Statut autosave : plus de bouton Enregistrer */}
             <span className={`flex items-center gap-1.5 font-display text-sm font-extrabold ${saving || dirty ? 'text-ink/45' : 'text-green-700'}`}>
@@ -445,22 +504,34 @@ export default function Editor() {
               {saving ? t('edit.autosaving') : dirty ? t('edit.autosaving') : t('edit.saved')}
             </span>
             <Button variant="secondary" size="sm" onClick={undo} disabled={!canUndo} title={t('edit.undo')}><RotateCcw size={16} /> {t('edit.undo')}</Button>
-            <Button variant="secondary" size="sm" onClick={() => setShowQR(true)}><QrCode size={16} /> {t('edit.qr')}</Button>
-            <Button as="a" href={`/${page.slug}`} target="_blank" rel="noreferrer" variant="secondary" size="sm"><Eye size={16} /> {t('common.view')}</Button>
+            {guest ? (
+              <Button size="sm" onClick={publishNow}>🚀 {t('onb.preview.publish')}</Button>
+            ) : (
+              <>
+                <Button variant="secondary" size="sm" onClick={() => setShowQR(true)}><QrCode size={16} /> {t('edit.qr')}</Button>
+                <Button as="a" href={`/${page.slug}`} target="_blank" rel="noreferrer" variant="secondary" size="sm"><Eye size={16} /> {t('common.view')}</Button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile : boutons flottants minimaux (retour + voir) — la barre est masquée */}
+      {/* Mobile : boutons flottants minimaux (retour + voir / publier) — la barre est masquée */}
       <div className="fixed left-3 top-3 z-30 lg:hidden">
-        <Link to="/dashboard" aria-label={t('edit.dashboard')} className="press grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/90 shadow-soft backdrop-blur">
+        <Link to={guest ? '/onboarding' : '/dashboard'} aria-label={guest ? t('common.back') : t('edit.dashboard')} className="press grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/90 shadow-soft backdrop-blur">
           <ChevronLeft size={18} strokeWidth={2.5} />
         </Link>
       </div>
       <div className="fixed right-3 top-3 z-30 lg:hidden">
-        <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/90 shadow-soft backdrop-blur">
-          <Eye size={17} />
-        </a>
+        {guest ? (
+          <button type="button" onClick={publishNow} aria-label={t('onb.preview.publish')} className="press grid h-10 w-10 place-items-center rounded-full border border-coral/40 bg-coral text-white shadow-glow-coral">
+            🚀
+          </button>
+        ) : (
+          <a href={`/${page.slug}`} target="_blank" rel="noreferrer" aria-label={t('common.view')} className="press grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/90 shadow-soft backdrop-blur">
+            <Eye size={17} />
+          </a>
+        )}
       </div>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-8 max-lg:pb-24 max-lg:pt-16 lg:grid-cols-2">
@@ -514,8 +585,8 @@ export default function Editor() {
                   ['reseaux', '📲', 'edit.m.reseaux'],
                   ['style', '🎨', 'edit.m.style'],
                   ['produits', '🛍️', 'edit.m.produits'],
-                  ['carte', '📱', 'edit.m.carte'],
-                ].map(([key, emoji, label]) => (
+                  ['carte', '📱', guest ? 'edit.guest.title' : 'edit.m.carte'],
+                ].filter(([key]) => !(guest && key === 'produits')).map(([key, emoji, label]) => (
                   <button
                     key={key}
                     type="button"
@@ -535,8 +606,17 @@ export default function Editor() {
             <Checklist page={page} theme={theme} buttons={buttons} t={t} onGo={openSection} />
           </div>
 
-          {/* LIEN PUBLIC */}
+          {/* LIEN PUBLIC — remplacé en invité par la carte « Mettre en ligne » */}
           <Card id="sec-carte" className={`scroll-mt-24 p-5 transition-shadow ${mCat('carte')}${hl('carte')}`}>
+            {guest ? (
+              <>
+                <SectionTitle emoji="🚀">{t('edit.guest.title')}</SectionTitle>
+                <p className="mt-3 text-sm font-medium text-ink/60">{t('edit.guest.sub')}</p>
+                <Button className="mt-4 w-full" onClick={publishNow}>🚀 {t('onb.preview.publish')}</Button>
+                <p className="mt-2 text-center text-xs font-semibold text-ink/50">{t('onb.preview.note')}</p>
+              </>
+            ) : (
+              <>
             <SectionTitle emoji="📱">{t('share.yourLink')}</SectionTitle>
             <ShareLink url={publicUrl} className="mt-3" />
             {/* QR accessible sur mobile (la barre du haut qui le portait y est masquée) */}
@@ -560,6 +640,8 @@ export default function Editor() {
                 <ShareLink url={`https://${page.slug}.aaven.fr`} className="mt-2" />
               </div>
             )}
+              </>
+            )}
           </Card>
 
           {/* IDENTITÉ */}
@@ -568,20 +650,23 @@ export default function Editor() {
             <div className="mt-4 space-y-3">
               <div><Label>{t('edit.title')}</Label><Input value={page.title} onChange={(e) => setField('title', e.target.value)} /></div>
               <div><Label>{t('edit.headline')}</Label><Input value={page.headline || ''} onChange={(e) => setField('headline', e.target.value)} placeholder={t('edit.headlinePh')} maxLength={80} /></div>
-              <div>
-                <Label>{t('edit.slug')}</Label>
-                {/* Brouillon local : le slug ne part à l'autosave qu'au blur (sinon on
-                    enregistrerait des slugs partiels à chaque pause de frappe). */}
-                <Input
-                  value={slugDraft ?? page.slug}
-                  onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                  onBlur={() => {
-                    if (slugDraft != null && slugDraft !== page.slug && slugDraft.replace(/^-+|-+$/g, '')) setField('slug', slugDraft)
-                    setSlugDraft(null)
-                  }}
-                />
-                {slugErr && <p className="mt-1 text-sm font-bold text-coral">{slugErr}</p>}
-              </div>
+              {/* Slug : attribué à la création → masqué en invité */}
+              {!guest && (
+                <div>
+                  <Label>{t('edit.slug')}</Label>
+                  {/* Brouillon local : le slug ne part à l'autosave qu'au blur (sinon on
+                      enregistrerait des slugs partiels à chaque pause de frappe). */}
+                  <Input
+                    value={slugDraft ?? page.slug}
+                    onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                    onBlur={() => {
+                      if (slugDraft != null && slugDraft !== page.slug && slugDraft.replace(/^-+|-+$/g, '')) setField('slug', slugDraft)
+                      setSlugDraft(null)
+                    }}
+                  />
+                  {slugErr && <p className="mt-1 text-sm font-bold text-coral">{slugErr}</p>}
+                </div>
+              )}
               <div><Label>{t('edit.bio')}</Label><Textarea rows={2} value={page.bio || ''} onChange={(e) => setField('bio', e.target.value)} placeholder={t('edit.bioPh')} /></div>
               <div><Label>{t('edit.location')}</Label><Input value={theme.location || ''} onChange={(e) => setTheme({ location: e.target.value })} placeholder={t('edit.locationPh')} maxLength={80} /></div>
 
@@ -639,7 +724,7 @@ export default function Editor() {
           {/* THÈME & STYLE */}
           <Card id="sec-style" className={`scroll-mt-24 p-5 transition-shadow ${mCat('style')}${hl('style')}`}>
             <SectionTitle emoji="🎨" className="mb-4">{t('edit.theme')}</SectionTitle>
-            <ThemeEditor slug={routeSlug} theme={theme} plan={user?.plan || 'free'} onChange={setTheme} />
+            <ThemeEditor slug={routeSlug} theme={theme} plan={user?.plan || 'free'} guest={guest} onChange={setTheme} />
           </Card>
 
           {/* BOUTONS */}
@@ -693,6 +778,7 @@ export default function Editor() {
                       slug={routeSlug}
                       button={b}
                       plan={user?.plan || 'free'}
+                      guest={guest}
                       onChange={(config) => updateBtn(b.id, { config, url: config.url || '' })}
                     />
                   )}
@@ -874,7 +960,7 @@ export default function Editor() {
                   </div>
                   {/* Smart Content : colle un lien → carte auto, ou carte visuelle manuelle */}
                   <div className="space-y-3 rounded-card border border-ink/10 bg-cream/70 p-3">
-                    <SmartLinkInput onAdd={addSmartBtn} />
+                    <SmartLinkInput onAdd={addSmartBtn} guest={guest} />
                     <SmartManualTiles onAdd={addSmartBtn} />
                   </div>
                   {/* Suggestions personnalisées : les blocs recommandés pour le
@@ -929,14 +1015,16 @@ export default function Editor() {
           {/* SMART SOCIALS — catégorie mobile dédiée « Réseaux » (séparée des boutons) */}
           <Card id="sec-reseaux" className={`scroll-mt-24 p-5 transition-shadow ${mCat('reseaux')}${hl('reseaux')}`}>
             <SectionTitle emoji="📲" className="mb-4">{t('edit.socials.title')}</SectionTitle>
-            <SmartSocialsEditor theme={theme} onChange={setTheme} />
+            <SmartSocialsEditor theme={theme} onChange={setTheme} guest={guest} />
           </Card>
 
-          {/* PRODUITS DIGITAUX */}
-          <Card id="sec-produits" className={`scroll-mt-24 p-5 transition-shadow ${mCat('produits')}${hl('produits')}`}>
-            <SectionTitle emoji="🛍️" className="mb-4">{t('edit.products')}</SectionTitle>
-            <ProductsEditor slug={routeSlug} products={products} onReload={loadProducts} />
-          </Card>
+          {/* PRODUITS DIGITAUX — nécessitent un compte (Stripe) → masqués en invité */}
+          {!guest && (
+            <Card id="sec-produits" className={`scroll-mt-24 p-5 transition-shadow ${mCat('produits')}${hl('produits')}`}>
+              <SectionTitle emoji="🛍️" className="mb-4">{t('edit.products')}</SectionTitle>
+              <ProductsEditor slug={routeSlug} products={products} onReload={loadProducts} />
+            </Card>
+          )}
         </div>
 
         {/* Colonne aperçu live. Mobile + sheet ouvert : l'aperçu se réduit et se fixe
@@ -968,7 +1056,7 @@ export default function Editor() {
           </PhoneFrame>
           {/* Chips d'édition contextuelle (desktop) : on touche ce qu'on veut changer */}
           <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
-            {EDIT_CHIPS.map(([cat, emoji, label]) => (
+            {EDIT_CHIPS.filter(([cat]) => !(guest && cat === 'produits')).map(([cat, emoji, label]) => (
               <button
                 key={cat}
                 type="button"
@@ -1013,7 +1101,7 @@ export default function Editor() {
         </>
       )}
 
-      {showQR && <QRModal url={publicUrl} page={page} onClose={() => setShowQR(false)} />}
+      {showQR && !guest && <QRModal url={publicUrl} page={page} onClose={() => setShowQR(false)} />}
     </div>
   )
 }

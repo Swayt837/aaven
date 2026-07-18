@@ -65,7 +65,10 @@ export default function App() {
             la connexion n'est demandée qu'au moment de la mettre en ligne. */}
         <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-          <Route path="/edit/:slug" element={<Protected><Editor /></Protected>} />
+          {/* Éditeur invité : personnalisation complète du brouillon local AVANT
+            la connexion (la route spécifique prime sur /edit/:slug protégée). */}
+        <Route path="/edit/draft" element={<Editor />} />
+        <Route path="/edit/:slug" element={<Protected><Editor /></Protected>} />
           <Route path="/stats/:slug" element={<Protected><Stats /></Protected>} />
           <Route path="/tip-success" element={<TipSuccess />} />
           <Route path="/buy-success" element={<BuySuccess />} />

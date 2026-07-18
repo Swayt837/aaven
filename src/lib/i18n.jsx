@@ -197,6 +197,12 @@ const dict = {
     'onb.preview.publish': 'Mettre ma page en ligne',
     'onb.preview.edit': 'Modifier mes infos',
     'onb.preview.note': 'Connexion en 10 secondes — ta page est sauvegardée.',
+    'onb.preview.customize': 'Personnaliser ma page',
+    'edit.guest.title': 'Mettre en ligne',
+    'edit.guest.sub': 'Ta page est sauvegardée sur cet appareil. Mets-la en ligne pour obtenir ton lien, ton QR code et ta carte Wallet.',
+    'edit.guest.afterPublish': 'Disponible après la mise en ligne ✨',
+    'edit.guest.tooBig': 'Image trop lourde pour le brouillon — essaie une image plus légère.',
+    'edit.guest.smartHint': 'Colle tes liens YouTube, TikTok, Spotify… après la mise en ligne. En attendant, crée une carte visuelle ci-dessous.',
     'login.secured': '🛡️ LOG IN SECURED BY',
 
     // Onboarding
@@ -742,6 +748,12 @@ const dict = {
     'onb.preview.publish': 'Publish my page',
     'onb.preview.edit': 'Edit my info',
     'onb.preview.note': '10-second login — your page is saved.',
+    'onb.preview.customize': 'Customize my page',
+    'edit.guest.title': 'Publish',
+    'edit.guest.sub': 'Your page is saved on this device. Publish it to get your link, QR code and Wallet card.',
+    'edit.guest.afterPublish': 'Available after publishing ✨',
+    'edit.guest.tooBig': 'Image too heavy for the draft — try a lighter one.',
+    'edit.guest.smartHint': 'Paste your YouTube, TikTok, Spotify… links after publishing. Meanwhile, create a visual card below.',
     'login.secured': '🛡️ LOG IN SECURED BY',
 
     'onb.title': 'What do you want from your bio link?',
