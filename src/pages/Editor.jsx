@@ -586,7 +586,7 @@ export default function Editor() {
                   ['style', '🎨', 'edit.m.style'],
                   ['produits', '🛍️', 'edit.m.produits'],
                   ['carte', '📱', guest ? 'edit.guest.title' : 'edit.m.carte'],
-                ].filter(([key]) => !(guest && key === 'produits')).map(([key, emoji, label]) => (
+                ].map(([key, emoji, label]) => (
                   <button
                     key={key}
                     type="button"
@@ -1018,13 +1018,19 @@ export default function Editor() {
             <SmartSocialsEditor theme={theme} onChange={setTheme} guest={guest} />
           </Card>
 
-          {/* PRODUITS DIGITAUX — nécessitent un compte (Stripe) → masqués en invité */}
-          {!guest && (
-            <Card id="sec-produits" className={`scroll-mt-24 p-5 transition-shadow ${mCat('produits')}${hl('produits')}`}>
-              <SectionTitle emoji="🛍️" className="mb-4">{t('edit.products')}</SectionTitle>
+          {/* PRODUITS DIGITAUX — la vente (Stripe) exige un compte : en invité la
+              section reste visible avec un teaser qui mène à la mise en ligne. */}
+          <Card id="sec-produits" className={`scroll-mt-24 p-5 transition-shadow ${mCat('produits')}${hl('produits')}`}>
+            <SectionTitle emoji="🛍️" className="mb-4">{t('edit.products')}</SectionTitle>
+            {guest ? (
+              <div className="rounded-card bg-cream/70 p-4 text-center">
+                <p className="text-sm font-semibold text-ink/70">{t('edit.guest.products')}</p>
+                <Button size="sm" className="mt-3" onClick={publishNow}>🚀 {t('onb.preview.publish')}</Button>
+              </div>
+            ) : (
               <ProductsEditor slug={routeSlug} products={products} onReload={loadProducts} />
-            </Card>
-          )}
+            )}
+          </Card>
         </div>
 
         {/* Colonne aperçu live. Mobile + sheet ouvert : l'aperçu se réduit et se fixe
@@ -1056,7 +1062,7 @@ export default function Editor() {
           </PhoneFrame>
           {/* Chips d'édition contextuelle (desktop) : on touche ce qu'on veut changer */}
           <div className="absolute right-0 top-16 hidden flex-col gap-2 lg:flex">
-            {EDIT_CHIPS.filter(([cat]) => !(guest && cat === 'produits')).map(([cat, emoji, label]) => (
+            {EDIT_CHIPS.map(([cat, emoji, label]) => (
               <button
                 key={cat}
                 type="button"
