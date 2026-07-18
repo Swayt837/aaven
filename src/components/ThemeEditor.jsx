@@ -54,8 +54,8 @@ export function ThemeEditor({ slug, theme, plan = 'free', guest = false, onChang
   async function onVideoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    // Invité : réservé aux abonnés, et l'abonnement demande un compte → simple hint.
-    if (guest) { e.target.value = ''; toast(t('edit.guest.afterPublish')); return }
+    // Invité = Free : la modale d'upgrade s'ouvre aussi (elle route vers le
+    // login si pas de compte — le brouillon est déjà sauvegardé en local).
     if (isFree) { e.target.value = ''; setUpgrade(true); return }
     setErr('')
     try {

@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X, Check, Sparkles, ArrowRight } from 'lucide-react'
 import { api } from '../lib/api'
+import { useAuth } from '../lib/auth'
 import { useI18n } from '../lib/i18n'
 import { track } from '../lib/analytics'
 import { toast } from './Toast'
@@ -48,12 +50,21 @@ const PLANS = [
 // Modale premium affichée quand on touche une fonctionnalité réservée Creator/Pro.
 export function UpgradeModal({ open, onClose }) {
   const { lang } = useI18n()
+  const { user } = useAuth()
+  const nav = useNavigate()
   const c = CONTENT[lang] || CONTENT.fr
   const [loading, setLoading] = useState(null)
 
   if (!open) return null
 
   async function choose(plan) {
+    // Invité (éditeur brouillon) : l'abonnement exige un compte → login d'abord.
+    // Son brouillon est déjà sauvegardé en local, il le retrouvera mis en ligne.
+    if (!user) {
+      track('upgrade_clicked', { plan, source: 'editor_modal', guest: true })
+      nav('/login')
+      return
+    }
     setLoading(plan)
     track('upgrade_clicked', { plan, source: 'editor_modal' })
     try {

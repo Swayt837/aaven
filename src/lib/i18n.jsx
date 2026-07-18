@@ -203,6 +203,7 @@ const dict = {
     'edit.guest.afterPublish': 'Disponible après la mise en ligne ✨',
     'edit.guest.tooBig': 'Image trop lourde pour le brouillon — essaie une image plus légère.',
     'edit.guest.smartHint': 'Colle tes liens YouTube, TikTok, Spotify… après la mise en ligne. En attendant, crée une carte visuelle ci-dessous.',
+    'edit.guest.products': 'Vends tes fichiers, presets, guides… Encaisse directement — disponible dès que ta page est en ligne.',
     'login.secured': '🛡️ LOG IN SECURED BY',
 
     // Onboarding
@@ -754,6 +755,7 @@ const dict = {
     'edit.guest.afterPublish': 'Available after publishing ✨',
     'edit.guest.tooBig': 'Image too heavy for the draft — try a lighter one.',
     'edit.guest.smartHint': 'Paste your YouTube, TikTok, Spotify… links after publishing. Meanwhile, create a visual card below.',
+    'edit.guest.products': 'Sell your files, presets, guides… Get paid directly — available as soon as your page is live.',
     'login.secured': '🛡️ LOG IN SECURED BY',
 
     'onb.title': 'What do you want from your bio link?',
