@@ -3,6 +3,7 @@ import { Upload, Check, Sparkles, Lock, Film } from 'lucide-react'
 import { Label } from './ui'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
+import { fileToDataUrl } from '../lib/localMedia'
 import { LAYOUTS } from '../lib/themes'
 import { STYLES, FONTS, BUTTON_STYLES, TEMPLATES, PERSONAS } from '../lib/templates'
 import { ImageFramer } from './ImageFramer'
@@ -27,7 +28,7 @@ function VideoThumb({ src, poster }) {
   )
 }
 
-export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
+export function ThemeEditor({ slug, theme, plan = 'free', guest = false, onChange }) {
   const { t, lang } = useI18n()
   const fileRef = useRef(null)
   const videoRef = useRef(null)
@@ -53,6 +54,8 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
   async function onVideoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    // Invité : réservé aux abonnés, et l'abonnement demande un compte → simple hint.
+    if (guest) { e.target.value = ''; toast(t('edit.guest.afterPublish')); return }
     if (isFree) { e.target.value = ''; setUpgrade(true); return }
     setErr('')
     try {
@@ -101,7 +104,8 @@ export function ThemeEditor({ slug, theme, plan = 'free', onChange }) {
     setErr('')
     setUploading(true)
     try {
-      const { url } = await api.uploadImage(slug, file)
+      // Invité : image de fond en data-URL locale (uploadée à la mise en ligne).
+      const url = guest ? await fileToDataUrl(file, 1280) : (await api.uploadImage(slug, file)).url
       set({ preset: 'upload', bgType: 'image', bgImage: url, text: 'light', overlay: 0.4 })
     } catch (ex) {
       setErr(ex.message || 'Upload échoué')

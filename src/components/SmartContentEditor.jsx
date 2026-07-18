@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Sparkles, ImagePlus, Columns2, GalleryHorizontal, Grid3x3, Trash2, Loader2 } from 'lucide-react'
 import { api } from '../lib/api'
+import { fileToDataUrl } from '../lib/localMedia'
 import { useI18n } from '../lib/i18n'
 import { toast } from './Toast'
 
@@ -11,12 +12,21 @@ import { toast } from './Toast'
 //    Carrousel, Grille Insta) — remplies via upload.
 // 3. SmartConfigEditor : réglages d'une carte existante (images, lien, mode Peek).
 
-// Colle un lien → carte auto.
-export function SmartLinkInput({ onAdd }) {
+// Colle un lien → carte auto. La résolution est un appel serveur authentifié →
+// en mode invité on affiche un hint à la place (les cartes visuelles restent dispo).
+export function SmartLinkInput({ onAdd, guest = false }) {
   const { t } = useI18n()
   const [url, setUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+
+  if (guest) {
+    return (
+      <p className="rounded-lg bg-ink/5 px-3 py-2 text-xs font-semibold text-ink/60">
+        <Sparkles size={12} className="mr-1 inline" /> {t('edit.guest.smartHint')}
+      </p>
+    )
+  }
 
   async function resolve() {
     const clean = url.trim()
@@ -99,7 +109,7 @@ export function SmartManualTiles({ onAdd }) {
 }
 
 // Réglages d'une carte smart existante (dans la liste des boutons).
-export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
+export function SmartConfigEditor({ slug, button, onChange, plan = 'free', guest = false }) {
   const { t } = useI18n()
   const cfg = button.config || { kind: 'generic', meta: {}, images: [] }
   const fileRef = useRef(null)
@@ -119,7 +129,10 @@ export function SmartConfigEditor({ slug, button, onChange, plan = 'free' }) {
     try {
       const urls = []
       for (const f of files) {
-        const { url } = f.type.startsWith('video/') ? await api.uploadMedia(slug, f) : await api.uploadImage(slug, f)
+        // Invité : images en data-URL locales (uploadées à la mise en ligne).
+        const url = guest
+          ? await fileToDataUrl(f, 1280)
+          : (f.type.startsWith('video/') ? await api.uploadMedia(slug, f) : await api.uploadImage(slug, f)).url
         urls.push(url)
       }
       set({ images: [...(cfg.images || []), ...urls].slice(0, maxImages) })

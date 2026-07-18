@@ -9,9 +9,10 @@ import { toast } from './Toast'
 const AUTO_STAT = new Set(['youtube', 'spotify'])
 
 // Champ stat : saisie libre + bouton « auto » pour les réseaux supportés.
-function StatField({ network, url, value, onChange, t }) {
+function StatField({ network, url, value, onChange, t, guest }) {
   const [busy, setBusy] = useState(false)
-  const canAuto = AUTO_STAT.has(network) && !!url
+  // La récup auto est un appel serveur authentifié → saisie manuelle en invité.
+  const canAuto = !guest && AUTO_STAT.has(network) && !!url
   async function fetchStat() {
     setBusy(true)
     try {
@@ -83,7 +84,7 @@ function Seg({ options, value, onChange, t }) {
   )
 }
 
-export function SmartSocialsEditor({ theme, onChange }) {
+export function SmartSocialsEditor({ theme, onChange, guest = false }) {
   const { t } = useI18n()
   const socials = theme.socials || []
   const cfg = theme.socialsCfg || { stats: 'peek', shape: 'squircle', size: 'md', animations: true }
@@ -140,6 +141,7 @@ export function SmartSocialsEditor({ theme, onChange }) {
                 value={cur?.stat || ''}
                 onChange={(stat) => setNetwork(key, { stat })}
                 t={t}
+                guest={guest}
               />
             </div>
           )
