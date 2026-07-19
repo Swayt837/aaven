@@ -353,25 +353,24 @@ function HeroPhone({ lang }) {
           >
             <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
             {real?.page ? (
-              /* IMPORTANT iOS : aucun ancêtre de la vidéo ne doit être animé
-                 (opacity/transform) sinon Safari perd le clip arrondi pendant
-                 l'animation. Le fondu d'attente est donc un VOILE par-dessus
-                 (calque frère) qui s'efface, pas un fondu du conteneur. */
+              /* La vidéo de flo-btt est rendue avec le MÊME mécanisme que les
+                 téléphones de la section Exemples (VideoBg : chargement paresseux,
+                 lecture à l'apparition, aucun transform) — le seul qui tient le
+                 clip arrondi sur iOS pendant le chargement. Le contenu réel de la
+                 page (BioImmersive) est rendu par-dessus, sans son propre fond. */
               <div className="relative h-[560px]" style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}>
+                {(() => {
+                  const th = real.page.theme || {}
+                  const src = th.bgVideo || th.introVideo
+                  return src ? <VideoBg src={src} style={{ objectPosition: `${th.bgPosX ?? 50}% ${th.bgPosY ?? 50}%` }} /> : null
+                })()}
                 <BioImmersive
                   page={real.page}
                   buttons={real.buttons}
                   supporters={supporters}
                   branding={real.branding !== false}
                   kenBurns={false}
-                />
-                <motion.div
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: 0 }}
-                  transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
-                  className="pointer-events-none absolute inset-0 z-10"
-                  style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}
-                  aria-hidden
+                  externalBg
                 />
               </div>
             ) : (
@@ -607,7 +606,7 @@ const PROFILE_COPY = {
   },
 }
 
-function VideoBg({ src }) {
+function VideoBg({ src, style }) {
   const ref = useRef(null)
   useEffect(() => {
     const v = ref.current
@@ -619,7 +618,7 @@ function VideoBg({ src }) {
     return () => io.disconnect()
   }, [src])
   const poster = /\.mp4($|\?)/.test(src || '') ? src.replace(/\.mp4(\?.*)?$/, '.jpg') : undefined
-  return <video ref={ref} poster={poster} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" aria-hidden />
+  return <video ref={ref} poster={poster} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" style={style} aria-hidden />
 }
 
 function PhoneCard({ p, copy, notif, wallLabel }) {
