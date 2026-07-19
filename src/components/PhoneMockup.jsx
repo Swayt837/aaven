@@ -664,7 +664,7 @@ function videoFrameBox(scale) {
 
 // Scène immersive plein écran (cinématique, sans carte) : fond + overlays + contenu flottant.
 // Se place dans un parent `relative` qui a une hauteur (viewport ou écran du mockup).
-export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false }) {
+export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false, externalBg = false }) {
   const theme = getTheme(page)
   const accent = theme.accent || modeOf(page.mode).accent
   // Base affichée DERRIÈRE la vidéo pendant son chargement : dégradé si fond dégradé,
@@ -676,10 +676,12 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
   return (
     <div className="absolute inset-0 overflow-hidden">
       {/* Fond plein écran (par priorité) :
+          0) externalBg : le parent fournit lui-même le fond (mockup du hero de la
+             landing — sa vidéo est rendue DERRIÈRE avec le mécanisme des exemples)
           1) vidéo d'intro = joue 1 fois puis se fige sur sa dernière frame (no loop)
           2) vidéo de fond en boucle
           3) image (léger zoom cinématique) */}
-      {theme.introVideo ? (
+      {externalBg ? null : theme.introVideo ? (
         <>
           <div className="absolute inset-0" style={videoBase} aria-hidden />
           <BgVideo
