@@ -653,6 +653,15 @@ function BgVideo({ src, loop = false, sound = false, className, style }) {
   )
 }
 
+// Cadrage vidéo par le LAYOUT (boîte sur-dimensionnée centrée), jamais par
+// transform: scale — sur iOS, une vidéo transformée échappe au clip arrondi de
+// ses ancêtres (cadre du mockup du hero) tant que la lecture n'a pas démarré :
+// le cadre paraît cassé pendant les premières secondes. Géométrie identique.
+function videoFrameBox(scale) {
+  const pct = Math.max(0, ((scale || 1) - 1) * 50)
+  return { left: `-${pct}%`, top: `-${pct}%`, width: `${100 + pct * 2}%`, height: `${100 + pct * 2}%` }
+}
+
 // Scène immersive plein écran (cinématique, sans carte) : fond + overlays + contenu flottant.
 // Se place dans un parent `relative` qui a une hauteur (viewport ou écran du mockup).
 export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false }) {
@@ -676,8 +685,8 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
           <BgVideo
             src={theme.introVideo}
             sound={sound}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${frameScale(theme.bgZoom ?? 1)})` }}
+            className="absolute object-cover"
+            style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, ...videoFrameBox(frameScale(theme.bgZoom ?? 1)) }}
           />
         </>
       ) : theme.bgVideo ? (
@@ -687,8 +696,8 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
             src={theme.bgVideo}
             loop
             sound={sound}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${videoScale})` }}
+            className="absolute object-cover"
+            style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, ...videoFrameBox(videoScale) }}
           />
         </>
       ) : theme.bgType === 'image' && theme.bgImage ? (
