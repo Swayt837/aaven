@@ -340,7 +340,16 @@ function HeroPhone({ lang }) {
               sur la vidéo pendant les premières secondes (compositing). */}
           <div
             className="isolate relative overflow-hidden rounded-[31px]"
-            style={{ clipPath: 'inset(0 round 31px)', WebkitMaskImage: '-webkit-radial-gradient(white, black)', transform: 'translateZ(0)' }}
+            style={{
+              clipPath: 'inset(0 round 31px)',
+              WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+              transform: 'translateZ(0)',
+              // Confinement de peinture : le navigateur DOIT peindre tous les
+              // descendants (vidéo/poster en chargement inclus) à l'intérieur de
+              // cette boîte — la garantie la plus forte contre les coins qui
+              // dépassent du cadre sur iOS pendant les premières secondes.
+              contain: 'paint',
+            }}
           >
             <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
             {real?.page ? (
