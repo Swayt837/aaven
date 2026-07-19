@@ -40,6 +40,7 @@ const T = {
   fr: {
     nav: { features: 'Fonctionnalités', examples: 'Exemples', pricing: 'Tarifs', testimonials: 'Témoignages' },
     start: 'Commencer',
+    login: 'Se connecter',
     heroBadge: 'Ton identité professionnelle',
     heroSub: 'Quand quelqu’un te découvre, ton Aaven te présente, convertit et encaisse pour toi. Ajoute-le à Apple Wallet ou Google Wallet et partage-le en un scan, par QR code ou NFC.',
     heroCta: 'Créer mon Aaven gratuitement', heroSee: 'Voir un exemple',
@@ -90,6 +91,7 @@ const T = {
   en: {
     nav: { features: 'Features', examples: 'Examples', pricing: 'Pricing', testimonials: 'Reviews' },
     start: 'Get started',
+    login: 'Log in',
     heroBadge: 'Your professional identity',
     heroSub: 'When someone discovers you, your Aaven introduces you, converts and gets you paid. Add it to Apple Wallet or Google Wallet and share it in one scan, via QR code or NFC.',
     heroCta: 'Create my Aaven for free', heroSee: 'See an example',
@@ -241,6 +243,10 @@ function Header({ onStart }) {
               <button key={l} data-testid={`lang-${l}`} onClick={() => setLang(l)} aria-pressed={lang === l} className={`px-2.5 py-1 uppercase transition-colors ${lang === l ? 'bg-brand-ink text-white' : 'text-brand-muted hover:text-brand-ink'}`}>{l}</button>
             ))}
           </div>
+          {/* Accès direct au compte : le CTA principal part vers l'onboarding invité,
+              le login n'est donc plus sur son chemin. (Déjà connecté → /login
+              redirige vers le dashboard.) */}
+          <a data-testid="header-login" href="/login" className="hidden font-sans text-sm font-semibold text-brand-muted transition-colors hover:text-brand-ink sm:inline-flex">{c.login}</a>
           <button data-testid="header-start" onClick={onStart} className="hidden rounded-full bg-brand-ink px-5 py-2.5 font-display text-sm font-extrabold text-white transition-transform hover:-translate-y-0.5 sm:inline-flex">{c.start}</button>
           <button data-testid="mobile-menu-toggle" onClick={() => setOpen((o) => !o)} aria-label="Menu" className="grid h-10 w-10 place-items-center rounded-xl border-2 border-brand-ink bg-white md:hidden">{open ? <X size={18} /> : <Menu size={18} />}</button>
         </div>
@@ -255,7 +261,8 @@ function Header({ onStart }) {
                   <button key={l} onClick={() => setLang(l)} className={`rounded-full border-2 border-brand-ink px-3 py-1 text-xs font-extrabold uppercase ${lang === l ? 'bg-brand-ink text-white' : 'text-brand-ink'}`}>{l}</button>
                 ))}
               </div>
-              <PrimaryButton testid="mobile-start" onClick={() => { setOpen(false); onStart() }} className="mt-3 w-full">{c.start} <ArrowRight size={18} strokeWidth={3} /></PrimaryButton>
+              <a data-testid="mobile-login" href="/login" className="mt-3 inline-flex w-full items-center justify-center rounded-full border-2 border-brand-ink bg-white px-7 py-3 font-display text-base font-extrabold text-brand-ink">{c.login}</a>
+              <PrimaryButton testid="mobile-start" onClick={() => { setOpen(false); onStart() }} className="mt-2 w-full">{c.start} <ArrowRight size={18} strokeWidth={3} /></PrimaryButton>
             </Container>
           </motion.div>
         )}
