@@ -220,10 +220,7 @@ function Tilt3D({ children, max = 9, radius = 40, depth = false, className = '' 
 function Header({ onStart }) {
   const c = useCopy()
   const { lang, setLang } = useI18n()
-  // Initialisé depuis la position réelle : au rechargement avec restauration de
-  // scroll (iOS), le premier rendu doit déjà avoir le fond — sinon le contenu
-  // chevauche le header transparent pendant les premières secondes.
-  const [scrolled, setScrolled] = useState(() => typeof window !== 'undefined' && window.scrollY > 12)
+  const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -334,45 +331,28 @@ function HeroPhone({ lang }) {
           onKeyDown={(e) => e.key === 'Enter' && window.open(HERO_PROFILE_URL, '_blank', 'noopener')}
           className="relative cursor-pointer rounded-[40px] border-[9px] border-brand-ink shadow-[10px_10px_0px_#0A0A0A]"
         >
-          {/* clip-path + mask webkit (et non overflow+radius seul) : seuls clips
-              arrondis fiables pour un layer vidéo — clip-path pour Chrome sous
-              transform 3D (Tilt), mask pour iOS Safari qui perd l'overflow arrondi
-              sur la vidéo pendant les premières secondes (compositing). */}
-          <div
-            className="isolate relative overflow-hidden rounded-[31px]"
-            style={{
-              clipPath: 'inset(0 round 31px)',
-              WebkitMaskImage: '-webkit-radial-gradient(white, black)',
-              transform: 'translateZ(0)',
-              // Confinement de peinture : le navigateur DOIT peindre tous les
-              // descendants (vidéo/poster en chargement inclus) à l'intérieur de
-              // cette boîte — la garantie la plus forte contre les coins qui
-              // dépassent du cadre sur iOS pendant les premières secondes.
-              contain: 'paint',
-            }}
-          >
+          {/* clip-path (et non overflow+radius) : seul clip arrondi fiable sous un
+              ancêtre en transform 3D (perspective du Tilt) avec un layer vidéo. */}
+          <div className="isolate relative overflow-hidden rounded-[31px]" style={{ clipPath: 'inset(0 round 31px)' }}>
             <div className="pointer-events-none absolute left-1/2 top-0 z-20 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-brand-ink" />
             {real?.page ? (
-              /* La vidéo de flo-btt est rendue avec le MÊME mécanisme que les
-                 téléphones de la section Exemples (VideoBg : chargement paresseux,
-                 lecture à l'apparition, aucun transform) — le seul qui tient le
-                 clip arrondi sur iOS pendant le chargement. Le contenu réel de la
-                 page (BioImmersive) est rendu par-dessus, sans son propre fond. */
-              <div className="relative h-[560px]" style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}>
-                {(() => {
-                  const th = real.page.theme || {}
-                  const src = th.bgVideo || th.introVideo
-                  return src ? <VideoBg src={src} style={{ objectPosition: `${th.bgPosX ?? 50}% ${th.bgPosY ?? 50}%` }} /> : null
-                })()}
+              /* Fond sombre d'attente + fondu : le temps que la vidéo de fond charge,
+                 le téléphone reste élégant (pas de moitié blanche qui « pop » après coup). */
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, ease: EASE }}
+                className="relative h-[560px]"
+                style={{ background: 'linear-gradient(165deg, #1c1330, #3d2a68 55%, #0e2a3f)' }}
+              >
                 <BioImmersive
                   page={real.page}
                   buttons={real.buttons}
                   supporters={supporters}
                   branding={real.branding !== false}
                   kenBurns={false}
-                  externalBg
                 />
-              </div>
+              </motion.div>
             ) : (
               <HeroPhoneStatic lang={lang} />
             )}
@@ -441,12 +421,10 @@ function Hero({ onStart }) {
             </motion.ul>
           </motion.div>
 
-          {/* Téléphone + Wallet + QR — PAS de motion ici : animer un ancêtre du
-              conteneur vidéo casse le clip arrondi sur iOS pendant l'animation
-              (la vidéo déborde du cadre). L'entrée est portée par le voile interne. */}
-          <div className="lg:col-span-5">
+          {/* Téléphone + Wallet + QR */}
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7, ease: EASE }} className="lg:col-span-5">
             <HeroPhone lang={lang} />
-          </div>
+          </motion.div>
         </div>
       </Container>
 
@@ -606,7 +584,7 @@ const PROFILE_COPY = {
   },
 }
 
-function VideoBg({ src, style }) {
+function VideoBg({ src }) {
   const ref = useRef(null)
   useEffect(() => {
     const v = ref.current
@@ -618,7 +596,7 @@ function VideoBg({ src, style }) {
     return () => io.disconnect()
   }, [src])
   const poster = /\.mp4($|\?)/.test(src || '') ? src.replace(/\.mp4(\?.*)?$/, '.jpg') : undefined
-  return <video ref={ref} poster={poster} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" style={style} aria-hidden />
+  return <video ref={ref} poster={poster} muted loop playsInline preload="none" className="absolute inset-0 h-full w-full object-cover" aria-hidden />
 }
 
 function PhoneCard({ p, copy, notif, wallLabel }) {
