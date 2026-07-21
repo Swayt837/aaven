@@ -66,6 +66,10 @@ export function sanitizeButtonConfig(type, config) {
     const phone = clampStr(config.phone, 40)
     return { mode, phone }
   }
+  if (type === 'newsletter') {
+    const mode = ['form', 'link'].includes(config.mode) ? config.mode : 'form'
+    return { mode }
+  }
   if (type === 'quote') {
     const mode = ['whatsapp', 'email', 'form'].includes(config.mode) ? config.mode : 'form'
     const phone = clampStr(config.phone, 40)
@@ -175,7 +179,7 @@ export function sanitizeTheme(input) {
 }
 
 // Smart Socials : réseaux affichés en rang d'icônes flottantes.
-const SOCIAL_NETWORKS = ['instagram', 'tiktok', 'youtube', 'spotify', 'x', 'linkedin', 'pinterest', 'discord', 'facebook', 'website']
+const SOCIAL_NETWORKS = ['instagram', 'tiktok', 'youtube', 'twitch', 'spotify', 'x', 'linkedin', 'pinterest', 'discord', 'facebook', 'website']
 function sanitizeSocials(v) {
   return (Array.isArray(v) ? v : [])
     .slice(0, 12)

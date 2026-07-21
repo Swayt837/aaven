@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Instagram, Youtube, Linkedin, Facebook, Globe } from 'lucide-react'
+import { Instagram, Youtube, Linkedin, Facebook, Globe, Twitch } from 'lucide-react'
 import { faviconUrl } from '../lib/modes'
 
 // ============================ Smart Socials ============================
@@ -29,6 +29,7 @@ const NETWORKS = {
   instagram: { icon: Instagram, aura: 'radial-gradient(circle at 30% 70%, #FEDA75, #F58529 30%, #DD2A7B 60%, #8134AF 90%)', anim: 'ring', label: 'Instagram' },
   tiktok: { icon: TikTokIcon, aura: 'radial-gradient(circle at 35% 35%, #25F4EE, transparent 60%), radial-gradient(circle at 65% 65%, #FE2C55, transparent 60%)', anim: 'bounce', label: 'TikTok' },
   youtube: { icon: Youtube, aura: '#FF0000', anim: 'pulse', label: 'YouTube' },
+  twitch: { icon: Twitch, aura: '#9146FF', anim: 'pulse', label: 'Twitch' },
   spotify: { icon: SpotifyIcon, aura: '#1DB954', anim: 'waves', label: 'Spotify' },
   x: { icon: XIcon, aura: 'rgba(255,255,255,0.9)', anim: 'halo', label: 'X' },
   linkedin: { icon: Linkedin, aura: '#0A66C2', anim: 'halo', label: 'LinkedIn' },
@@ -119,7 +120,7 @@ function Orbit({ radius }) {
 }
 
 /* ---------------- Une icône ---------------- */
-function SocialIcon({ item, cfg, light, index, onOpen, onMulti }) {
+function SocialIcon({ item, cfg, light, index, live, onOpen, onMulti }) {
   const net = NETWORKS[item.network]
   if (!net) return null
   const S = SIZES[cfg.size] || SIZES.md
@@ -139,6 +140,15 @@ function SocialIcon({ item, cfg, light, index, onOpen, onMulti }) {
       className="relative flex shrink-0 flex-col items-center"
       style={{ paddingBottom: cfg.stats === 'always' && item.stat ? 0 : undefined }}
     >
+      {/* Badge « EN DIRECT » (statut récupéré côté serveur : Twitch / YouTube) */}
+      {live && (
+        <span
+          aria-label="En direct"
+          className="absolute -top-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full bg-[#E91916] px-1.5 py-[2px] text-[8px] font-extrabold uppercase tracking-wider text-white shadow-md"
+        >
+          <span className="h-1 w-1 animate-pulse rounded-full bg-white" aria-hidden /> LIVE
+        </span>
+      )}
       {/* Flottement ambiant désynchronisé (C) */}
       <motion.div
         animate={anims ? { y: [0, -2, 0, 1.5, 0] } : undefined}
@@ -219,7 +229,7 @@ function SocialIcon({ item, cfg, light, index, onOpen, onMulti }) {
 }
 
 /* ---------------- Le rang ---------------- */
-export function SmartSocials({ socials, cfg = {}, light = true, onOpen, onMulti }) {
+export function SmartSocials({ socials, cfg = {}, light = true, live = null, onOpen, onMulti }) {
   const valid = (socials || []).filter((s) => s.network && s.url && NETWORKS[s.network])
   // Plusieurs sites web → une seule icône (favicon du 1er) qui ouvre la modale de liens.
   const websites = valid.filter((s) => s.network === 'website')
@@ -244,7 +254,7 @@ export function SmartSocials({ socials, cfg = {}, light = true, onOpen, onMulti 
           style={{ gap: S.gap, paddingBottom: peekPad, paddingTop: 10 }}
         >
           {items.map((item, i) => (
-            <SocialIcon key={`${item.network}-${i}`} item={item} cfg={cfg} light={light} index={i} onOpen={onOpen} onMulti={onMulti} />
+            <SocialIcon key={`${item.network}-${i}`} item={item} cfg={cfg} light={light} index={i} live={!!(live && live[item.network])} onOpen={onOpen} onMulti={onMulti} />
           ))}
         </div>
       </div>

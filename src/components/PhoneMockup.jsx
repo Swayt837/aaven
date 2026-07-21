@@ -5,6 +5,7 @@ import { SmartCard } from './SmartCard'
 import { SmartSocials } from './SmartSocials'
 import { track } from '../lib/analytics'
 import { modeOf, BUTTON_TYPES, faviconUrl } from '../lib/modes'
+import { connectorOf } from '../lib/connectors'
 import { useI18n } from '../lib/i18n'
 import { getTheme, backgroundStyle, isLight, textColor } from '../lib/themes'
 import { STYLES, surfaceTokens, buttonTokens, iconBoxTokens, fontCss, readableOn, frameScale } from '../lib/templates'
@@ -361,7 +362,7 @@ function ProductsSection({ products, txt, accent, headFont, light, t, onBuy }) {
 }
 
 // Rendu d'une page bio (en-tête + supporters + boutons + produits). Themable + skinnable.
-export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, immersive = false }) {
+export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, onNewsletter, live, supporters, products, onBuy, branding = true, immersive = false }) {
   const { t, lang } = useI18n()
   const theme = getTheme(page)
   const mode = modeOf(page.mode)
@@ -405,6 +406,7 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
         <SmartSocials
           socials={theme.socials}
           cfg={theme.socialsCfg || {}}
+          live={live}
           light={light}
           onOpen={(item) => track('social_click', { network: item.network })}
           onMulti={(links) => onLinks && onLinks({ id: 'smart-socials-web', label: t('socials.mySites'), config: { links } })}
@@ -458,6 +460,12 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
               if (onContact) return onContact(b)
             }
             if (act === 'contact' && onContact) return onContact(b)
+            if (b.type === 'newsletter') {
+              const m = b.config?.mode || 'form'
+              if (m === 'link' && b.url) return onButtonClick && onButtonClick(b)
+              if (onNewsletter) return onNewsletter(b)
+              return
+            }
             if (act === 'services' && b.config?.items?.length && onServices) return onServices(b)
             if (b.type === 'reserve') {
               const m = b.config?.mode || 'link'
@@ -474,7 +482,11 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
           // Lien personnalisé : favicon du site affiché si un seul lien (sinon icône générique).
           const linkList = b.type === 'link' ? (b.config?.links || []).filter((l) => l && l.url) : []
           const oneLink = b.type === 'link' && (linkList.length === 1 ? linkList[0].url : linkList.length === 0 && b.url ? b.url : null)
-          const favicon = oneLink ? faviconUrl(oneLink) : null
+          // Connecteur reconnu (Calendly, Planity, ZenChef…) : le bouton prend la
+          // marque de la plateforme — favicon + mention « via X » sous le libellé.
+          const connUrl = oneLink || b.url
+          const conn = connUrl ? connectorOf(connUrl) : null
+          const favicon = oneLink || conn ? faviconUrl(connUrl) : null
           const bt = buttonTokens(btn, light, accent, isPrimary, radius)
           const ib = iconBoxTokens(btn, light, isPrimary)
           const btnEl = (
@@ -490,7 +502,10 @@ export function BioRender({ page, buttons, onButtonClick, onTip, onContact, onSe
                   <Icon name={b.icon} size={isPrimary ? 20 : 18} />
                 )}
               </span>
-              <span className="flex-1 text-center leading-tight">{labelOf(b)}</span>
+              <span className="flex-1 text-center leading-tight">
+                {labelOf(b)}
+                {conn ? <span className="block text-[10px] font-bold opacity-55">via {conn.name}</span> : null}
+              </span>
               {/* Élément de droite pour équilibrer l'icône → texte parfaitement centré */}
               {isPrimary ? <ArrowRight size={18} strokeWidth={3} className="shrink-0" /> : <span aria-hidden className="h-8 w-8 shrink-0" />}
             </button>
@@ -693,7 +708,7 @@ function BgVideo({ src, loop = false, sound = false, className, style, zoom = 1,
 
 // Scène immersive plein écran (cinématique, sans carte) : fond + overlays + contenu flottant.
 // Se place dans un parent `relative` qui a une hauteur (viewport ou écran du mockup).
-export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, supporters, products, onBuy, branding = true, kenBurns = true, sound = false }) {
+export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, onServices, onReserve, onQuote, onLinks, onNewsletter, live, supporters, products, onBuy, branding = true, kenBurns = true, sound = false }) {
   const theme = getTheme(page)
   const accent = theme.accent || modeOf(page.mode).accent
   // Base affichée DERRIÈRE la vidéo pendant son chargement : dégradé si fond dégradé,
@@ -749,7 +764,7 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
       {/* Contenu flottant, défilable — position selon la disposition */}
       <div className="no-scrollbar absolute inset-0 overflow-y-auto">
         <div className={`mx-auto flex min-h-full max-w-md flex-col px-6 py-16 ${['cover', 'magazine', 'fullbleed'].includes(theme.layout) ? 'justify-end' : 'justify-center'}`}>
-          <BioRender immersive page={page} buttons={buttons} onButtonClick={onButtonClick} onTip={onTip} onContact={onContact} onServices={onServices} onReserve={onReserve} onQuote={onQuote} onLinks={onLinks} supporters={supporters} products={products} onBuy={onBuy} branding={branding} />
+          <BioRender immersive page={page} buttons={buttons} onButtonClick={onButtonClick} onTip={onTip} onContact={onContact} onServices={onServices} onReserve={onReserve} onQuote={onQuote} onLinks={onLinks} onNewsletter={onNewsletter} live={live} supporters={supporters} products={products} onBuy={onBuy} branding={branding} />
         </div>
       </div>
     </div>
