@@ -584,9 +584,47 @@ export function BioSurface({ page, buttons, onButtonClick, onTip, onContact, sup
 // Si `sound`, on tente d'activer le son (volume d'ambiance modéré) immédiatement, puis au
 // 1er geste du visiteur (tap/scroll/clic) — c'est la règle des navigateurs. Un petit bouton
 // permet de couper/réactiver à tout moment.
-function BgVideo({ src, loop = false, sound = false, className, style }) {
+function BgVideo({ src, loop = false, sound = false, className, style, zoom = 1, posX = 50, posY = 50 }) {
   const ref = useRef(null)
   const [muted, setMuted] = useState(true)
+  // « Cover » calculé en JS : l'élément vidéo est dimensionné EXACTEMENT au
+  // ratio de la vidéo (× zoom), positionné selon posX/posY — plutôt que de
+  // compter sur object-fit: cover + transform scale, qu'iOS ignore parfois sur
+  // les vidéos importées (rendu « contain » → bande noire sur le côté, qui
+  // s'élargit avec le zoom). Avec un élément au ratio exact, aucune bande
+  // n'est mathématiquement possible, sur aucun navigateur.
+  const [geom, setGeom] = useState(null)
+  useEffect(() => {
+    const v = ref.current
+    if (!v || !v.parentElement) return
+    const parent = v.parentElement
+    const compute = () => {
+      const vw = v.videoWidth, vh = v.videoHeight
+      const cw = parent.clientWidth, ch = parent.clientHeight
+      if (!vw || !vh || !cw || !ch) return
+      const s = Math.max(cw / vw, ch / vh) * (zoom || 1)
+      const w = vw * s, h = vh * s
+      setGeom({
+        width: w,
+        height: h,
+        // Le preflight Tailwind impose max-width:100% aux vidéos → il rognerait
+        // la largeur calculée (bande vide à droite, grandissante avec le zoom).
+        maxWidth: 'none',
+        maxHeight: 'none',
+        left: (cw - w) * ((posX ?? 50) / 100),
+        top: (ch - h) * ((posY ?? 50) / 100),
+        right: 'auto',
+        bottom: 'auto',
+        objectFit: 'fill', // l'élément est déjà au ratio de la vidéo
+        transform: 'none',
+      })
+    }
+    compute()
+    v.addEventListener('loadedmetadata', compute)
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(compute) : null
+    ro?.observe(parent)
+    return () => { v.removeEventListener('loadedmetadata', compute); ro?.disconnect() }
+  }, [src, zoom, posX, posY])
 
   useEffect(() => {
     if (!sound) return
@@ -638,7 +676,7 @@ function BgVideo({ src, loop = false, sound = false, className, style }) {
 
   return (
     <>
-      <video ref={ref} className={className} style={style} src={src} poster={poster} autoPlay muted loop={loop} playsInline preload="auto" />
+      <video ref={ref} className={className} style={geom ? { ...style, ...geom } : style} src={src} poster={poster} autoPlay muted loop={loop} playsInline preload="auto" />
       {sound && (
         <button
           type="button"
@@ -678,6 +716,9 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
             sound={sound}
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${frameScale(theme.bgZoom ?? 1)})` }}
+            zoom={frameScale(theme.bgZoom ?? 1)}
+            posX={theme.bgPosX ?? 50}
+            posY={theme.bgPosY ?? 50}
           />
         </>
       ) : theme.bgVideo ? (
@@ -689,6 +730,9 @@ export function BioImmersive({ page, buttons, onButtonClick, onTip, onContact, o
             sound={sound}
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: `${theme.bgPosX ?? 50}% ${theme.bgPosY ?? 50}%`, transform: `scale(${videoScale})` }}
+            zoom={videoScale}
+            posX={theme.bgPosX ?? 50}
+            posY={theme.bgPosY ?? 50}
           />
         </>
       ) : theme.bgType === 'image' && theme.bgImage ? (
