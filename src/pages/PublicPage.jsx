@@ -8,9 +8,12 @@ import { ServicesModal } from '../components/ServicesModal'
 import { ReservationModal } from '../components/ReservationModal'
 import { QuoteModal } from '../components/QuoteModal'
 import { LinksModal } from '../components/LinksModal'
+import { EmbedModal } from '../components/EmbedModal'
+import { NewsletterModal } from '../components/NewsletterModal'
 import { ShareStory } from '../components/ShareStory'
 import { useI18n } from '../lib/i18n'
 import { api } from '../lib/api'
+import { connectorOf, embedUrl } from '../lib/connectors'
 import { getTheme } from '../lib/themes'
 import { toast } from '../components/Toast'
 
@@ -26,6 +29,9 @@ export default function PublicPage({ slug: slugProp }) {
   const [reserve, setReserve] = useState(null) // bouton réservation (formulaire) ouvert
   const [quote, setQuote] = useState(null) // bouton devis express (formulaire) ouvert
   const [links, setLinks] = useState(null) // bouton multi-liens ouvert
+  const [embed, setEmbed] = useState(null) // widget connecteur intégré ouvert
+  const [newsletter, setNewsletter] = useState(null) // formulaire newsletter ouvert
+  const [live, setLive] = useState(null) // { twitch: true, … } — badges LIVE des Smart Socials
   const [supporters, setSupporters] = useState(null)
   const [products, setProducts] = useState([])
   const [soundOn, setSoundOn] = useState(false)
@@ -42,6 +48,7 @@ export default function PublicPage({ slug: slugProp }) {
     api.publicPage(slug).then(setData).catch(() => setData(null))
     api.supporters(slug).then(setSupporters).catch(() => {})
     api.publicProducts(slug).then((r) => setProducts(r.products || [])).catch(() => {})
+    api.liveStatus(slug).then((r) => setLive(r.live && Object.keys(r.live).length ? r.live : null)).catch(() => {})
   }, [slug])
 
   if (data === undefined) return <div className="grid min-h-screen place-items-center font-display text-xl">{t('common.loading')}</div>
@@ -63,7 +70,15 @@ export default function PublicPage({ slug: slugProp }) {
   async function handleClick(b) {
     // tracking (fire-and-forget) puis ouverture de la cible
     api.trackClick(slug, b.id).catch(() => {})
-    if (b.url) window.open(b.url, '_blank', 'noopener')
+    if (!b.url) return
+    // Connecteur embarquable (Calendly, ZenChef, Planity…) → widget intégré
+    // au lieu d'une redirection : le visiteur réserve sans quitter la page.
+    const conn = connectorOf(b.url)
+    if (conn?.embed) {
+      setEmbed({ url: embedUrl(conn, b.url), openUrl: b.url, title: b.label, brand: conn.name })
+      return
+    }
+    window.open(b.url, '_blank', 'noopener')
   }
 
   async function handleBuy(pr) {
@@ -92,6 +107,8 @@ export default function PublicPage({ slug: slugProp }) {
         onReserve={(b) => { api.trackClick(slug, b.id).catch(() => {}); setReserve(b) }}
         onQuote={(b) => { api.trackClick(slug, b.id).catch(() => {}); setQuote(b) }}
         onLinks={(b) => { api.trackClick(slug, b.id).catch(() => {}); setLinks(b) }}
+        onNewsletter={(b) => { api.trackClick(slug, b.id).catch(() => {}); setNewsletter(b) }}
+        live={live}
       />
       <ShareStory page={page} slug={slug} />
       {tip && <TipModal slug={slug} amounts={theme.tipAmounts} onClose={() => setTip(false)} />}
@@ -100,6 +117,8 @@ export default function PublicPage({ slug: slugProp }) {
       {reserve && <ReservationModal slug={slug} title={reserve.label} accent={theme.accent} onClose={() => setReserve(null)} />}
       {quote && <QuoteModal slug={slug} title={quote.label} accent={theme.accent} onClose={() => setQuote(null)} />}
       {links && <LinksModal title={links.label} links={links.config?.links} accent={theme.accent} onClose={() => setLinks(null)} />}
+      {embed && <EmbedModal url={embed.url} openUrl={embed.openUrl} title={embed.title} brand={embed.brand} accent={theme.accent} onClose={() => setEmbed(null)} />}
+      {newsletter && <NewsletterModal slug={slug} title={newsletter.label} accent={theme.accent} onClose={() => setNewsletter(null)} />}
 
       {/* Son d'ambiance (premium, opt-in) */}
       {theme.ambientAudio && (

@@ -117,12 +117,20 @@ await pool.query(`
     "stripeSessionId" TEXT DEFAULT '',
     "createdAt" TEXT
   );
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id TEXT PRIMARY KEY,
+    "pageId" TEXT,
+    email TEXT,
+    name TEXT DEFAULT '',
+    "createdAt" TEXT
+  );
   CREATE INDEX IF NOT EXISTS idx_pages_user ON pages("userId");
   CREATE INDEX IF NOT EXISTS idx_messages_page ON messages("pageId");
   CREATE INDEX IF NOT EXISTS idx_buttons_page ON buttons("pageId");
   CREATE INDEX IF NOT EXISTS idx_clicks_page ON clicks("pageId");
   CREATE INDEX IF NOT EXISTS idx_products_page ON products("pageId");
   CREATE INDEX IF NOT EXISTS idx_purchases_token ON purchases(token);
+  CREATE INDEX IF NOT EXISTS idx_subscribers_page ON subscribers("pageId");
 `)
 
 // Migrations incrémentales (colonnes ajoutées après la création initiale du schéma).
@@ -260,7 +268,7 @@ export const Pages = {
     const client = await pool.connect()
     try {
       await client.query('BEGIN')
-      for (const t of ['clicks', 'tips', 'messages', 'purchases', 'products', 'buttons']) {
+      for (const t of ['clicks', 'tips', 'messages', 'purchases', 'products', 'subscribers', 'buttons']) {
         await client.query(`DELETE FROM ${t} WHERE "pageId" = $1`, [id])
       }
       await client.query('DELETE FROM pages WHERE id = $1', [id])
@@ -457,6 +465,27 @@ export const Products = {
   },
   remove: (id) => run('DELETE FROM products WHERE id = $1', [id]),
   incSales: (id) => run('UPDATE products SET sales = sales + 1 WHERE id = $1', [id]),
+}
+
+// ---------- Abonnés newsletter ----------
+export const Subscribers = {
+  // Dédoublonné par e-mail (insensible à la casse) : ré-inscription = no-op.
+  async create({ pageId, email, name }) {
+    const clean = String(email || '').trim().toLowerCase()
+    const existing = await one('SELECT * FROM subscribers WHERE "pageId" = $1 AND lower(email) = $2', [pageId, clean])
+    if (existing) return existing
+    const sub = { id: nanoid(12), pageId, email: clean, name: name || '', createdAt: now() }
+    await run(
+      'INSERT INTO subscribers (id,"pageId",email,name,"createdAt") VALUES ($1,$2,$3,$4,$5)',
+      [sub.id, sub.pageId, sub.email, sub.name, sub.createdAt]
+    )
+    return sub
+  },
+  byPage: (pageId) => all('SELECT id, email, name, "createdAt" FROM subscribers WHERE "pageId" = $1 ORDER BY "createdAt" DESC', [pageId]),
+  async countByPage(pageId) {
+    const r = await one('SELECT COUNT(*)::int AS n FROM subscribers WHERE "pageId" = $1', [pageId])
+    return r ? r.n : 0
+  },
 }
 
 // ---------- Achats ----------

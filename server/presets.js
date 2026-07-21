@@ -24,6 +24,7 @@ export const BUTTON_TYPES_SERVER = {
   quote: { icon: 'FileText', label: { fr: 'Devis express', en: 'Quick quote' } },
   services: { icon: 'Briefcase', label: { fr: 'Services & tarifs', en: 'Services & pricing' } },
   contact: { icon: 'Mail', label: { fr: 'Me contacter', en: 'Contact me' } },
+  newsletter: { icon: 'MailPlus', label: { fr: 'Rejoindre ma newsletter', en: 'Join my newsletter' } },
   link: { icon: 'Link', label: { fr: 'Lien personnalisé', en: 'Custom link' } },
   smart: { icon: 'Sparkles', label: { fr: 'Smart Content', en: 'Smart Content' } },
 }

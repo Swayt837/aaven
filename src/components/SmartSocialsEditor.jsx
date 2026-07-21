@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Instagram, Youtube, Linkedin, Facebook, Globe, Music2, MessageCircle, Twitter, Pin, Trash2, Plus, RefreshCw } from 'lucide-react'
+import { Instagram, Youtube, Linkedin, Facebook, Globe, Music2, MessageCircle, Twitter, Twitch, Pin, Trash2, Plus, RefreshCw } from 'lucide-react'
 import { api } from '../lib/api'
 import { useI18n } from '../lib/i18n'
 import { toast } from './Toast'
@@ -58,6 +58,7 @@ const NETWORKS = [
   { key: 'instagram', label: 'Instagram', icon: Instagram, ph: 'https://instagram.com/...' },
   { key: 'tiktok', label: 'TikTok', icon: Music2, ph: 'https://tiktok.com/@...' },
   { key: 'youtube', label: 'YouTube', icon: Youtube, ph: 'https://youtube.com/@...' },
+  { key: 'twitch', label: 'Twitch', icon: Twitch, ph: 'https://twitch.tv/...' },
   { key: 'spotify', label: 'Spotify', icon: Music2, ph: 'https://open.spotify.com/...' },
   { key: 'x', label: 'X', icon: Twitter, ph: 'https://x.com/...' },
   { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, ph: 'https://linkedin.com/in/...' },

@@ -17,7 +17,7 @@ const PROVIDERS = [
   { kind: 'spotify', test: (u) => u.hostname === 'open.spotify.com', oembed: (url) => `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}` },
   { kind: 'music', test: (u) => /(^|\.)(soundcloud\.com|music\.apple\.com|deezer\.com)$/.test(u.hostname), og: true },
   { kind: 'instagram', test: (u) => /(^|\.)instagram\.com$/.test(u.hostname) }, // pas d'oEmbed sans token → carte simple
-  { kind: 'booking', test: (u) => /(^|\.)(calendly\.com|cal\.com|planity\.com|treatwell\.\w+|zcal\.co|youcanbook\.me)$/.test(u.hostname) },
+  { kind: 'booking', test: (u) => /(^|\.)(calendly\.com|cal\.com|planity\.com|treatwell\.\w+|zcal\.co|youcanbook\.me|zenchef\.com|thefork\.\w+|lafourchette\.com|sevenrooms\.com|guestonline\.(fr|io)|fresha\.com|booksy\.com|wecasa\.fr|eversports\.\w+)$/.test(u.hostname) },
   { kind: 'product', test: (u) => /(^|\.)(gumroad\.com|lemonsqueezy\.com|payhip\.com)$/.test(u.hostname) || /myshopify\.com$/.test(u.hostname) || /\/products?\//.test(u.pathname), og: true },
   { kind: 'blog', test: (u) => /(^|\.)(substack\.com|medium\.com|notion\.site|notion\.so)$/.test(u.hostname) || /\/(blog|article|post)s?\//.test(u.pathname), og: true },
 ]

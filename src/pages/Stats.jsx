@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Eye, MousePointerClick, Percent, MessageSquare, Heart, ShoppingBag } from 'lucide-react'
+import { Eye, MousePointerClick, Percent, MessageSquare, Heart, ShoppingBag, MailPlus, Download } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Button, Card } from '../components/ui'
 import { Icon } from '../components/Icon'
@@ -15,13 +15,27 @@ export default function Stats() {
   const [data, setData] = useState(null)
   const [msgs, setMsgs] = useState([])
   const [tips, setTips] = useState([])
+  const [subs, setSubs] = useState([])
   const [replies, setReplies] = useState({})
 
   useEffect(() => {
     api.stats(slug).then(setData).catch(() => nav('/dashboard'))
     api.messages(slug).then((r) => setMsgs(r.messages || [])).catch(() => {})
     api.tips(slug).then((r) => setTips(r.tips || [])).catch(() => {})
+    api.subscribers(slug).then((r) => setSubs(r.subscribers || [])).catch(() => {})
   }, [slug, nav])
+
+  // Export CSV des abonnés (généré côté client — BOM pour Excel, séparateur ;)
+  function exportSubs() {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const rows = [['email', 'nom', 'date'], ...subs.map((s) => [s.email, s.name, s.createdAt])]
+    const csv = '\uFEFF' + rows.map((r) => r.map(esc).join(';')).join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    a.download = `newsletter-${slug}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
 
   async function sendReply(id) {
     const reply = (replies[id] || '').trim()
@@ -62,10 +76,11 @@ export default function Stats() {
           <Kpi icon={<MessageSquare size={22} className="text-green-600" />} label={t('stats.messages')} value={data.messages ?? msgs.length} />
         </div>
 
-        {/* Recettes : tips + ventes de produits digitaux */}
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        {/* Recettes + audience : tips, ventes de produits, abonnés newsletter */}
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Kpi icon={<Heart size={22} className="text-coral" fill="#EF5A4C" />} label={t('stats.tipsRevenue')} value={`${eur(data.tipsRevenue ?? 0)}€`} sub={`${data.tipsCount ?? 0} ${t('stats.tipsUnit')}`} />
           <Kpi icon={<ShoppingBag size={22} className="text-ink" />} label={t('stats.productsRevenue')} value={`${eur(data.productsRevenue ?? 0)}€`} sub={`${data.productsCount ?? 0} ${t('stats.salesUnit')}`} />
+          <Kpi icon={<MailPlus size={22} className="text-blue-600" />} label={t('stats.subscribers')} value={data.subscribers ?? subs.length} />
         </div>
 
         <Card className="mt-6 p-6">
@@ -110,6 +125,33 @@ export default function Stats() {
                   </div>
                   {m.subject ? <p className="mt-1 text-xs font-bold uppercase tracking-wide text-ink/50">{m.subject}</p> : null}
                   <p className="mt-1.5 whitespace-pre-wrap text-sm font-medium text-ink/80">{m.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Abonnés newsletter : liste + export CSV (la liste t'appartient) */}
+        <Card className="mt-6 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display flex items-center gap-2 text-lg font-extrabold uppercase tracking-wide">
+              <MailPlus size={18} className="text-blue-600" /> {t('stats.subsList')}
+            </h2>
+            {subs.length > 0 && (
+              <Button variant="secondary" size="sm" onClick={exportSubs}><Download size={15} /> {t('stats.exportCsv')}</Button>
+            )}
+          </div>
+          {subs.length === 0 ? (
+            <p className="mt-4 font-medium text-ink/50">{t('stats.noSubs')}</p>
+          ) : (
+            <div className="mt-5 space-y-2">
+              {subs.map((s) => (
+                <div key={s.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 rounded-brutal border-2 border-ink bg-white px-4 py-2.5">
+                  <span className="font-display text-sm font-extrabold">
+                    {s.email}
+                    {s.name ? <span className="ml-2 font-sans font-semibold text-ink/50">{s.name}</span> : null}
+                  </span>
+                  <span className="text-xs font-semibold text-ink/50">{new Date(s.createdAt).toLocaleDateString()}</span>
                 </div>
               ))}
             </div>

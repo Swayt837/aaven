@@ -16,5 +16,6 @@ export const Tips = impl.Tips
 export const Messages = impl.Messages
 export const Products = impl.Products
 export const Purchases = impl.Purchases
+export const Subscribers = impl.Subscribers
 export const slugify = impl.slugify
 export const uniqueSlug = impl.uniqueSlug

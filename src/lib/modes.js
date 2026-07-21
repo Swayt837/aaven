@@ -51,6 +51,7 @@ export const BUTTON_TYPES = {
   quote: { icon: 'FileText', label: { fr: 'Devis express', en: 'Quick quote' }, action: 'contact', urlPh: '' },
   services: { icon: 'Briefcase', label: { fr: 'Services & tarifs', en: 'Services & pricing' }, action: 'services', urlPh: 'https://...' },
   contact: { icon: 'Mail', label: { fr: 'Me contacter', en: 'Contact me' }, action: 'contact', urlPh: '' },
+  newsletter: { icon: 'MailPlus', label: { fr: 'Rejoindre ma newsletter', en: 'Join my newsletter' }, action: 'newsletter', urlPh: '' },
   link: { icon: 'Link', label: { fr: 'Lien personnalisé', en: 'Custom link' }, urlPh: 'https://...' },
   smart: { icon: 'Sparkles', label: { fr: 'Smart Content', en: 'Smart Content' }, urlPh: 'https://...' },
 }

@@ -10,7 +10,7 @@ import rateLimit from 'express-rate-limit'
 import multer from 'multer'
 import nodemailer from 'nodemailer'
 import { nanoid } from 'nanoid'
-import { Users, Pages, Buttons, Clicks, Tips, Messages, Products, Purchases } from './db.js'
+import { Users, Pages, Buttons, Clicks, Tips, Messages, Products, Purchases, Subscribers } from './db.js'
 import { BUTTON_TYPES_SERVER, PRESETS_SERVER } from './presets.js'
 import { sanitizeUrl, sanitizeAsset, clampStr, sanitizeTheme, sanitizeButtonConfig } from './validate.js'
 import { savePublic, savePublicAt, saveProductFile, getProductDownload, deleteProductFile, deletePagePublicAssets, uploadsDir, storageMode } from './storage.js'
@@ -24,6 +24,7 @@ import { blockToButton, modeForCategory, themeForProfession, SOCIAL_BUTTON_TYPES
 import { buildProfessionEmails } from './professionEmails.js'
 import { resolveSmartLink } from './smartResolve.js'
 import { fetchSocialStat } from './socialStats.js'
+import { fetchLiveStatus, liveConfigured } from './liveStatus.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3001
@@ -568,6 +569,7 @@ app.get('/api/pages/:slug/stats', requireAuth, ownPage, async (req, res) => {
     views: req.page.views,
     totalClicks,
     messages: await Messages.countByPage(req.page.id),
+    subscribers: await Subscribers.countByPage(req.page.id),
     tipsRevenue: round2((tipAgg?.total || 0) * keep),
     tipsCount: tipAgg?.n || 0,
     productsRevenue: round2(((prodAgg?.cents || 0) / 100) * keep),
@@ -579,6 +581,11 @@ app.get('/api/pages/:slug/stats', requireAuth, ownPage, async (req, res) => {
 // Messages reçus (owner uniquement).
 app.get('/api/pages/:slug/messages', requireAuth, ownPage, async (req, res) => {
   res.json({ messages: await Messages.byPage(req.page.id) })
+})
+
+// Abonnés newsletter (owner uniquement) — l'export CSV se fait côté client.
+app.get('/api/pages/:slug/subscribers', requireAuth, ownPage, async (req, res) => {
+  res.json({ subscribers: await Subscribers.byPage(req.page.id) })
 })
 
 // Soutiens reçus (owner) + réponse du créateur.
@@ -794,6 +801,33 @@ app.post('/api/public/:slug/reserve', contactLimiter, async (req, res) => {
   const msg = await Messages.create({ pageId: page.id, name, email: '', body, subject: 'Réservation de table' })
   notifyOwner(page, msg) // fire-and-forget
   res.json({ ok: true })
+})
+
+// Inscription newsletter (public, bouton « newsletter » en mode formulaire).
+app.post('/api/public/:slug/subscribe', contactLimiter, async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
+  if (!page) return res.status(404).json({ error: 'Page introuvable' })
+  const email = clampStr(req.body.email, 160).trim()
+  const name = clampStr(req.body.name, 80).trim()
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'E-mail invalide' })
+  await Subscribers.create({ pageId: page.id, email, name })
+  res.json({ ok: true })
+})
+
+// Statut « en direct » des Smart Socials (Twitch / YouTube) — résultat mis en
+// cache côté serveur (liveStatus.js), donc peu coûteux même très consulté.
+app.get('/api/public/:slug/live', async (req, res) => {
+  const page = await Pages.bySlug(req.params.slug)
+  if (!page) return res.status(404).json({ error: 'Page introuvable' })
+  const socials = (page.theme && page.theme.socials) || []
+  const candidates = socials.filter((s) => (s.network === 'twitch' || s.network === 'youtube') && liveConfigured[s.network] && s.url)
+  const live = {}
+  await Promise.all(candidates.map(async (s) => {
+    try {
+      if (await fetchLiveStatus(s.network, s.url)) live[s.network] = true
+    } catch { /* réseau muet → pas de badge */ }
+  }))
+  res.json({ live })
 })
 
 // Mur de supporters (public) : compteur + soutiens récents (prénom, message, réponse).

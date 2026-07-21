@@ -53,6 +53,7 @@ export const api = {
   deletePage: (slug) => req('DELETE', `/pages/${slug}`),
   stats: (slug) => req('GET', `/pages/${slug}/stats`),
   messages: (slug) => req('GET', `/pages/${slug}/messages`),
+  subscribers: (slug) => req('GET', `/pages/${slug}/subscribers`),
   tips: (slug) => req('GET', `/pages/${slug}/tips`),
   replyTip: (slug, tipId, reply) => req('POST', `/pages/${slug}/tips/${tipId}/reply`, { reply }),
 
@@ -114,6 +115,8 @@ export const api = {
   trackClick: (slug, buttonId) => req('POST', `/public/${slug}/click/${buttonId}`),
   sendMessage: (slug, b) => req('POST', `/public/${slug}/contact`, b),
   reserve: (slug, b) => req('POST', `/public/${slug}/reserve`, b),
+  subscribe: (slug, b) => req('POST', `/public/${slug}/subscribe`, b),
+  liveStatus: (slug) => req('GET', `/public/${slug}/live`),
   supporters: (slug) => req('GET', `/public/${slug}/supporters`),
   publicProducts: (slug) => req('GET', `/public/${slug}/products`),
   buyProduct: (slug, id) => req('POST', `/public/${slug}/products/${id}/buy`, {}),

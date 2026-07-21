@@ -19,6 +19,7 @@ import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { track } from '../lib/analytics'
 import { modeOf, BUTTON_TYPES, PRESETS } from '../lib/modes'
+import { connectorOf } from '../lib/connectors'
 import { getTheme } from '../lib/themes'
 import { professionBySlug } from '../lib/professions'
 import { blockToButton, SOCIAL_BUTTON_TYPES } from '../lib/professionEngine'
@@ -61,6 +62,7 @@ const PICK_GROUPS = [
   ['cash', '💶', ['tip', 'services', 'course']],
   ['book', '📅', ['reserve', 'bookcall']],
   ['contact', '📞', ['contact', 'quote', 'call', 'whatsapp']],
+  ['grow', '💌', ['newsletter']],
   ['show', '🎬', ['products', 'menu', 'reviews', 'directions']],
   ['other', '✨', ['link', 'twitch', 'snapchat']],
 ]
@@ -128,6 +130,19 @@ function Checklist({ page, theme, buttons, t, onGo }) {
         </div>
       )}
     </div>
+  )
+}
+
+// Connecteur reconnu dans l'URL collée (Calendly, Planity, ZenChef…) :
+// confirme le bouton brandé, et signale le widget intégré le cas échéant.
+function ConnectorHint({ url, t }) {
+  const conn = connectorOf(url)
+  if (!conn) return null
+  return (
+    <p className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-green-700">
+      <Check size={12} strokeWidth={3} />
+      {t(conn.embed ? 'edit.conn.embed' : 'edit.conn.detected', { name: conn.name })}
+    </p>
   )
 }
 
@@ -782,17 +797,20 @@ export default function Editor() {
                       onChange={(config) => updateBtn(b.id, { config, url: config.url || '' })}
                     />
                   )}
-                  {b.type !== 'tip' && b.type !== 'smart' && b.type !== 'link' && b.type !== 'products' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        value={b.url || ''}
-                        onChange={(e) => updateBtn(b.id, { url: e.target.value })}
-                        placeholder={BUTTON_TYPES[b.type]?.urlPh || t('edit.url')}
-                        className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
-                      />
-                      <button type="button" onClick={() => pickBtnFile(b.id)} title={t('edit.uploadFile')} className="press grid shrink-0 place-items-center rounded-lg border border-ink/15 bg-white px-2.5 shadow-soft">
-                        <Upload size={15} />
-                      </button>
+                  {b.type !== 'tip' && b.type !== 'smart' && b.type !== 'link' && b.type !== 'products' && b.type !== 'newsletter' && BUTTON_TYPES[b.type]?.action !== 'contact' && !(b.type === 'reserve' && (b.config?.mode || 'link') !== 'link') && (
+                    <div className="mt-2">
+                      <div className="flex gap-2">
+                        <input
+                          value={b.url || ''}
+                          onChange={(e) => updateBtn(b.id, { url: e.target.value })}
+                          placeholder={BUTTON_TYPES[b.type]?.urlPh || t('edit.url')}
+                          className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
+                        />
+                        <button type="button" onClick={() => pickBtnFile(b.id)} title={t('edit.uploadFile')} className="press grid shrink-0 place-items-center rounded-lg border border-ink/15 bg-white px-2.5 shadow-soft">
+                          <Upload size={15} />
+                        </button>
+                      </div>
+                      <ConnectorHint url={b.url} t={t} />
                     </div>
                   )}
                   {BUTTON_TYPES[b.type]?.action === 'services' && (
@@ -842,6 +860,39 @@ export default function Editor() {
                       )}
                       {(b.config?.mode || 'link') === 'form' && (
                         <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.reserve.formHint')}</p>
+                      )}
+                    </div>
+                  )}
+                  {b.type === 'newsletter' && (
+                    <div className="mt-2">
+                      <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-ink/40">{t('edit.nl.mode')}</p>
+                      <div className="flex rounded-xl bg-ink/5 p-0.5">
+                        {['form', 'link'].map((m) => {
+                          const cur = b.config?.mode || 'form'
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => updateBtn(b.id, { config: { ...(b.config || {}), mode: m } })}
+                              className={`press flex-1 rounded-[10px] px-2 py-1.5 text-xs font-bold transition ${cur === m ? 'bg-white text-ink shadow-soft' : 'text-ink/55'}`}
+                            >
+                              {t('edit.nl.' + m)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {(b.config?.mode || 'form') === 'form' ? (
+                        <p className="mt-2 text-xs font-medium text-ink/55">{t('edit.nl.formHint')}</p>
+                      ) : (
+                        <>
+                          <input
+                            value={b.url || ''}
+                            onChange={(e) => updateBtn(b.id, { url: e.target.value })}
+                            placeholder={t('edit.nl.linkPh')}
+                            className="mt-2 w-full rounded-lg border border-ink/15 px-2 py-1.5 text-sm transition focus:border-coral/50 focus:outline-none"
+                          />
+                          <ConnectorHint url={b.url} t={t} />
+                        </>
                       )}
                     </div>
                   )}

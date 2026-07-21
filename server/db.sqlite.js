@@ -100,12 +100,20 @@ db.exec(`
     stripeSessionId TEXT DEFAULT '',
     createdAt TEXT
   );
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id TEXT PRIMARY KEY,
+    pageId TEXT,
+    email TEXT,
+    name TEXT DEFAULT '',
+    createdAt TEXT
+  );
   CREATE INDEX IF NOT EXISTS idx_pages_user ON pages(userId);
   CREATE INDEX IF NOT EXISTS idx_messages_page ON messages(pageId);
   CREATE INDEX IF NOT EXISTS idx_buttons_page ON buttons(pageId);
   CREATE INDEX IF NOT EXISTS idx_clicks_page ON clicks(pageId);
   CREATE INDEX IF NOT EXISTS idx_products_page ON products(pageId);
   CREATE INDEX IF NOT EXISTS idx_purchases_token ON purchases(token);
+  CREATE INDEX IF NOT EXISTS idx_subscribers_page ON subscribers(pageId);
 `)
 
 // Migrations de schéma incrémentales (ajout de colonnes sans casser l'existant).
@@ -304,6 +312,7 @@ export const Pages = {
       db.prepare('DELETE FROM messages WHERE pageId = ?').run(pageId)
       db.prepare('DELETE FROM purchases WHERE pageId = ?').run(pageId)
       db.prepare('DELETE FROM products WHERE pageId = ?').run(pageId)
+      db.prepare('DELETE FROM subscribers WHERE pageId = ?').run(pageId)
       db.prepare('DELETE FROM buttons WHERE pageId = ?').run(pageId)
       db.prepare('DELETE FROM pages WHERE id = ?').run(pageId)
     })
@@ -480,6 +489,21 @@ export const Products = {
   },
   remove: (id) => db.prepare('DELETE FROM products WHERE id = ?').run(id),
   incSales: (id) => db.prepare('UPDATE products SET sales = sales + 1 WHERE id = ?').run(id),
+}
+
+// ---------- Abonnés newsletter ----------
+export const Subscribers = {
+  // Dédoublonné par e-mail (insensible à la casse) : ré-inscription = no-op.
+  create({ pageId, email, name }) {
+    const clean = String(email || '').trim().toLowerCase()
+    const existing = db.prepare('SELECT * FROM subscribers WHERE pageId = ? AND lower(email) = ?').get(pageId, clean)
+    if (existing) return existing
+    const sub = { id: nanoid(12), pageId, email: clean, name: name || '', createdAt: now() }
+    db.prepare('INSERT INTO subscribers (id,pageId,email,name,createdAt) VALUES (@id,@pageId,@email,@name,@createdAt)').run(sub)
+    return sub
+  },
+  byPage: (pageId) => db.prepare('SELECT id, email, name, createdAt FROM subscribers WHERE pageId = ? ORDER BY createdAt DESC').all(pageId),
+  countByPage: (pageId) => db.prepare('SELECT COUNT(*) AS n FROM subscribers WHERE pageId = ?').get(pageId).n,
 }
 
 // ---------- Achats ----------

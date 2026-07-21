@@ -1,6 +1,6 @@
 import {
   Heart, Instagram, Youtube, ShoppingBag, GraduationCap, BookOpen, Phone,
-  MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail,
+  MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail, MailPlus,
   LayoutGrid, Twitter, Linkedin, Facebook, Twitch, MessageCircle, Music, Ghost,
   Link as LinkIcon, ExternalLink, Sparkles,
 } from 'lucide-react'
@@ -16,7 +16,7 @@ function TikTok({ size = 24, ...props }) {
 
 const MAP = {
   Heart, Instagram, Youtube, ShoppingBag, GraduationCap, BookOpen, Phone,
-  MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail,
+  MapPin, Star, CalendarClock, CalendarCheck, FileText, Briefcase, Mail, MailPlus,
   LayoutGrid, Twitter, Linkedin, Facebook, Twitch, MessageCircle, Music, Ghost, TikTok,
   Link: LinkIcon, ExternalLink, Sparkles,
 }
