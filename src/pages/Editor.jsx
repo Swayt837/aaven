@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Trash2, Eye, QrCode, Plus, X, Upload, RotateCcw, Check } from 'lucide-react'
+import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Trash2, Eye, QrCode, Plus, X, Upload, RotateCcw, Check, Settings2 } from 'lucide-react'
 import { Button, Card, Input, Textarea, Label, Badge } from '../components/ui'
 import { Confetti } from '../components/Confetti'
 import { Icon } from '../components/Icon'
@@ -18,8 +18,9 @@ import { useI18n } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { track } from '../lib/analytics'
-import { modeOf, BUTTON_TYPES, PRESETS } from '../lib/modes'
-import { connectorOf } from '../lib/connectors'
+import { modeOf, BUTTON_TYPES, PRESETS, faviconUrl } from '../lib/modes'
+import { connectorOf, sortedConnectors } from '../lib/connectors'
+import { ConnectorGrid, ConnectModal, ConnectorLogo } from '../components/ConnectorPicker'
 import { getTheme } from '../lib/themes'
 import { professionBySlug } from '../lib/professions'
 import { blockToButton, SOCIAL_BUTTON_TYPES } from '../lib/professionEngine'
@@ -174,6 +175,8 @@ export default function Editor() {
   const [slugErr, setSlugErr] = useState('')
   const [showQR, setShowQR] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [connModal, setConnModal] = useState(null) // connecteur en cours de connexion (modale)
+  const [openBtn, setOpenBtn] = useState(null) // bouton dont la config est dépliée (liste compacte)
   // Mode assistant mobile : l'aperçu est l'écran principal, l'édition vit dans un
   // bottom sheet par catégorie. null = fermé · 'menu' = choix · sinon catégorie active.
   // Desktop (lg+) : sans effet, l'éditeur complet reste en colonne.
@@ -289,6 +292,10 @@ export default function Editor() {
     : (PRESETS[page.mode] || []).map((p) => ({ type: p.type, label: '' }))
   ).filter((s, i, arr) => BUTTON_TYPES[s.type] && !existingTypes.has(s.type) && arr.findIndex((x) => x.type === s.type) === i)
 
+  // Connecteurs recommandés pour le métier (3 max), hors plateformes déjà reliées.
+  const connectedKeys = new Set(buttons.map((x) => connectorOf(x.url || '')?.key).filter(Boolean))
+  const suggConns = prof ? sortedConnectors(prof.category, page.mode).slice(0, 3).filter((c) => !connectedKeys.has(c.key)) : []
+
   // Capture l'état AVANT une modification (pour ↩ Annuler). Les rafales d'une même
   // action (frappe dans un champ, glissement d'un slider) sont groupées en 1 snapshot.
   function snapshot(key) {
@@ -403,10 +410,11 @@ export default function Editor() {
   function addBtn(type, label) {
     snapshot('add')
     const def = BUTTON_TYPES[type]
+    const id = nanoid(8)
     setButtons((bs) => [
       ...bs,
       {
-        id: nanoid(8),
+        id,
         type,
         label: (label || def.label[lang] || def.label.fr).slice(0, 60),
         icon: def.icon,
@@ -417,7 +425,33 @@ export default function Editor() {
         _new: true,
       },
     ])
+    setOpenBtn(id) // config dépliée directement (il reste l'URL à renseigner)
     setShowPicker(false)
+  }
+
+  // Connecteur « branché » depuis la galerie : bouton pré-configuré (type, libellé,
+  // config) + URL déjà validée dans la modale → rien à régler ensuite.
+  function addConnectorBtn(conn, url, spec) {
+    snapshot('add')
+    const type = BUTTON_TYPES[spec.type] ? spec.type : 'link'
+    setButtons((bs) => [
+      ...bs,
+      {
+        id: nanoid(8),
+        type,
+        label: spec.label.slice(0, 60),
+        icon: BUTTON_TYPES[type].icon,
+        url,
+        config: spec.config || null,
+        isActive: true,
+        featured: false,
+        clicks: 0,
+        _new: true,
+      },
+    ])
+    setConnModal(null)
+    setShowPicker(false)
+    toast(t('edit.conn.added', { name: conn.name }))
   }
 
   // Smart Content : ajoute une carte (config résolue depuis un lien, ou kind manuel).
@@ -749,7 +783,13 @@ export default function Editor() {
             </SectionTitle>
 
             <div className="mt-4 space-y-2">
-              {buttons.map((b, i) => (
+              {buttons.map((b, i) => {
+                // Ligne compacte : la config se déplie au clic (engrenage). Un bouton
+                // relié à une plateforme reconnue affiche son logo + « Connecté ».
+                const open = openBtn === b.id
+                const btnUrl = b.url || (b.config?.links?.length === 1 ? b.config.links[0].url : '')
+                const bconn = connectorOf(btnUrl)
+                return (
                 <div
                   key={b.id}
                   onDragOver={(e) => e.preventDefault()}
@@ -765,14 +805,27 @@ export default function Editor() {
                     >
                       <GripVertical size={16} />
                     </span>
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-ink/10" style={{ background: mode.cardBg }}>
-                      <Icon name={b.icon} size={16} />
+                    <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink/10" style={{ background: bconn ? '#fff' : mode.cardBg }}>
+                      {bconn ? (
+                        <img src={faviconUrl(btnUrl)} alt="" width={17} height={17} className="rounded" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                      ) : (
+                        <Icon name={b.icon} size={16} />
+                      )}
                     </span>
                     <input
                       value={b.label}
                       onChange={(e) => updateBtn(b.id, { label: e.target.value })}
                       className="min-w-0 flex-1 rounded-lg border border-ink/15 px-2 py-1.5 font-display text-sm font-extrabold transition focus:border-coral/50 focus:outline-none"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setOpenBtn(open ? null : b.id)}
+                      aria-label={t('edit.btnSettings')}
+                      aria-expanded={open}
+                      className={`press grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition ${open ? 'border-ink bg-ink text-white' : 'border-ink/15 bg-white text-ink/50'}`}
+                    >
+                      <Settings2 size={14} />
+                    </button>
                     <div className="flex shrink-0 flex-col">
                       <button onClick={() => move(i, -1)} aria-label="↑" className="press"><ChevronUp size={16} /></button>
                       <button onClick={() => move(i, 1)} aria-label="↓" className="press"><ChevronDown size={16} /></button>
@@ -788,6 +841,13 @@ export default function Editor() {
                     </button>
                     <button onClick={() => removeBtn(b.id)} aria-label={t('common.delete')} className="press shrink-0 text-coral"><Trash2 size={16} /></button>
                   </div>
+                  {bconn && (
+                    <p className="ml-10 mt-1 flex items-center gap-1.5 text-[11px] font-bold text-green-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-600" aria-hidden />
+                      {t('edit.conn.connected')} · {bconn.name}
+                    </p>
+                  )}
+                  {open && (<>
                   {b.type === 'smart' && (
                     <SmartConfigEditor
                       slug={routeSlug}
@@ -995,8 +1055,10 @@ export default function Editor() {
                       </div>
                     </div>
                   )}
+                  </>)}
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="relative mt-3">
@@ -1014,14 +1076,31 @@ export default function Editor() {
                     <SmartLinkInput onAdd={addSmartBtn} guest={guest} />
                     <SmartManualTiles onAdd={addSmartBtn} />
                   </div>
+                  {/* Connecteurs : grille de logos triée par métier → modale « Connecter X » */}
+                  <div className="mt-3">
+                    <p className="mb-1.5 px-1 font-display text-xs font-extrabold uppercase text-ink/60">
+                      <span aria-hidden>🔌</span> {t('edit.conn.section')}
+                    </p>
+                    <ConnectorGrid profCategory={prof?.category} mode={page.mode} onPick={setConnModal} />
+                  </div>
                   {/* Suggestions personnalisées : les blocs recommandés pour le
                       métier de l'utilisateur (Profession Engine) non encore ajoutés. */}
-                  {suggested.length > 0 && (
+                  {(suggested.length > 0 || suggConns.length > 0) && (
                     <div>
                       <p className="mb-1.5 mt-3 px-1 font-display text-xs font-extrabold uppercase text-coral">
                         ✦ {t('edit.pick.suggested')}
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
+                        {suggConns.map((c) => (
+                          <button
+                            key={'conn-' + c.key}
+                            onClick={() => setConnModal(c)}
+                            className="press flex items-center gap-2 rounded-lg border border-coral/40 bg-coral/5 px-2.5 py-2 text-left text-sm font-bold shadow-soft"
+                          >
+                            <ConnectorLogo conn={c} size={24} />
+                            <span className="min-w-0 truncate">{t('edit.conn.connect', { name: c.name })}</span>
+                          </button>
+                        ))}
                         {suggested.map((s) => (
                           <button
                             key={s.type + s.label}
@@ -1158,6 +1237,7 @@ export default function Editor() {
         </>
       )}
 
+      {connModal && <ConnectModal conn={connModal} onAdd={addConnectorBtn} onClose={() => setConnModal(null)} />}
       {showQR && !guest && <QRModal url={publicUrl} page={page} onClose={() => setShowQR(false)} />}
     </div>
   )
