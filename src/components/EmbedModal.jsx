@@ -15,7 +15,7 @@ export function EmbedModal({ url, openUrl, title, brand, accent = '#EF5A4C', onC
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50" onClick={onClose}>
       <div
-        className="flex h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] border-2 border-ink bg-white shadow-hard-lg"
+        className="flex h-[88vh] max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] border-2 border-ink bg-white shadow-hard-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2 border-b border-ink/10 px-4 py-3">
@@ -60,7 +60,8 @@ export function EmbedModal({ url, openUrl, title, brand, accent = '#EF5A4C', onC
           href={external}
           target="_blank"
           rel="noopener noreferrer"
-          className="block border-t border-ink/10 bg-white px-4 py-2.5 text-center text-xs font-bold text-ink/55"
+          className="block border-t border-ink/10 bg-white px-4 pt-2.5 text-center text-xs font-bold text-ink/55"
+          style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}
         >
           {t('embed.fallback')} <span className="underline">{t('embed.open')}</span>
         </a>

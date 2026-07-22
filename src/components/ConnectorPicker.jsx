@@ -79,10 +79,16 @@ export function ConnectModal({ conn, onAdd, onClose }) {
   const valid = !!trimmed && connectorOf(trimmed)?.key === conn.key
   const wrong = !!trimmed && !valid
 
+  // Mobile : pas d'autofocus (le clavier surgirait sur le bottom-sheet) ; desktop : confort.
+  const desktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 lg:items-center" onClick={onClose}>
-      <div className="w-full max-w-md overflow-hidden rounded-t-[28px] border-2 border-ink bg-white shadow-hard-lg lg:rounded-[28px]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-3 px-5 py-4" style={{ background: `${conn.color}14` }}>
+      <div
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[28px] border-2 border-ink bg-white pb-[env(safe-area-inset-bottom)] shadow-hard-lg lg:rounded-[28px]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 rounded-t-[26px] px-5 py-4" style={{ background: `${conn.color}14` }}>
           <ConnectorLogo conn={conn} size={44} />
           <div className="min-w-0 flex-1">
             <h2 className="font-display text-xl font-extrabold leading-tight">{t('conn.title', { name: conn.name })}</h2>
@@ -99,7 +105,7 @@ export function ConnectModal({ conn, onAdd, onClose }) {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder={connectorPlaceholder(conn)}
-            autoFocus
+            autoFocus={desktop}
             inputMode="url"
             className="w-full rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition focus:outline-none"
             style={{ borderColor: valid ? '#15803D' : wrong ? '#EF5A4C' : 'rgba(10,10,10,0.15)' }}

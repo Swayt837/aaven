@@ -796,12 +796,13 @@ export default function Editor() {
                   onDrop={() => onDrop(i)}
                   className={`rounded-card border border-ink/10 bg-white p-2.5 shadow-soft ${b.isActive ? '' : 'opacity-50'}`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 max-lg:gap-1.5">
+                    {/* Poignée de drag inutile au tactile → masquée (les flèches restent) */}
                     <span
                       draggable
                       onDragStart={() => (dragIndex.current = i)}
                       aria-hidden
-                      className="shrink-0 cursor-grab text-ink/40"
+                      className="shrink-0 cursor-grab text-ink/40 max-lg:hidden"
                     >
                       <GripVertical size={16} />
                     </span>
@@ -1062,11 +1063,25 @@ export default function Editor() {
             </div>
 
             <div className="relative mt-3">
-              <Button variant="secondary" className="w-full" onClick={() => setShowPicker((s) => !s)}>
+              {/* Mobile : le picker (Smart Content + connecteurs + types) est long →
+                  on agrandit le sheet en même temps, sinon tout vit dans 38vh. */}
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  const opening = !showPicker
+                  setShowPicker(opening)
+                  if (opening && window.matchMedia('(max-width: 1023px)').matches) {
+                    setSheetTall(true)
+                    // Attend l'animation du sheet puis amène le picker à l'écran.
+                    setTimeout(() => document.getElementById('btn-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350)
+                  }
+                }}
+              >
                 <Plus size={16} /> {t('edit.addButton')}
               </Button>
               {showPicker && (
-                <Card className="absolute left-0 right-0 z-20 mt-2 max-h-96 overflow-auto p-3">
+                <Card id="btn-picker" className="absolute left-0 right-0 z-20 mt-2 max-h-96 overflow-auto p-3 scroll-mt-16">
                   <div className="mb-2 flex items-center justify-between px-1">
                     <span className="font-display text-xs font-extrabold uppercase text-ink/60">{t('edit.pickType')}</span>
                     <button onClick={() => setShowPicker(false)}><X size={16} /></button>
